@@ -49,3 +49,12 @@ All tests are passing, confirming that the core type definitions and duality rel
   - Added unit tests for Chan type, including tests for creation and IO access
   - Ensured the Chan type works with the Protocol trait and IO traits
   - Fixed conflicts with existing trait implementations
+
+- Completed Task 2.3: Implement Offer Type
+  - Created src/proto/offer.rs with Offer<L, R> type definition
+  - Created a placeholder for Choose<L, R> in src/proto/choose.rs
+  - Implemented Protocol trait for Offer<L, R> with Choose<L::Dual, R::Dual> as its dual
+  - Documented Offer<L, R> type thoroughly with examples
+  - Added unit tests for Offer<L, R> type, including tests for duality relationships
+  - Updated src/proto/mod.rs to export the Offer type
+  - Ensured all tests pass, confirming the Offer type is correctly implemented

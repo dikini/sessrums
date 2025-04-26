@@ -82,3 +82,23 @@
 - Unit tests with different protocol types verify the Chan type works with various protocols
 - Testing with both standard library types (mpsc) and custom types ensures flexibility
 - Avoiding trait implementation conflicts by reusing existing implementations
+
+## 2025-04-26: Offer Type Implementation
+
+### Technical Insights
+- The `Offer<L, R>` type represents a protocol that offers a choice between two continuations
+- The duality relationship between `Offer<L, R>` and `Choose<L, R>` reflects the complementary nature of offering and choosing
+- Circular dependencies between types can be resolved using fully qualified paths (e.g., `super::offer::Offer`)
+- Even placeholder implementations need to satisfy trait bounds for compilation
+
+### Design Patterns
+- The choice pattern allows expressing branching communication protocols
+- Using PhantomData to carry type parameters without runtime overhead
+- Forward declarations can be used to break circular dependencies between modules
+- Minimal implementations can be provided for types that will be fully implemented later
+
+### Best Practices
+- Creating placeholder implementations for dependent types to enable incremental development
+- Using type-level tests to verify protocol relationships at compile time
+- Documenting duality relationships clearly to help users understand the session type system
+- Commenting out tests that depend on future implementations to avoid compilation errors

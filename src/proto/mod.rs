@@ -15,11 +15,12 @@ pub use recv::Recv;
 mod end;
 pub use end::End;
 
-// These will be uncommented in Phase 2
-// mod offer;
-// pub use offer::Offer;
+// Phase 2 implementations
+mod offer;
+pub use offer::Offer;
 
-// mod choose;
+mod choose;
+// Choose will be fully implemented in Task 2.4
 // pub use choose::Choose;
 
 // These will be uncommented in Phase 5
