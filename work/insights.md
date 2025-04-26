@@ -1,5 +1,66 @@
 # Insights and Learnings
 
+## 2025-04-26: Phase 3 Completion - Implement send and recv
+
+### Technical Insights
+- The Error type is crucial for robust protocol communication, providing specific error variants for different failure scenarios
+- Asynchronous methods (send, recv) enable non-blocking protocol communication, essential for real-world applications
+- Type-state programming enforces protocol adherence at compile time by advancing the protocol type after each operation
+- Consuming self and returning a new channel with the advanced protocol type ensures protocol sequence is followed
+- Converting IO-specific errors to the library's Error type provides a consistent error handling interface
+- The close method provides a clean way to terminate a protocol session
+- Bidirectional channels are necessary for implementing full protocols with both sending and receiving capabilities
+
+### Design Patterns
+- The state machine pattern is implemented at the type level, with each method advancing the protocol state
+- Method specialization based on protocol type (Send<T, P>, Recv<T, P>, End) enables type-safe protocol operations
+- The builder pattern is used implicitly, with each method returning a new channel with the advanced protocol
+- Error mapping from IO-specific errors to the library's Error type provides a consistent error handling interface
+- The adapter pattern is used to adapt different IO implementations to the Sender<T> and Receiver<T> traits
+- The visitor pattern can be used with Offer<L, R> to handle different protocol branches
+- Phantom types ensure type safety without runtime overhead
+
+### Best Practices
+- Comprehensive documentation with examples helps users understand the protocol operations
+- Unit tests for each method verify both success and error cases
+- Integration tests demonstrate the complete protocol flow
+- Using async/await for IO operations allows for non-blocking communication
+- Separating protocol types from method implementations improves code organization
+- Converting IO-specific errors to the library's Error type provides a consistent error handling interface
+- Providing example implementations demonstrates practical usage of the library
+- Including commented-out examples of invalid protocols helps users understand type-level constraints
+- Demonstrating error handling shows users how to handle runtime failures
+
+## 2025-04-26: Task 3.6 Completion - Comprehensive Documentation
+
+### Technical Insights
+- Documentation is a critical component of library development, especially for complex concepts like session types
+- Structuring documentation in layers (overview, detailed docs, quick reference) helps different users find what they need
+- Visual representations significantly enhance understanding of abstract concepts like protocol communication
+- Separating documentation by topic (error handling, testing, specific types) improves maintainability and usability
+- Markdown is an effective format for technical documentation, balancing readability and formatting capabilities
+- Cross-referencing between documentation files creates a cohesive documentation system
+
+### Design Patterns
+- The documentation follows a layered architecture pattern, with increasing levels of detail
+- The quick reference guide implements the cheat sheet pattern for experienced users
+- Visual diagrams implement the visual explanation pattern for complex concepts
+- The documentation index implements the central navigation pattern
+- Error handling documentation follows the comprehensive examples pattern
+- Testing documentation follows the best practices pattern
+
+### Best Practices
+- Starting with core concepts before diving into implementation details helps users build mental models
+- Including both simple and complex examples demonstrates the library's capabilities
+- Using ASCII diagrams when SVG or other formats aren't available ensures accessibility
+- Providing a quick reference guide helps experienced users find information quickly
+- Documenting error handling comprehensively helps users create robust applications
+- Creating a documentation index improves discoverability of resources
+- Cross-referencing between documentation files helps users navigate the documentation
+- Including visual representations of abstract concepts improves understanding
+- Documenting testing approaches helps users verify their own protocol implementations
+- Separating documentation by topic allows users to focus on what they need
+
 ## 2025-04-26: Task 3.5 Completion - Simple Protocol Example
 
 ### Technical Insights

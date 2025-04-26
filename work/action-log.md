@@ -1,5 +1,80 @@
 # Action Log
 
+## 2025-04-26: Completed Phase 3 - Implement send and recv
+
+- Completed all Phase 3 tasks:
+  - Task 3.1: Define Error Type
+  - Task 3.2: Implement send Method
+  - Task 3.3: Implement recv Method
+  - Task 3.4: Implement close Method
+  - Task 3.5: Create Simple Protocol Example
+  - Task 3.6: Create Comprehensive Documentation
+
+- Implemented the Error type with various error variants:
+  - Io: For errors in the underlying IO implementation
+  - Protocol: For protocol violations
+  - Connection: For connection establishment or termination errors
+  - Serialization: For errors when serializing data
+  - Deserialization: For errors when deserializing data
+  - ChannelClosed: For attempts to communicate on a closed channel
+
+- Implemented the send method for Chan<Send<T, P>, IO>:
+  - Asynchronous method that sends a value and advances the protocol
+  - Converts IO-specific errors to the library's Error type
+  - Returns a new channel with the advanced protocol type
+
+- Implemented the recv method for Chan<Recv<T, P>, IO>:
+  - Asynchronous method that receives a value and advances the protocol
+  - Converts IO-specific errors to the library's Error type
+  - Returns the received value and a new channel with the advanced protocol type
+
+- Implemented the close method for Chan<End, IO>:
+  - Terminates the protocol session
+  - Consumes the channel to ensure it can't be used after closing
+
+- Created a simple protocol example demonstrating:
+  - A client-server query-response protocol
+  - Bidirectional channel implementation
+  - Error handling
+  - Type safety through the type system
+
+- Created comprehensive documentation covering:
+  - Core concepts of session types
+  - The Error type and its variants
+  - The send, recv, and close methods
+  - Example protocol implementations
+  - Visual diagrams and explanations
+
+All Phase 3 tasks are now complete, with the implementation of send, recv, and close methods, error handling, and example protocols. The library now provides a complete session types implementation with type-safe protocol communication.
+
+## 2025-04-26: Completed Task 3.6 - Create Comprehensive Documentation
+
+- Created comprehensive documentation for the session types library (sez) Phase 3 implementation
+  - Created docs/session-types-documentation.md with detailed explanations of core concepts
+  - Created docs/quick-reference.md with a concise summary of key concepts and API methods
+  - Created docs/session-types-diagrams.md with visual representations of session types concepts
+  - Created docs/error-handling.md with detailed information about error handling
+  - Created docs/testing-protocols.md with examples and best practices for testing protocols
+  - Created docs/offer-choose.md with detailed information about the Offer and Choose protocol types
+  - Created docs/index.md as a central navigation point for all documentation
+  - Updated README.md with an overview of the library and links to documentation
+
+- Documentation covers all required aspects:
+  - Core concepts of session types and their implementation in the library
+  - The Error type and its variants
+  - The send, recv, and close methods with examples
+  - Clear examples of library usage
+  - Diagrams and visual explanations
+
+- Ensured documentation is:
+  - Concise yet thorough
+  - Includes practical examples demonstrating real-world usage
+  - Accessible to developers who may not be familiar with session types
+  - Structured logically, starting with core concepts and moving to specific implementation details
+  - Uses code examples liberally to illustrate usage patterns
+
+All documentation files are complete and ready for inclusion in the project.
+
 ## 2025-04-26: Completed Task 3.5 - Create Simple Protocol Example
 
 - Created examples/simple.rs with a simple protocol example
