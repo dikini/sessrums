@@ -7,9 +7,11 @@
 //! - Client receives the String response
 //! - Both sides close the connection
 
-use std::marker::PhantomData;
-use sez::proto::{Protocol, Send, Recv, End};
+use sez::proto::{Send, Recv, End};
 use sez::chan::Chan;
+
+// Import helper functions from the integration test module
+use crate::integration::{assert_protocol, assert_dual, mock_channel};
 
 // Define the protocol types
 type PingPongClient = Send<i32, Recv<String, End>>;
@@ -30,15 +32,13 @@ async fn test_ping_pong_protocol() {
     // 6. Both sides close the connection
     
     // For now, we just verify that the types are correctly defined
-    fn assert_protocol<P: Protocol>() {}
     assert_protocol::<PingPongClient>();
     assert_protocol::<PingPongServer>();
     
     // Also verify that PingPongServer is the dual of PingPongClient
-    fn assert_dual<P: Protocol, Q: Protocol>()
-    where
-        P::Dual: Protocol,
-        Q: PartialEq<P::Dual>,
-    {}
     assert_dual::<PingPongClient, PingPongServer>();
+    
+    // Create mock channels for type checking
+    let _client_chan: Chan<PingPongClient, ()> = mock_channel();
+    let _server_chan: Chan<PingPongServer, ()> = mock_channel();
 }

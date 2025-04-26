@@ -1,5 +1,27 @@
 # Insights and Learnings
 
+## 2025-04-26: Integration Test Infrastructure Setup
+
+### Technical Insights
+- Helper functions in a central module provide reusable testing utilities across multiple protocol tests
+- Type-level assertions can verify protocol properties without runtime overhead
+- The `assert_dual` function uses Rust's type system to verify duality relationships at compile time
+- Test runners in the top-level tests directory allow for running tests with patterns like `cargo test --test 'protocol_*'`
+- Mock channels can be created for type checking without needing actual IO implementations
+
+### Design Patterns
+- Using helper functions to abstract common test operations improves code reuse and readability
+- The type assertion pattern (`fn assert_same_type<T, U>() where T: Protocol, U: Protocol {}`) leverages Rust's type system for compile-time verification
+- Separating test infrastructure from test cases allows for better organization and maintenance
+- Re-exporting modules in the integration test module provides a clean API for test cases
+
+### Best Practices
+- Documenting test infrastructure helps other developers understand how to write tests
+- Using descriptive function names makes test code self-documenting
+- Keeping test infrastructure DRY (Don't Repeat Yourself) by centralizing common functionality
+- Providing mock implementations for testing simplifies test cases
+- Ensuring tests can be run both individually and as a group improves developer experience
+
 ## 2025-04-26: Phase 2.5 Planning - Example Protocol Implementations
 
 ### Technical Insights

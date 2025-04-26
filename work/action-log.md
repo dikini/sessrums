@@ -1,5 +1,18 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.1 - Set Up Integration Test Infrastructure
+
+- Created tests/integration/mod.rs with helper functions for testing protocols:
+  - `assert_protocol<P>()`: Verifies that a type implements the Protocol trait
+  - `assert_dual<P, Q>()`: Verifies that two types have the correct duality relationship
+  - `assert_self_dual<P>()`: Verifies that a type is its own dual
+  - `mock_channel<P, IO>()`: Creates a channel with a specific protocol and IO type for testing
+- Updated tests/integration/protocol_1.rs to use the new helper functions
+- Created tests/protocol_1_test.rs to run the protocol_1 tests
+- Ensured integration tests can be run with `cargo test --test 'protocol_*'`
+- Updated tests/README.md with detailed documentation of the test infrastructure
+- All tests are passing, confirming that the integration test infrastructure is correctly set up
+
 ## 2025-04-26: Added Phase 2.5 - Example Protocol Implementations
 
 - Updated project plan to include new Phase 2.5 for example protocol implementations
