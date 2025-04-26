@@ -42,3 +42,10 @@ All tests are passing, confirming that the core type definitions and duality rel
   - Added unit tests for IO traits, including custom implementations and thread-based tests
   - Updated src/lib.rs to export the io module
   - Fixed doctest examples to use local types instead of foreign types
+
+- Completed Task 2.2: Define Channel Type
+  - Created src/chan/mod.rs with Chan<P: Protocol, IO> type definition
+  - Documented Chan type thoroughly with examples
+  - Added unit tests for Chan type, including tests for creation and IO access
+  - Ensured the Chan type works with the Protocol trait and IO traits
+  - Fixed conflicts with existing trait implementations

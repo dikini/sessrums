@@ -62,3 +62,23 @@
 - Unit tests with multiple implementations verify the traits work as expected in different scenarios
 - Testing with threads ensures the traits work correctly in concurrent scenarios
 - Using custom implementations in tests helps verify the trait contracts are properly defined
+
+## 2025-04-26: Channel Type Implementation
+
+### Technical Insights
+- The Chan<P: Protocol, IO> type serves as a wrapper around an IO implementation that carries a protocol type
+- PhantomData is used to carry the protocol type without runtime overhead
+- The Chan type provides a clean separation between the protocol (type-level) and the IO implementation (value-level)
+- Generic type parameters allow the Chan type to work with any protocol and IO implementation
+
+### Design Patterns
+- The wrapper pattern allows adding protocol information to existing IO implementations
+- The type parameter pattern enables compile-time protocol checking
+- Using PhantomData to carry type information without runtime overhead
+- Accessor methods (io() and io_mut()) provide controlled access to the underlying IO implementation
+
+### Best Practices
+- Comprehensive documentation with examples helps users understand how to use the Chan type
+- Unit tests with different protocol types verify the Chan type works with various protocols
+- Testing with both standard library types (mpsc) and custom types ensures flexibility
+- Avoiding trait implementation conflicts by reusing existing implementations
