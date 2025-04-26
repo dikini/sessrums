@@ -1,5 +1,15 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.2 - Add trybuild for Compile-Fail Tests
+
+- Added trybuild infrastructure for compile-fail tests
+- Created tests/compile_fail/error_1.rs with a deadlock (Recv/Recv) example
+- Created tests/compile_fail/error_1.stderr with expected error messages
+- Created tests/helpers.rs with helper functions for testing protocols
+- Updated tests/README.md with documentation on how to use trybuild for compile-fail tests
+- Ensured compile-fail tests can be run with `cargo test --test compile_fail`
+- All tests are passing, confirming that the trybuild infrastructure is correctly set up
+
 ## 2025-04-26: Completed Task 2.5.1 - Set Up Integration Test Infrastructure
 
 - Created tests/integration/mod.rs with helper functions for testing protocols:

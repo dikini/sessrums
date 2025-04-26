@@ -1,5 +1,28 @@
 # Insights and Learnings
 
+## 2025-04-26: Compile-Fail Test Infrastructure Setup
+
+### Technical Insights
+- The trybuild crate provides a clean way to test that certain code patterns fail to compile with expected error messages
+- Compile-fail tests are essential for verifying that the session type system correctly rejects invalid protocols
+- The .stderr files contain the expected error messages and are compared against the actual compiler output
+- Helper functions with type constraints can be used to verify type-level properties at compile time
+- The verify_dual_protocols function uses type constraints to ensure that two protocols are duals of each other
+
+### Design Patterns
+- Using type constraints to verify type-level properties is a powerful technique in Rust
+- The "expected to fail" pattern is useful for testing that invalid code is rejected by the compiler
+- Separating test helpers into a common module improves code reuse across different test types
+- Documenting expected error messages helps users understand the type system
+
+### Best Practices
+- Including detailed comments in compile-fail tests explaining why the code should fail
+- Focusing on testing one specific error case per file
+- Using descriptive file names that indicate what error is being tested
+- Ensuring error messages are clear and helpful for users
+- Keeping test cases minimal while still demonstrating the error
+- Documenting how to use and extend the test infrastructure
+
 ## 2025-04-26: Integration Test Infrastructure Setup
 
 ### Technical Insights
