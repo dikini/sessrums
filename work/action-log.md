@@ -58,3 +58,11 @@ All tests are passing, confirming that the core type definitions and duality rel
   - Added unit tests for Offer<L, R> type, including tests for duality relationships
   - Updated src/proto/mod.rs to export the Offer type
   - Ensured all tests pass, confirming the Offer type is correctly implemented
+
+- Completed Task 2.4: Implement Choose Type
+  - Updated src/proto/choose.rs with the full Choose<L, R> type definition
+  - Implemented Protocol trait for Choose<L, R> with Offer<L::Dual, R::Dual> as its dual
+  - Documented Choose<L, R> type thoroughly with examples
+  - Added unit tests for Choose<L, R> type, including tests for duality relationships
+  - Updated src/proto/mod.rs to export the Choose type
+  - Ensured all tests pass, confirming the Choose type is correctly implemented

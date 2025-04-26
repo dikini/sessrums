@@ -102,3 +102,23 @@
 - Using type-level tests to verify protocol relationships at compile time
 - Documenting duality relationships clearly to help users understand the session type system
 - Commenting out tests that depend on future implementations to avoid compilation errors
+
+## 2025-04-26: Choose Type Implementation
+
+### Technical Insights
+- The `Choose<L, R>` type represents a protocol that chooses between two continuations
+- The duality relationship between `Choose<L, R>` and `Offer<L, R>` is symmetric, with `Choose<L, R>::Dual = Offer<L::Dual, R::Dual>` and `Offer<L, R>::Dual = Choose<L::Dual, R::Dual>`
+- The symmetry of duality relationships can be verified at compile time using generic functions with trait bounds
+- Protocol composition allows for creating complex communication patterns by combining simpler protocol types
+
+### Design Patterns
+- The choice pattern allows expressing branching communication protocols from both sides (choosing and offering)
+- Using PhantomData to carry type parameters without runtime overhead
+- Type-level programming in Rust enables compile-time verification of protocol properties
+- Symmetric duality relationships ensure protocol compatibility between communicating parties
+
+### Best Practices
+- Thorough documentation with examples helps users understand how to use the protocol types
+- Unit tests that verify type relationships at compile time ensure the type system works as expected
+- Mirroring the structure and tests of related types (e.g., Offer and Choose) ensures consistency
+- Enabling previously commented-out tests when implementing dependent functionality ensures correctness

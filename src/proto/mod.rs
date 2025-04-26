@@ -20,8 +20,8 @@ mod offer;
 pub use offer::Offer;
 
 mod choose;
-// Choose will be fully implemented in Task 2.4
-// pub use choose::Choose;
+// Choose is now fully implemented in Task 2.4
+pub use choose::Choose;
 
 // These will be uncommented in Phase 5
 // mod rec;
