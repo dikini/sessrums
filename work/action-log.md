@@ -1,5 +1,17 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.8 - Implement Error Example 1 - Recv/Recv Deadlock
+
+- Enhanced tests/compile_fail/error_1.rs with comprehensive documentation explaining why Recv/Recv deadlock should fail to compile
+- Added a visual ASCII diagram of the protocol showing the deadlock situation
+- Updated tests/compile_fail/error_1.stderr to match the enhanced implementation
+- Verified that the compile-fail test correctly identifies the type mismatch between Recv<i32, End> and Send<i32, End>
+- The implementation demonstrates:
+  - How the session type system prevents deadlocks at compile time through duality checking
+  - The importance of complementary communication patterns in session types
+  - Visual representation of protocol errors to aid understanding
+  - Type-level error detection without runtime overhead
+
 ## 2025-04-26: Completed Task 2.5.7 - Implement Protocol 5 - Data Query with Options
 
 - Fully implemented the Data Query with Options protocol in tests/integration/protocol_5.rs
