@@ -1,5 +1,27 @@
 # Insights and Learnings
 
+## 2025-04-26: Protocol 5 Implementation - Data Query with Options
+
+### Technical Insights
+- The Data Query with Options protocol demonstrates a more complex branching pattern with server choice and client offering
+- The protocol combines both sequential communication (query sending) and branching (response options)
+- Type-level enforcement ensures that the server can only choose between the options that the client offers
+- The protocol shows how session types can model query-response patterns with error handling
+- Different message types (String for query, Vec<u8> for data, i16 for error) are enforced at compile time
+
+### Design Patterns
+- Branching protocol pattern: Using Choose<L, R> and Offer<L, R> to represent decision points
+- Query-response pattern with options: Modeling API-like interactions with success and error paths
+- Visual representation of branching protocols helps clarify the communication flow and decision points
+- Type aliases make complex branching protocol types more readable and self-documenting
+
+### Best Practices
+- Documenting both branches of the protocol clearly in the visual diagram
+- Testing both the positive cases (valid protocols) and negative cases (invalid protocols)
+- Maintaining consistent documentation structure across different protocol implementations
+- Reusing test patterns to verify type-level properties consistently
+- Creating clear visual diagrams that show the branching nature of the protocol
+
 ## 2025-04-26: Protocol 4 Implementation - Simple Authentication
 
 ### Technical Insights

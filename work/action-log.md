@@ -1,5 +1,19 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.7 - Implement Protocol 5 - Data Query with Options
+
+- Fully implemented the Data Query with Options protocol in tests/integration/protocol_5.rs
+- Added detailed documentation explaining the protocol and how it demonstrates session type safety
+- Created a visual ASCII diagram of the protocol showing the communication flow and branching
+- Added test cases to verify protocol types, duality relationship, and type safety
+- Updated tests/integration/mod.rs to include the new protocol_5 module
+- Verified that all tests pass, confirming that the protocol is correctly implemented
+- The implementation demonstrates:
+  - Type-level protocol definition using Send<T, P>, Recv<T, P>, Choose<L, R>, Offer<L, R>, and End
+  - Duality between client and server protocols
+  - Type safety enforcing the correct sequence of operations
+  - Branching protocols with server choice and client offering
+
 ## 2025-04-26: Completed Task 2.5.6 - Implement Protocol 4 - Simple Authentication
 
 - Fully implemented the Simple Authentication protocol in tests/integration/protocol_4.rs
