@@ -1,5 +1,29 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.12 - Create Test Documentation
+
+- Updated tests/README.md with detailed information about:
+  - The purpose and structure of the tests
+  - How to run the tests
+  - How to interpret the test results
+  - How to add new tests
+  - How the tests demonstrate session type safety
+- Created tests/EXAMPLES.md with:
+  - An overview of all the protocol examples
+  - Explanations of how each example demonstrates different aspects of session types
+  - Visual diagrams of the protocols
+  - References to the actual test files
+- Created tests/ERRORS.md with:
+  - An overview of all the error examples
+  - Explanations of how each error example demonstrates type safety
+  - Visual diagrams of the error cases
+  - References to the actual test files
+- The documentation provides:
+  - Clear explanations of the test infrastructure
+  - Comprehensive guides for running and extending the tests
+  - Visual representations of protocols and error cases
+  - Detailed explanations of how session types enforce protocol safety
+
 ## 2025-04-26: Completed Task 2.5.11 - Implement Error Example 4 - Unexpected End
 
 - Created tests/compile_fail/error_4.rs with comprehensive documentation explaining why Unexpected End should fail to compile

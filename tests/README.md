@@ -1,22 +1,22 @@
 # Session Types Library (sez) Tests
 
-This directory contains tests for the sez library, organized into different categories.
+This directory contains tests for the sez library, organized into different categories. The tests are designed to verify both the type-level properties and runtime behavior of session types, ensuring that the library correctly enforces protocol adherence at compile time.
 
 ## Test Structure
 
 - **integration/**: Integration tests that demonstrate working protocol examples
   - `mod.rs`: Common test infrastructure, helper functions, and utilities
   - `protocol_1.rs`: Simple Send/Recv Ping-Pong protocol
-  - `protocol_2.rs`: Request/Response protocol (to be implemented)
-  - `protocol_3.rs`: Simple Choice protocol (Send u64 or Recv f32) (to be implemented)
-  - `protocol_4.rs`: Simple Authentication protocol (to be implemented)
-  - `protocol_5.rs`: Data Query with Options protocol (to be implemented)
+  - `protocol_2.rs`: Request/Response protocol
+  - `protocol_3.rs`: Simple Choice protocol (Send u64 or Recv f32)
+  - `protocol_4.rs`: Simple Authentication protocol
+  - `protocol_5.rs`: Data Query with Options protocol
 
 - **compile_fail/**: Tests that are expected to fail compilation
   - `error_1.rs`: Deadlock (Recv/Recv) example
-  - `error_2.rs`: Deadlock (Send/Send) example (to be implemented)
-  - `error_3.rs`: Type Mismatch example (to be implemented)
-  - `error_4.rs`: Unexpected End example (to be implemented)
+  - `error_2.rs`: Deadlock (Send/Send) example
+  - `error_3.rs`: Type Mismatch example
+  - `error_4.rs`: Unexpected End example
 
 ## Test Infrastructure
 
@@ -31,22 +31,31 @@ The integration test infrastructure is designed to make it easy to write tests t
 
 2. **Test Runners**: Each protocol has its own test runner file in the `tests` directory:
    - `protocol_1_test.rs`: Runs the tests for Protocol 1
-   - Additional test runners will be added for future protocols
+   - `protocol_2_test.rs`: Runs the tests for Protocol 2
+   - `protocol_3_test.rs`: Runs the tests for Protocol 3
+   - `protocol_4_test.rs`: Runs the tests for Protocol 4
+   - Integration tests for Protocol 5 are included in the general integration tests
 
 ## Running Tests
 
 ### Integration Tests
 
-To run the integration tests:
+To run all integration tests:
 
 ```bash
-cargo test --test 'protocol_*'
+cargo test --test 'protocol_*' --test integration_tests
 ```
 
 To run a specific protocol test:
 
 ```bash
 cargo test --test protocol_1_test
+```
+
+To run a specific test function:
+
+```bash
+cargo test --test protocol_1_test test_ping_pong_protocol
 ```
 
 ### Compile-Fail Tests
@@ -60,6 +69,17 @@ To run the compile-fail tests:
 ```bash
 cargo test --test compile_fail
 ```
+
+#### How to Interpret Compile-Fail Test Results
+
+When running compile-fail tests:
+
+- **Success**: The test passes if the code fails to compile with exactly the expected error messages in the corresponding `.stderr` file.
+- **Failure**: The test fails if either:
+  - The code compiles when it should fail
+  - The error messages don't match the expected ones in the `.stderr` file
+
+The error messages in the `.stderr` files are carefully crafted to demonstrate specific type safety properties of the session type system. They show how the Rust compiler detects protocol violations at compile time.
 
 #### Adding New Compile-Fail Tests
 
@@ -83,13 +103,42 @@ To add a new compile-fail test:
 - Use descriptive file names that indicate what error is being tested
 - Ensure the error messages are clear and helpful for users
 - Keep the test cases minimal while still demonstrating the error
+- Add visual diagrams to illustrate the protocol error
+- Include a correct version of the protocol for reference
 
-## Test Purpose
+## How to Add New Tests
 
-These tests serve multiple purposes:
+### Adding a New Protocol Example
 
-1. **Verification**: Ensure that the session type system correctly enforces protocol adherence at compile time
-2. **Documentation**: Provide concrete examples of how to use the library
-3. **Regression Testing**: Prevent regressions in the type system
+To add a new protocol example:
 
-The integration tests demonstrate correct usage of the session type system, while the compile-fail tests verify that the type system correctly rejects invalid protocols.
+1. Create a new file in the `tests/integration/` directory (e.g., `tests/integration/protocol_6.rs`)
+2. Define the protocol types using the session type primitives (`Send`, `Recv`, `Choose`, `Offer`, `End`)
+3. Add test functions that verify the type-level properties of the protocol
+4. Update `tests/integration/mod.rs` to include the new protocol module
+5. Create a test runner file in the `tests` directory (e.g., `tests/protocol_6_test.rs`)
+6. Update the documentation in `tests/EXAMPLES.md` to include the new protocol
+
+### Adding a New Error Example
+
+To add a new error example:
+
+1. Create a new file in the `tests/compile_fail/` directory (e.g., `tests/compile_fail/error_5.rs`)
+2. Write code that should fail to compile, with detailed comments explaining why it should fail
+3. Follow the steps in "Adding New Compile-Fail Tests" above
+4. Update the documentation in `tests/ERRORS.md` to include the new error example
+
+## How Session Types Demonstrate Type Safety
+
+Session types provide compile-time guarantees about communication protocols by encoding the protocol in the type system. The tests in this directory demonstrate several key aspects of session type safety:
+
+1. **Protocol Adherence**: The type system ensures that both parties follow the agreed-upon protocol.
+2. **Deadlock Freedom**: The duality relationship between client and server protocols ensures that communication can proceed without deadlocks.
+3. **Type Safety**: The type system ensures that the correct types are sent and received at each step.
+4. **Protocol Completion**: Both sides must follow the protocol to completion, ensuring that no communication is left hanging.
+5. **Branching Safety**: When using `Choose` and `Offer` types, the type system ensures that all branches are handled correctly.
+
+The integration tests demonstrate correct usage of the session type system, while the compile-fail tests verify that the type system correctly rejects invalid protocols. Together, they provide comprehensive verification of the session type system's safety properties.
+
+For more detailed information about the protocol examples, see [EXAMPLES.md](EXAMPLES.md).
+For more detailed information about the error examples, see [ERRORS.md](ERRORS.md).

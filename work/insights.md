@@ -1,5 +1,31 @@
 # Insights and Learnings
 
+## 2025-04-26: Test Documentation Creation
+
+### Technical Insights
+- Comprehensive test documentation is essential for understanding and extending a session type library
+- Visual diagrams significantly enhance the understanding of complex protocol interactions
+- Organizing tests into protocol examples and error examples provides a clear structure for demonstrating session type properties
+- The test infrastructure can be designed to verify both type-level properties and runtime behavior
+- Compile-fail tests are a powerful tool for demonstrating type safety properties
+
+### Design Patterns
+- Documentation pattern: Separating general test information (README.md) from specific examples (EXAMPLES.md, ERRORS.md)
+- Visual protocol representation: Using ASCII diagrams to visualize communication patterns and potential errors
+- Test categorization pattern: Organizing tests by functionality (protocols vs. errors) rather than by implementation details
+- Reference implementation pattern: Providing correct versions alongside error examples for comparison
+- Comprehensive test coverage pattern: Testing both positive cases (valid protocols) and negative cases (invalid protocols)
+
+### Best Practices
+- Creating clear visual diagrams that illustrate protocol flow and error cases
+- Providing detailed explanations of why certain protocols fail to compile
+- Including step-by-step instructions for running tests and interpreting results
+- Documenting how to extend the test suite with new examples
+- Maintaining consistent documentation structure across different protocol implementations
+- Explaining both the technical details and the conceptual significance of each test
+- Using type-level assertions to verify protocol properties at compile time
+- Leveraging compile-fail tests to demonstrate type safety properties
+
 ## 2025-04-26: Error Example 4 Implementation - Unexpected End
 
 ### Technical Insights
