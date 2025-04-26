@@ -72,6 +72,80 @@ I've created a comprehensive project plan that breaks down each phase into micro
 - **Tests**: Write unit tests verifying duality relationships
 - **Completion Criteria**: Duality is implemented for Offer and Choose, documented, and passes all tests
 
+## Phase 2.5: Example Protocol Implementations
+
+### Task 2.5.1: Set Up Integration Test Infrastructure
+- **Code**: Create tests/integration directory structure
+- **Documentation**: Document test structure and purpose
+- **Tests**: Ensure test infrastructure is properly set up
+- **Completion Criteria**: Integration test infrastructure is set up and ready for protocol examples
+
+### Task 2.5.2: Add trybuild for Compile-Fail Tests
+- **Code**: Add trybuild as a dev-dependency in Cargo.toml
+- **Documentation**: Document how to use trybuild for compile-fail tests
+- **Tests**: Create a basic trybuild test to verify setup
+- **Completion Criteria**: trybuild is properly configured for compile-fail tests
+
+### Task 2.5.3: Implement Protocol 1 - Simple Ping-Pong
+- **Code**: Create tests/integration/protocol_1.rs implementing the Ping-Pong protocol
+- **Documentation**: Document the protocol with detailed comments
+- **Tests**: Ensure the protocol compiles and runs correctly
+- **Completion Criteria**: Protocol 1 is implemented, documented, and passes tests
+
+### Task 2.5.4: Implement Protocol 2 - Request/Response
+- **Code**: Create tests/integration/protocol_2.rs implementing the Request/Response protocol
+- **Documentation**: Document the protocol with detailed comments
+- **Tests**: Ensure the protocol compiles and runs correctly
+- **Completion Criteria**: Protocol 2 is implemented, documented, and passes tests
+
+### Task 2.5.5: Implement Protocol 3 - Simple Choice
+- **Code**: Create tests/integration/protocol_3.rs implementing the Simple Choice protocol
+- **Documentation**: Document the protocol with detailed comments
+- **Tests**: Ensure the protocol compiles and runs correctly
+- **Completion Criteria**: Protocol 3 is implemented, documented, and passes tests
+
+### Task 2.5.6: Implement Protocol 4 - Simple Authentication
+- **Code**: Create tests/integration/protocol_4.rs implementing the Simple Authentication protocol
+- **Documentation**: Document the protocol with detailed comments
+- **Tests**: Ensure the protocol compiles and runs correctly
+- **Completion Criteria**: Protocol 4 is implemented, documented, and passes tests
+
+### Task 2.5.7: Implement Protocol 5 - Data Query with Options
+- **Code**: Create tests/integration/protocol_5.rs implementing the Data Query protocol
+- **Documentation**: Document the protocol with detailed comments
+- **Tests**: Ensure the protocol compiles and runs correctly
+- **Completion Criteria**: Protocol 5 is implemented, documented, and passes tests
+
+### Task 2.5.8: Implement Error Example 1 - Recv/Recv Deadlock
+- **Code**: Create tests/compile_fail/error_1.rs implementing the Recv/Recv Deadlock example
+- **Documentation**: Document why this protocol should fail to compile
+- **Tests**: Verify that the protocol fails to compile with appropriate type errors
+- **Completion Criteria**: Error example 1 is implemented, documented, and fails to compile as expected
+
+### Task 2.5.9: Implement Error Example 2 - Send/Send Deadlock
+- **Code**: Create tests/compile_fail/error_2.rs implementing the Send/Send Deadlock example
+- **Documentation**: Document why this protocol should fail to compile
+- **Tests**: Verify that the protocol fails to compile with appropriate type errors
+- **Completion Criteria**: Error example 2 is implemented, documented, and fails to compile as expected
+
+### Task 2.5.10: Implement Error Example 3 - Type Mismatch
+- **Code**: Create tests/compile_fail/error_3.rs implementing the Type Mismatch example
+- **Documentation**: Document why this protocol should fail to compile
+- **Tests**: Verify that the protocol fails to compile with appropriate type errors
+- **Completion Criteria**: Error example 3 is implemented, documented, and fails to compile as expected
+
+### Task 2.5.11: Implement Error Example 4 - Unexpected End
+- **Code**: Create tests/compile_fail/error_4.rs implementing the Unexpected End example
+- **Documentation**: Document why this protocol should fail to compile
+- **Tests**: Verify that the protocol fails to compile with appropriate type errors
+- **Completion Criteria**: Error example 4 is implemented, documented, and fails to compile as expected
+
+### Task 2.5.12: Create Test Documentation
+- **Code**: Create tests/README.md explaining the test structure and purpose
+- **Documentation**: Document how to run tests and interpret results
+- **Tests**: Ensure documentation is accurate and helpful
+- **Completion Criteria**: Test documentation is complete and accurate
+
 ## Phase 3: Implement send and recv
 
 ### Task 3.1: Define Error Type
