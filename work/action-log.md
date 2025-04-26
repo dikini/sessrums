@@ -1,170 +1,68 @@
 # Action Log
 
-## 2025-04-26: Completed Task 2.5.12 - Create Test Documentation
+## 2025-04-26: Completed Phase 2.5 - Example Protocol Implementations
 
-- Updated tests/README.md with detailed information about:
-  - The purpose and structure of the tests
-  - How to run the tests
-  - How to interpret the test results
-  - How to add new tests
-  - How the tests demonstrate session type safety
-- Created tests/EXAMPLES.md with:
-  - An overview of all the protocol examples
-  - Explanations of how each example demonstrates different aspects of session types
-  - Visual diagrams of the protocols
-  - References to the actual test files
-- Created tests/ERRORS.md with:
-  - An overview of all the error examples
-  - Explanations of how each error example demonstrates type safety
-  - Visual diagrams of the error cases
-  - References to the actual test files
-- The documentation provides:
-  - Clear explanations of the test infrastructure
-  - Comprehensive guides for running and extending the tests
-  - Visual representations of protocols and error cases
-  - Detailed explanations of how session types enforce protocol safety
+- Completed Task 2.5.1: Set Up Integration Test Infrastructure
+  - Created tests/integration/mod.rs with helper functions
+  - Set up test infrastructure for protocol examples
+  - Updated tests/integration/protocol_1.rs to use the new helper functions
 
-## 2025-04-26: Completed Task 2.5.11 - Implement Error Example 4 - Unexpected End
+- Completed Task 2.5.2: Add trybuild for Compile-Fail Tests
+  - Configured trybuild for compile-fail tests
+  - Created tests/helpers.rs with utility functions
+  - Updated documentation for compile-fail tests
 
-- Created tests/compile_fail/error_4.rs with comprehensive documentation explaining why Unexpected End should fail to compile
-- Added a visual ASCII diagram of the protocol showing the continuation mismatch situation
-- Created tests/compile_fail/error_4.stderr with expected error messages
-- Verified that the compile-fail test correctly identifies the mismatch between Send<i32, End> and Recv<i32, Send<bool, End>>
-- The implementation demonstrates:
-  - How the session type system prevents protocol mismatches at compile time through duality checking
-  - The importance of matching continuation protocols in session types
-  - Visual representation of protocol errors to aid understanding
-  - Type-level error detection without runtime overhead
+- Completed Task 2.5.3: Implement Protocol 1 - Simple Ping-Pong
+  - Created tests/integration/protocol_1.rs with the Ping-Pong protocol
+  - Added detailed documentation and visual diagram
+  - Added tests for protocol types, duality, and type safety
 
-## 2025-04-26: Completed Task 2.5.10 - Implement Error Example 3 - Type Mismatch
+- Completed Task 2.5.4: Implement Protocol 2 - Request/Response
+  - Created tests/integration/protocol_2.rs with the Request/Response protocol
+  - Added detailed documentation and visual diagram
+  - Added tests for protocol types, duality, and type safety
 
-- Created tests/compile_fail/error_3.rs with comprehensive documentation explaining why Type Mismatch should fail to compile
-- Added a visual ASCII diagram of the protocol showing the type mismatch situation
-- Created tests/compile_fail/error_3.stderr with expected error messages
-- Verified that the compile-fail test correctly identifies the type mismatch between Send<i32, End> and Recv<String, End>
-- The implementation demonstrates:
-  - How the session type system prevents type mismatches at compile time through duality checking
-  - The importance of type safety in session types
-  - Visual representation of protocol errors to aid understanding
-  - Type-level error detection without runtime overhead
+- Completed Task 2.5.5: Implement Protocol 3 - Simple Choice
+  - Created tests/integration/protocol_3.rs with the Simple Choice protocol
+  - Added detailed documentation and visual diagram
+  - Added tests for protocol types, duality, and type safety
 
-## 2025-04-26: Completed Task 2.5.9 - Implement Error Example 2 - Send/Send Deadlock
+- Completed Task 2.5.6: Implement Protocol 4 - Simple Authentication
+  - Created tests/integration/protocol_4.rs with the Simple Authentication protocol
+  - Added detailed documentation and visual diagram
+  - Added tests for protocol types, duality, and type safety
 
-- Created tests/compile_fail/error_2.rs with comprehensive documentation explaining why Send/Send deadlock should fail to compile
-- Added a visual ASCII diagram of the protocol showing the deadlock situation
-- Created tests/compile_fail/error_2.stderr with expected error messages
-- Verified that the compile-fail test correctly identifies the type mismatch between Send<i32, End> and Recv<i32, End>
-- The implementation demonstrates:
-  - How the session type system prevents deadlocks at compile time through duality checking
-  - The importance of complementary communication patterns in session types
-  - Visual representation of protocol errors to aid understanding
-  - Type-level error detection without runtime overhead
+- Completed Task 2.5.7: Implement Protocol 5 - Data Query with Options
+  - Created tests/integration/protocol_5.rs with the Data Query protocol
+  - Added detailed documentation and visual diagram
+  - Added tests for protocol types, duality, and type safety
 
-## 2025-04-26: Completed Task 2.5.8 - Implement Error Example 1 - Recv/Recv Deadlock
+- Completed Task 2.5.8: Implement Error Example 1 - Recv/Recv Deadlock
+  - Updated tests/compile_fail/error_1.rs with the Recv/Recv Deadlock example
+  - Created .stderr file with expected error message
+  - Added detailed documentation and visual diagram
 
-- Enhanced tests/compile_fail/error_1.rs with comprehensive documentation explaining why Recv/Recv deadlock should fail to compile
-- Added a visual ASCII diagram of the protocol showing the deadlock situation
-- Updated tests/compile_fail/error_1.stderr to match the enhanced implementation
-- Verified that the compile-fail test correctly identifies the type mismatch between Recv<i32, End> and Send<i32, End>
-- The implementation demonstrates:
-  - How the session type system prevents deadlocks at compile time through duality checking
-  - The importance of complementary communication patterns in session types
-  - Visual representation of protocol errors to aid understanding
-  - Type-level error detection without runtime overhead
+- Completed Task 2.5.9: Implement Error Example 2 - Send/Send Deadlock
+  - Created tests/compile_fail/error_2.rs with the Send/Send Deadlock example
+  - Created .stderr file with expected error message
+  - Added detailed documentation and visual diagram
 
-## 2025-04-26: Completed Task 2.5.7 - Implement Protocol 5 - Data Query with Options
+- Completed Task 2.5.10: Implement Error Example 3 - Type Mismatch
+  - Created tests/compile_fail/error_3.rs with the Type Mismatch example
+  - Created .stderr file with expected error message
+  - Added detailed documentation and visual diagram
 
-- Fully implemented the Data Query with Options protocol in tests/integration/protocol_5.rs
-- Added detailed documentation explaining the protocol and how it demonstrates session type safety
-- Created a visual ASCII diagram of the protocol showing the communication flow and branching
-- Added test cases to verify protocol types, duality relationship, and type safety
-- Updated tests/integration/mod.rs to include the new protocol_5 module
-- Verified that all tests pass, confirming that the protocol is correctly implemented
-- The implementation demonstrates:
-  - Type-level protocol definition using Send<T, P>, Recv<T, P>, Choose<L, R>, Offer<L, R>, and End
-  - Duality between client and server protocols
-  - Type safety enforcing the correct sequence of operations
-  - Branching protocols with server choice and client offering
+- Completed Task 2.5.11: Implement Error Example 4 - Unexpected End
+  - Created tests/compile_fail/error_4.rs with the Unexpected End example
+  - Created .stderr file with expected error message
+  - Added detailed documentation and visual diagram
 
-## 2025-04-26: Completed Task 2.5.6 - Implement Protocol 4 - Simple Authentication
+- Completed Task 2.5.12: Create Test Documentation
+  - Updated tests/README.md with comprehensive information
+  - Created tests/EXAMPLES.md with protocol examples documentation
+  - Created tests/ERRORS.md with error examples documentation
 
-- Fully implemented the Simple Authentication protocol in tests/integration/protocol_4.rs
-- Added detailed documentation explaining the protocol and how it demonstrates session type safety
-- Created a visual ASCII diagram of the protocol showing the communication flow
-- Added test cases to verify protocol types, duality relationship, and type safety
-- Updated tests/integration/mod.rs to include the new protocol_4 module
-- Created tests/protocol_4_test.rs to run the protocol_4 tests
-- Verified that all tests pass, confirming that the protocol is correctly implemented
-- The implementation demonstrates:
-  - Type-level protocol definition using Send<T, P>, Recv<T, P>, and End
-  - Duality between client and server protocols
-  - Type safety enforcing the correct sequence of operations
-  - Multi-step communication with different message types (String for username/password, u128 for token)
-
-## 2025-04-26: Completed Task 2.5.5 - Implement Protocol 3 - Simple Choice
-
-- Fully implemented the Simple Choice protocol in tests/integration/protocol_3.rs
-- Added detailed documentation explaining the protocol and how it demonstrates session type safety
-- Created a visual ASCII diagram of the protocol showing the communication flow and branching
-- Added test cases to verify protocol types, duality relationship, and type safety
-- Updated tests/integration/mod.rs to include the new protocol_3 module
-- Created tests/protocol_3_test.rs to run the protocol_3 tests
-- Verified that all tests pass, confirming that the protocol is correctly implemented
-- The implementation demonstrates:
-  - Type-level protocol definition using Choose<L, R>, Offer<L, R>, Send<T, P>, Recv<T, P>, and End
-  - Duality between client and server protocols
-  - Type safety enforcing the correct sequence of operations
-  - Branching protocols with client choice and server offering
-
-## 2025-04-26: Completed Task 2.5.4 - Implement Protocol 2 - Request/Response
-
-- Fully implemented the Request/Response protocol in tests/integration/protocol_2.rs
-- Added detailed documentation explaining the protocol and how it demonstrates session type safety
-- Created a visual ASCII diagram of the protocol showing the communication flow
-- Added test cases to verify protocol types, duality relationship, and type safety
-- Updated tests/integration/mod.rs to include the new protocol_2 module
-- Created tests/protocol_2_test.rs to run the protocol_2 tests
-- Verified that all tests pass, confirming that the protocol is correctly implemented
-- The implementation demonstrates:
-  - Type-level protocol definition using Send<T, P>, Recv<T, P>, and End
-  - Duality between client and server protocols
-  - Type safety enforcing the correct sequence of operations
-
-## 2025-04-26: Completed Task 2.5.3 - Implement Protocol 1 - Simple Ping-Pong
-
-- Fully implemented the Simple Ping-Pong protocol in tests/integration/protocol_1.rs
-- Added detailed documentation explaining the protocol and how it demonstrates session type safety
-- Created a visual ASCII diagram of the protocol showing the communication flow
-- Added a new test case `test_ping_pong_type_safety()` to demonstrate how the type system prevents protocol violations
-- Enhanced existing test case with more detailed comments
-- Verified that all tests pass, confirming that the protocol is correctly implemented
-- The implementation demonstrates:
-  - Type-level protocol definition using Send<T, P>, Recv<T, P>, and End
-  - Duality between client and server protocols
-  - Type safety enforcing the correct sequence of operations
-
-## 2025-04-26: Completed Task 2.5.2 - Add trybuild for Compile-Fail Tests
-
-- Added trybuild infrastructure for compile-fail tests
-- Created tests/compile_fail/error_1.rs with a deadlock (Recv/Recv) example
-- Created tests/compile_fail/error_1.stderr with expected error messages
-- Created tests/helpers.rs with helper functions for testing protocols
-- Updated tests/README.md with documentation on how to use trybuild for compile-fail tests
-- Ensured compile-fail tests can be run with `cargo test --test compile_fail`
-- All tests are passing, confirming that the trybuild infrastructure is correctly set up
-
-## 2025-04-26: Completed Task 2.5.1 - Set Up Integration Test Infrastructure
-
-- Created tests/integration/mod.rs with helper functions for testing protocols:
-  - `assert_protocol<P>()`: Verifies that a type implements the Protocol trait
-  - `assert_dual<P, Q>()`: Verifies that two types have the correct duality relationship
-  - `assert_self_dual<P>()`: Verifies that a type is its own dual
-  - `mock_channel<P, IO>()`: Creates a channel with a specific protocol and IO type for testing
-- Updated tests/integration/protocol_1.rs to use the new helper functions
-- Created tests/protocol_1_test.rs to run the protocol_1 tests
-- Ensured integration tests can be run with `cargo test --test 'protocol_*'`
-- Updated tests/README.md with detailed documentation of the test infrastructure
-- All tests are passing, confirming that the integration test infrastructure is correctly set up
+All tests are passing, confirming that the protocol examples and error examples are correctly implemented. The examples demonstrate the key features of session types, including type-level protocol definition, duality, and type safety.
 
 ## 2025-04-26: Added Phase 2.5 - Example Protocol Implementations
 
