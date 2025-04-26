@@ -1,5 +1,27 @@
 # Insights and Learnings
 
+## 2025-04-26: Protocol 3 Implementation - Simple Choice
+
+### Technical Insights
+- The Simple Choice protocol demonstrates the use of Choose and Offer types for branching protocols
+- Type-level branching allows clients to select between different protocol continuations at runtime
+- The duality relationship between Choose and Offer mirrors the relationship between Send and Recv
+- Branching protocols enable more complex communication patterns while maintaining type safety
+- The protocol structure shows how session types can model decision points in communication
+
+### Design Patterns
+- Branching protocol pattern: Using Choose<L, R> and Offer<L, R> to represent decision points
+- Protocol composition with branching: Building complex protocols by composing choices with other protocol types
+- Visual representation of branching protocols helps clarify the communication flow and decision points
+- Type aliases make complex branching protocol types more readable and self-documenting
+
+### Best Practices
+- Documenting both branches of the protocol clearly in the visual diagram
+- Testing both the positive cases (valid protocols) and negative cases (invalid protocols)
+- Maintaining consistent documentation structure across different protocol implementations
+- Reusing test patterns to verify type-level properties consistently
+- Creating dedicated test files for each protocol to allow focused testing
+
 ## 2025-04-26: Protocol 2 Implementation - Request/Response
 
 ### Technical Insights
