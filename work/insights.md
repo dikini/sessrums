@@ -1,5 +1,28 @@
 # Insights and Learnings
 
+## 2025-04-26: Phase 3 Start - Error Type Definition
+
+### Technical Insights
+- A well-designed error type is crucial for runtime protocol communication
+- Using an enum for errors allows for precise error categorization and handling
+- Implementing standard error traits (std::error::Error, std::fmt::Display) improves interoperability
+- From<io::Error> implementation allows for ergonomic error conversion from IO operations
+- Error types should cover all possible failure modes in the communication protocol
+
+### Design Patterns
+- The error type follows the Rust error handling idiom with Result<T, Error>
+- Using static string references for error messages avoids allocation overhead
+- Variant-specific error data allows for rich error information
+- Error conversion traits (From<T>) enable ergonomic error handling with the ? operator
+- Separating error categories into distinct variants improves error handling
+
+### Best Practices
+- Comprehensive documentation with examples helps users understand error handling
+- Unit tests for error display, conversion, and source methods ensure correct behavior
+- Implementing std::error::Error enables integration with standard error handling tools
+- Providing specific error variants rather than generic errors improves error handling
+- Including source errors (like io::Error) preserves the error chain for debugging
+
 ## 2025-04-26: Phase 2.5 Completion - Example Protocol Implementations
 
 ### Technical Insights

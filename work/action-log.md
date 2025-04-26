@@ -1,5 +1,19 @@
 # Action Log
 
+## 2025-04-26: Completed Task 3.1 - Define Error Type
+
+- Created src/error.rs with Error enum definition
+  - Implemented various error variants: Io, Protocol, Connection, Serialization, Deserialization, and ChannelClosed
+  - Added comprehensive documentation with examples
+  - Implemented std::error::Error and std::fmt::Display traits
+  - Added From<io::Error> implementation for convenient error conversion
+  - Added unit tests for all error functionality
+
+- Updated lib.rs to export the error module
+  - Uncommented the error module export as part of Phase 3 implementation
+
+All tests are passing (38 unit tests and 22 doc-tests), confirming that the Error type is correctly implemented and integrated into the library.
+
 ## 2025-04-26: Completed Phase 2.5 - Example Protocol Implementations
 
 - Completed Task 2.5.1: Set Up Integration Test Infrastructure

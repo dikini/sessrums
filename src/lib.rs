@@ -13,8 +13,8 @@
 pub mod proto;
 pub mod chan;
 
-// This will be uncommented in Phase 3
-// pub mod error;
+// Phase 3 implementation
+pub mod error;
 
 // This will be uncommented in Phase 2
 pub mod io;
