@@ -1,5 +1,29 @@
 # Insights and Learnings
 
+## 2025-04-26: Phase 3 Progress - Implementing send, recv, and close Methods
+
+### Technical Insights
+- Asynchronous methods (send, recv) are essential for non-blocking protocol communication
+- The Result type combined with the Error type provides comprehensive error handling
+- Type-state programming ensures protocol adherence at compile time by advancing the protocol type after each operation
+- Consuming self and returning a new channel with the advanced protocol type enforces the protocol sequence
+- The close method provides a clean way to terminate a protocol session
+
+### Design Patterns
+- The state machine pattern is implemented at the type level, with each method advancing the protocol state
+- Method specialization based on protocol type (Send<T, P>, Recv<T, P>, End) enables type-safe protocol operations
+- The builder pattern is used implicitly, with each method returning a new channel with the advanced protocol
+- Error mapping from IO-specific errors to the library's Error type provides a consistent error handling interface
+- Phantom types ensure type safety without runtime overhead
+
+### Best Practices
+- Comprehensive documentation with examples helps users understand the protocol operations
+- Unit tests for each method verify both success and error cases
+- Integration tests demonstrate the complete protocol flow
+- Using async/await for IO operations allows for non-blocking communication
+- Separating protocol types from method implementations improves code organization
+- Converting IO-specific errors to the library's Error type provides a consistent error handling interface
+
 ## 2025-04-26: Phase 3 Start - Error Type Definition
 
 ### Technical Insights

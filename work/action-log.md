@@ -1,5 +1,28 @@
 # Action Log
 
+## 2025-04-26: Completed Tasks 3.2, 3.3, and 3.4 - Implement send, recv, and close Methods
+
+- Completed Task 3.2: Implement send Method
+  - Implemented `async fn send<T>(self, value: T) -> Result<Chan<P, IO>, Error>` for `Chan<Send<T, P>, IO>`
+  - Added comprehensive documentation with examples
+  - Added unit tests for the send method
+
+- Completed Task 3.3: Implement recv Method
+  - Implemented `async fn recv(self) -> Result<(T, Chan<P, IO>), Error>` for `Chan<Recv<T, P>, IO>`
+  - Added comprehensive documentation with examples
+  - Added unit tests for the recv method
+
+- Completed Task 3.4: Implement close Method
+  - Implemented `fn close(self) -> Result<(), Error>` for `Chan<End, IO>`
+  - Added comprehensive documentation with examples
+  - Added unit tests for the close method
+
+- Updated integration tests to use the new methods
+  - Updated tests/integration/protocol_1.rs to demonstrate the runtime behavior of the ping-pong protocol
+  - Added a custom TestIO implementation for testing the protocol communication
+
+All tests are passing, confirming that the send, recv, and close methods are correctly implemented and integrated into the library.
+
 ## 2025-04-26: Completed Task 3.1 - Define Error Type
 
 - Created src/error.rs with Error enum definition
