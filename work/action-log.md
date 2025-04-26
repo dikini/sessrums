@@ -1,5 +1,17 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.9 - Implement Error Example 2 - Send/Send Deadlock
+
+- Created tests/compile_fail/error_2.rs with comprehensive documentation explaining why Send/Send deadlock should fail to compile
+- Added a visual ASCII diagram of the protocol showing the deadlock situation
+- Created tests/compile_fail/error_2.stderr with expected error messages
+- Verified that the compile-fail test correctly identifies the type mismatch between Send<i32, End> and Recv<i32, End>
+- The implementation demonstrates:
+  - How the session type system prevents deadlocks at compile time through duality checking
+  - The importance of complementary communication patterns in session types
+  - Visual representation of protocol errors to aid understanding
+  - Type-level error detection without runtime overhead
+
 ## 2025-04-26: Completed Task 2.5.8 - Implement Error Example 1 - Recv/Recv Deadlock
 
 - Enhanced tests/compile_fail/error_1.rs with comprehensive documentation explaining why Recv/Recv deadlock should fail to compile

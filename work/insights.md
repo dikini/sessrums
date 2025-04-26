@@ -1,5 +1,29 @@
 # Insights and Learnings
 
+## 2025-04-26: Error Example 2 Implementation - Send/Send Deadlock
+
+### Technical Insights
+- The Send/Send Deadlock example demonstrates how session types prevent deadlocks at compile time
+- Duality is a fundamental concept in session types that ensures communication compatibility
+- The type system can detect potential deadlocks by checking if protocols are duals of each other
+- For any protocol P, there must exist a dual protocol P::Dual that represents the complementary behavior
+- The dual of Send<T, P> is Recv<T, P::Dual>, which enforces that when one party sends, the other must receive
+- Compile-fail tests are an effective way to verify that the type system correctly rejects invalid protocols
+
+### Design Patterns
+- Error example pattern: Using compile-fail tests to demonstrate type-level safety properties
+- Visual protocol representation: Using ASCII diagrams to visualize communication patterns and potential errors
+- Type constraint verification: Using trait bounds to verify type-level properties at compile time
+- Dual protocol pattern: Enforcing that communicating parties have compatible protocols through duality
+
+### Best Practices
+- Documenting why protocols fail with detailed explanations helps users understand the type system
+- Creating visual diagrams of error cases makes complex concepts more understandable
+- Using compile-fail tests to verify that the type system rejects invalid protocols
+- Providing both the erroneous example and a correct reference example for comparison
+- Maintaining consistent error messages that clearly explain why a protocol is invalid
+- Using descriptive type aliases that clearly communicate protocol intent
+
 ## 2025-04-26: Error Example 1 Implementation - Recv/Recv Deadlock
 
 ### Technical Insights
