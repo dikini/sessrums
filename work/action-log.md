@@ -1,5 +1,20 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.6 - Implement Protocol 4 - Simple Authentication
+
+- Fully implemented the Simple Authentication protocol in tests/integration/protocol_4.rs
+- Added detailed documentation explaining the protocol and how it demonstrates session type safety
+- Created a visual ASCII diagram of the protocol showing the communication flow
+- Added test cases to verify protocol types, duality relationship, and type safety
+- Updated tests/integration/mod.rs to include the new protocol_4 module
+- Created tests/protocol_4_test.rs to run the protocol_4 tests
+- Verified that all tests pass, confirming that the protocol is correctly implemented
+- The implementation demonstrates:
+  - Type-level protocol definition using Send<T, P>, Recv<T, P>, and End
+  - Duality between client and server protocols
+  - Type safety enforcing the correct sequence of operations
+  - Multi-step communication with different message types (String for username/password, u128 for token)
+
 ## 2025-04-26: Completed Task 2.5.5 - Implement Protocol 3 - Simple Choice
 
 - Fully implemented the Simple Choice protocol in tests/integration/protocol_3.rs

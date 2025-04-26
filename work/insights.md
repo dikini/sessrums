@@ -1,5 +1,27 @@
 # Insights and Learnings
 
+## 2025-04-26: Protocol 4 Implementation - Simple Authentication
+
+### Technical Insights
+- The Simple Authentication protocol demonstrates a multi-step communication pattern with different message types
+- Sequential composition of Send and Recv operations creates a structured conversation flow
+- Type-level enforcement ensures that authentication steps happen in the correct order
+- The protocol shows how session types can model security-related communication patterns
+- Different message types (String for credentials, u128 for token) are enforced at compile time
+
+### Design Patterns
+- Sequential protocol pattern: Chaining multiple Send/Recv operations to create a structured conversation
+- Authentication protocol pattern: Using session types to enforce secure authentication flows
+- Visual representation of sequential protocols helps clarify the multi-step communication flow
+- Type aliases make complex sequential protocol types more readable and self-documenting
+
+### Best Practices
+- Documenting each step of the protocol clearly in the visual diagram
+- Testing both the positive cases (valid protocols) and negative cases (invalid protocols)
+- Maintaining consistent documentation structure across different protocol implementations
+- Reusing test patterns to verify type-level properties consistently
+- Creating dedicated test files for each protocol to allow focused testing
+
 ## 2025-04-26: Protocol 3 Implementation - Simple Choice
 
 ### Technical Insights
