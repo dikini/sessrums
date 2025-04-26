@@ -1,5 +1,28 @@
 # Insights and Learnings
 
+## 2025-04-26: Protocol 1 Implementation - Simple Ping-Pong
+
+### Technical Insights
+- The simple ping-pong protocol demonstrates the fundamental building blocks of session types: Send, Recv, and End
+- Type-level protocol definitions can enforce communication patterns at compile time without runtime overhead
+- Duality between client and server protocols ensures compatibility and prevents deadlocks
+- The Chan<P, IO> abstraction cleanly separates protocol types from IO implementations
+- Even without implementing the actual send/recv methods yet, we can verify type-level properties
+
+### Design Patterns
+- Protocol composition pattern: Building complex protocols by composing simpler protocol types (Send<T, Recv<U, End>>)
+- Dual protocol pattern: For every protocol P, there exists a dual protocol P::Dual that represents the complementary behavior
+- Type-level verification pattern: Using Rust's type system to verify protocol properties at compile time
+- Visual protocol representation: Using ASCII diagrams to visualize protocol flow enhances documentation
+
+### Best Practices
+- Documenting both the high-level protocol flow and the type-level representation
+- Creating visual diagrams to make protocols more understandable
+- Testing both positive cases (valid protocols) and negative cases (invalid protocols)
+- Adding detailed comments explaining why certain operations would fail to compile
+- Separating type-level verification from runtime behavior testing
+- Using descriptive type aliases that clearly communicate protocol intent
+
 ## 2025-04-26: Compile-Fail Test Infrastructure Setup
 
 ### Technical Insights
