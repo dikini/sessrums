@@ -1,5 +1,30 @@
 # Insights and Learnings
 
+## 2025-04-26: Task 3.5 Completion - Simple Protocol Example
+
+### Technical Insights
+- Practical examples are crucial for demonstrating session type concepts
+- Bidirectional channels are needed for implementing full protocols
+- Custom IO implementations can be used to demonstrate error handling
+- The type system enforces protocol adherence at compile time
+- Session types prevent common protocol errors like sending/receiving in the wrong order
+- Error handling is an important aspect of protocol communication
+
+### Design Patterns
+- The bidirectional channel pattern allows for two-way communication
+- The adapter pattern can be used to adapt standard library types (like mpsc) to the library's IO traits
+- The state machine pattern is implemented at the type level, with each method advancing the protocol state
+- The visitor pattern can be used to handle different protocol branches (though not demonstrated in this simple example)
+- Error handling patterns ensure robust protocol communication
+
+### Best Practices
+- Providing detailed documentation with visual diagrams helps users understand protocols
+- Including commented-out examples of invalid protocols helps users understand type-level constraints
+- Demonstrating error handling shows users how to handle runtime failures
+- Using realistic protocol scenarios (like client-server query-response) makes examples relatable
+- Separating protocol definition from implementation details improves code organization
+- Creating custom IO implementations for testing simplifies error demonstration
+
 ## 2025-04-26: Phase 3 Progress - Implementing send, recv, and close Methods
 
 ### Technical Insights

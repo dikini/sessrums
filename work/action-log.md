@@ -1,5 +1,28 @@
 # Action Log
 
+## 2025-04-26: Completed Task 3.5 - Create Simple Protocol Example
+
+- Created examples/simple.rs with a simple protocol example
+  - Implemented a client-server query-response protocol
+  - Used a bidirectional channel implementation for communication
+  - Demonstrated the usage of send, recv, and close methods
+  - Added error handling demonstration
+  - Included detailed comments explaining each step of the protocol
+  - Added visual diagram in comments to illustrate the protocol flow
+  - Demonstrated how the type system ensures protocol adherence
+
+- Added type safety examples to show compile-time protocol enforcement
+  - Demonstrated correct protocol usage
+  - Included commented-out examples of protocol violations that would not compile
+  - Showed how the type system prevents common protocol errors
+
+- Ensured the example compiles and runs correctly
+  - Fixed issues with trait implementations for mpsc channels
+  - Created a custom BiChannel type for bidirectional communication
+  - Implemented proper error handling
+
+All tests are passing, and the example runs successfully, demonstrating the core functionality of the session types library.
+
 ## 2025-04-26: Completed Tasks 3.2, 3.3, and 3.4 - Implement send, recv, and close Methods
 
 - Completed Task 3.2: Implement send Method
