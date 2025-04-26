@@ -1,5 +1,26 @@
 # Insights and Learnings
 
+## 2025-04-26: Phase 2.5 Planning - Example Protocol Implementations
+
+### Technical Insights
+- Protocol examples serve as both documentation and integration tests
+- Compile-fail tests are essential for verifying that the type system correctly rejects invalid protocols
+- The trybuild crate provides a clean way to test that certain code patterns fail to compile
+- Integration tests can verify both type-level properties and runtime behavior
+- Separating positive examples (valid protocols) from negative examples (invalid protocols) clarifies the library's guarantees
+
+### Design Patterns
+- Using placeholder tests during early development allows for incremental implementation
+- Type-level assertions can verify protocol properties even before runtime functionality is implemented
+- Test-driven development is particularly valuable for type-level programming
+- Organizing tests by protocol pattern helps users understand the library's capabilities
+
+### Best Practices
+- Creating a clear test structure improves maintainability
+- Documenting expected compile-time errors helps users understand the type system
+- Using real-world protocol examples makes the library more accessible
+- Testing both success and failure cases ensures comprehensive verification
+
 ## 2025-04-26: Phase 2 Completion - Channel Abstraction & Basic IO Traits
 
 ### Technical Insights

@@ -1,5 +1,16 @@
 # Action Log
 
+## 2025-04-26: Added Phase 2.5 - Example Protocol Implementations
+
+- Updated project plan to include new Phase 2.5 for example protocol implementations
+- Added detailed tasks for implementing protocol examples
+- Created test infrastructure for protocol examples
+  - Set up integration test directory structure
+  - Set up compile-fail test infrastructure with trybuild
+- Added trybuild as a dev-dependency for compile-fail tests
+- Created placeholder examples for protocols and compile-fail tests
+- Updated Cargo.toml with necessary dev-dependencies
+
 ## 2025-04-26: Completed Phase 2 - Channel Abstraction & Basic IO Traits
 
 - Completed Task 2.1: Define Basic IO Traits
