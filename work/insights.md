@@ -1,5 +1,26 @@
 # Insights and Learnings
 
+## 2025-04-26: Protocol 2 Implementation - Request/Response
+
+### Technical Insights
+- The Request/Response protocol builds on the foundation established with Protocol 1, demonstrating the flexibility of session types
+- Different message types (String request, boolean response) can be enforced at compile time through the type system
+- The protocol structure remains consistent with Send/Recv/End pattern, showing the composability of session types
+- Type-level verification ensures that client and server protocols are compatible without runtime overhead
+
+### Design Patterns
+- Protocol composition pattern continues to be effective for more complex protocols
+- The dual protocol pattern ensures that client and server can communicate safely
+- Visual representation of protocols helps clarify the communication flow
+- Type aliases make complex protocol types more readable and self-documenting
+
+### Best Practices
+- Maintaining consistent documentation structure across different protocol implementations
+- Reusing test patterns to verify type-level properties consistently
+- Creating dedicated test files for each protocol to allow focused testing
+- Updating module exports to make new protocols available for integration testing
+- Documenting work in action-log.md to track progress and maintain project history
+
 ## 2025-04-26: Protocol 1 Implementation - Simple Ping-Pong
 
 ### Technical Insights

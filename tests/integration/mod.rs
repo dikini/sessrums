@@ -49,9 +49,9 @@ where
 
 // Re-export protocol modules for convenience
 pub mod protocol_1;
+pub mod protocol_2;
 
 // Add more protocol modules as they are implemented
-// pub mod protocol_2;
 // pub mod protocol_3;
 // pub mod protocol_4;
 // pub mod protocol_5;

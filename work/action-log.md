@@ -1,5 +1,19 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.4 - Implement Protocol 2 - Request/Response
+
+- Fully implemented the Request/Response protocol in tests/integration/protocol_2.rs
+- Added detailed documentation explaining the protocol and how it demonstrates session type safety
+- Created a visual ASCII diagram of the protocol showing the communication flow
+- Added test cases to verify protocol types, duality relationship, and type safety
+- Updated tests/integration/mod.rs to include the new protocol_2 module
+- Created tests/protocol_2_test.rs to run the protocol_2 tests
+- Verified that all tests pass, confirming that the protocol is correctly implemented
+- The implementation demonstrates:
+  - Type-level protocol definition using Send<T, P>, Recv<T, P>, and End
+  - Duality between client and server protocols
+  - Type safety enforcing the correct sequence of operations
+
 ## 2025-04-26: Completed Task 2.5.3 - Implement Protocol 1 - Simple Ping-Pong
 
 - Fully implemented the Simple Ping-Pong protocol in tests/integration/protocol_1.rs
