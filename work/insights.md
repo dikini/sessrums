@@ -122,3 +122,24 @@
 - Unit tests that verify type relationships at compile time ensure the type system works as expected
 - Mirroring the structure and tests of related types (e.g., Offer and Choose) ensures consistency
 - Enabling previously commented-out tests when implementing dependent functionality ensures correctness
+
+## 2025-04-26: Duality for Offer and Choose Implementation
+
+### Technical Insights
+- The duality relationship between `Offer<L, R>` and `Choose<L, R>` forms a perfect symmetry, with `Offer<L, R>::Dual = Choose<L::Dual, R::Dual>` and `Choose<L, R>::Dual = Offer<L::Dual, R::Dual>`
+- This symmetry extends to nested types and complex protocol compositions
+- The duality relationship satisfies the property that `P::Dual::Dual == P` for any protocol type P
+- Testing multiple levels of duality (dual of dual, dual of dual of dual) requires careful type parameter handling to avoid cyclic type dependencies
+
+### Design Patterns
+- The symmetric duality pattern ensures protocol compatibility between communicating parties
+- Recursive application of duality transformations preserves the protocol structure while swapping complementary operations
+- Type-level programming in Rust enables compile-time verification of complex protocol properties
+- Using generic functions with carefully crafted trait bounds allows testing type-level properties
+
+### Best Practices
+- Comprehensive testing of duality relationships at multiple levels ensures the type system works as expected
+- Documenting duality transformation rules with examples helps users understand the session type system
+- Breaking down complex type relationships into smaller, testable components improves test clarity
+- Using type aliases for complex protocol types improves readability and maintainability
+- Avoiding cyclic type dependencies by using explicit type parameters in test functions

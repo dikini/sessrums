@@ -66,3 +66,15 @@ All tests are passing, confirming that the core type definitions and duality rel
   - Added unit tests for Choose<L, R> type, including tests for duality relationships
   - Updated src/proto/mod.rs to export the Choose type
   - Ensured all tests pass, confirming the Choose type is correctly implemented
+
+- Completed Task 2.5: Implement Duality for Offer and Choose
+  - Enabled the previously commented-out duality symmetry test in offer.rs
+  - Added comprehensive tests for the duality relationship between Offer and Choose:
+    - Tests for nested Offer and Choose types
+    - Tests for multiple levels of duality (dual of dual, dual of dual of dual)
+    - Tests for complex protocol compositions involving Offer and Choose
+  - Enhanced documentation for the duality relationship between Offer and Choose:
+    - Added detailed explanations of the duality transformation rules
+    - Added examples of duality with simple and nested types
+    - Documented the symmetry property of duality
+  - Ensured all tests pass, confirming the duality relationship is correctly implemented

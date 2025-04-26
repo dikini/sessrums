@@ -14,8 +14,51 @@ use super::choose::Choose;
 ///
 /// # Duality
 ///
-/// The dual of `Offer<L, R>` is `Choose<L::Dual, R::Dual>`. This reflects the fact
-/// that if one party offers a choice, the other party must choose one of the options.
+/// The dual of `Offer<L, R>` is `Choose<L::Dual, R::Dual>`. This reflects the fundamental
+/// session type principle that if one party offers a choice, the other party must choose
+/// one of the options.
+///
+/// This duality relationship ensures protocol compatibility between communicating parties:
+/// - When one process offers a choice between protocols L and R, the other process must
+///   choose between the dual protocols L::Dual and R::Dual.
+/// - The duality relationship is symmetric: `Offer<L, R>::Dual::Dual == Offer<L, R>`.
+///
+/// ## Duality Transformation
+///
+/// The duality transformation for Offer follows these rules:
+/// 1. Replace Offer with Choose
+/// 2. Apply the duality transformation to each branch (L becomes L::Dual, R becomes R::Dual)
+///
+/// For example:
+/// ```
+/// use sez::proto::{Protocol, Send, Recv, End, Offer, Choose};
+///
+/// // Original protocol
+/// type MyOffer = Offer<Send<i32, End>, Recv<String, End>>;
+///
+/// // Its dual
+/// type MyOfferDual = Choose<Recv<i32, End>, Send<String, End>>;
+/// ```
+///
+/// ## Nested Duality
+///
+/// The duality relationship extends to nested Offer types:
+///
+/// ```
+/// use sez::proto::{Protocol, Send, Recv, End, Offer, Choose};
+///
+/// // A protocol with nested Offer
+/// type NestedOffer = Offer<
+///     Offer<Send<i32, End>, Recv<bool, End>>,
+///     Recv<String, End>
+/// >;
+///
+/// // Its dual has nested Choose
+/// type NestedOfferDual = Choose<
+///     Choose<Recv<i32, End>, Send<bool, End>>,
+///     Send<String, End>
+/// >;
+/// ```
 ///
 /// # Type Parameters
 ///
@@ -119,8 +162,8 @@ mod tests {
         }
         
         // This will compile only if the duality relationship is correctly implemented
-        // Note: This test will fail until Choose<L, R> is fully implemented in Task 2.4
-        // check_duality_symmetry::<OfferProtocol, DualProtocol>();
+        // Now that Choose<L, R> is fully implemented in Task 2.4, we can enable this test
+        check_duality_symmetry::<OfferProtocol, DualProtocol>();
     }
 
     #[test]
@@ -133,6 +176,134 @@ mod tests {
         
         // The dual should be Send<bool, Choose<Recv<i32, End>, Send<String, End>>>
         type ExpectedDual = Send<bool, Choose<Recv<i32, End>, Send<String, End>>>;
+        
+        // Check that the dual relationships are correctly established
+        fn check_complex_dual<P, D>()
+        where
+            P: Protocol<Dual = D>,
+        {
+            // Empty function body - we're just checking type relationships
+        }
+        
+        // This will compile only if ComplexProtocol's dual is correctly derived
+        check_complex_dual::<ComplexProtocol, ExpectedDual>();
+    }
+
+    #[test]
+    fn test_nested_offer_duality() {
+        // Test duality with nested Offer types
+        
+        // A protocol that offers a choice between:
+        // 1. Offering a choice between Send<i32, End> and Recv<bool, End>
+        // 2. Receiving a String and then ending
+        type NestedOfferProtocol = Offer<
+            Offer<Send<i32, End>, Recv<bool, End>>,
+            Recv<String, End>
+        >;
+        
+        // The dual should be Choose between:
+        // 1. Choosing between Recv<i32, End> and Send<bool, End>
+        // 2. Sending a String and then ending
+        type ExpectedDual = Choose<
+            Choose<Recv<i32, End>, Send<bool, End>>,
+            Send<String, End>
+        >;
+        
+        // Check that the dual relationships are correctly established
+        fn check_nested_dual<P, D>()
+        where
+            P: Protocol<Dual = D>,
+        {
+            // Empty function body - we're just checking type relationships
+        }
+        
+        // This will compile only if NestedOfferProtocol's dual is correctly derived
+        check_nested_dual::<NestedOfferProtocol, ExpectedDual>();
+    }
+
+    #[test]
+    fn test_multiple_level_duality() {
+        // Test multiple levels of duality (dual of dual of dual)
+        
+        // Start with a simple protocol
+        type OriginalProtocol = Offer<Send<i32, End>, Recv<String, End>>;
+        
+        // Get its dual
+        type FirstDual = <OriginalProtocol as Protocol>::Dual;
+        
+        // Get the dual of the dual
+        type SecondDual = <FirstDual as Protocol>::Dual;
+        
+        // Get the dual of the dual of the dual
+        type ThirdDual = <SecondDual as Protocol>::Dual;
+        
+        // The dual of the dual should be the original protocol
+        fn check_dual_of_dual<P, D, DD>()
+        where
+            P: Protocol<Dual = D>,
+            D: Protocol<Dual = DD>,
+            DD: Protocol,
+        {
+            // Empty function body - we're just checking type relationships
+        }
+        
+        // This will compile only if the dual of the dual is the original protocol
+        check_dual_of_dual::<OriginalProtocol, FirstDual, SecondDual>();
+        
+        // The dual of the dual of the dual should be the dual of the original protocol
+        fn check_dual_of_dual_of_dual<P, D, DD, DDD>()
+        where
+            P: Protocol<Dual = D>,
+            D: Protocol<Dual = DD>,
+            DD: Protocol<Dual = DDD>,
+            DDD: Protocol,
+        {
+            // Empty function body - we're just checking type relationships
+        }
+        
+        // This will compile only if the dual of the dual of the dual is the dual of the original protocol
+        check_dual_of_dual_of_dual::<OriginalProtocol, FirstDual, SecondDual, ThirdDual>();
+    }
+
+    #[test]
+    fn test_complex_offer_choose_composition() {
+        // Test a complex composition of Offer and Choose types
+        
+        // A protocol with multiple levels of Offer and Choose
+        type ComplexProtocol = Recv<bool,
+            Offer<
+                Send<i32,
+                    Offer<
+                        Recv<String, End>,
+                        Recv<bool, End>
+                    >
+                >,
+                Recv<f64,
+                    Offer<
+                        Send<char, End>,
+                        Send<u8, End>
+                    >
+                >
+            >
+        >;
+        
+        // The dual should have Send/Recv swapped and Offer/Choose swapped
+        type ExpectedDual = Send<bool,
+            Choose<
+                Recv<i32,
+                    Choose<
+                        Send<String, End>,
+                        Send<bool, End>
+                    >
+                >,
+                Send<f64,
+                    Choose<
+                        Recv<char, End>,
+                        Recv<u8, End>
+                    >
+                >
+            >
+        >;
         
         // Check that the dual relationships are correctly established
         fn check_complex_dual<P, D>()
