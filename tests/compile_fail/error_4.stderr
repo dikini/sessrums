@@ -1,0 +1,18 @@
+error[E0271]: type mismatch resolving `<Recv<i32, Send<bool, End>> as Protocol>::Dual == Send<i32, End>`
+   --> tests/compile_fail/error_4.rs:94:40
+    |
+94  |     verify_dual_protocols(client_chan, server_chan);
+    |     ---------------------              ^^^^^^^^^^^ expected `Send<i32, End>`, found `Send<i32, Recv<bool, End>>`
+    |     |
+    |     required by a bound introduced by this call
+    |
+    = note: expected struct `sez::proto::Send<i32, sez::proto::End>`
+               found struct `sez::proto::Send<i32, Recv<bool, sez::proto::End>>`
+note: required by a bound in `verify_dual_protocols`
+   --> tests/compile_fail/error_4.rs:104:17
+    |
+99  | fn verify_dual_protocols<P, Q, IO1, IO2>(_chan1: Chan<P, IO1>, _chan2: Chan<Q, IO2>)
+    |    --------------------- required by a bound in this function
+...
+104 |     Q: Protocol<Dual = P>  // This is the key constraint that should fail
+    |                 ^^^^^^^^ required by this bound in `verify_dual_protocols`

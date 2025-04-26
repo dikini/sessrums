@@ -1,5 +1,17 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.11 - Implement Error Example 4 - Unexpected End
+
+- Created tests/compile_fail/error_4.rs with comprehensive documentation explaining why Unexpected End should fail to compile
+- Added a visual ASCII diagram of the protocol showing the continuation mismatch situation
+- Created tests/compile_fail/error_4.stderr with expected error messages
+- Verified that the compile-fail test correctly identifies the mismatch between Send<i32, End> and Recv<i32, Send<bool, End>>
+- The implementation demonstrates:
+  - How the session type system prevents protocol mismatches at compile time through duality checking
+  - The importance of matching continuation protocols in session types
+  - Visual representation of protocol errors to aid understanding
+  - Type-level error detection without runtime overhead
+
 ## 2025-04-26: Completed Task 2.5.10 - Implement Error Example 3 - Type Mismatch
 
 - Created tests/compile_fail/error_3.rs with comprehensive documentation explaining why Type Mismatch should fail to compile

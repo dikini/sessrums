@@ -1,5 +1,30 @@
 # Insights and Learnings
 
+## 2025-04-26: Error Example 4 Implementation - Unexpected End
+
+### Technical Insights
+- The Unexpected End example demonstrates how session types prevent protocol continuation mismatches at compile time
+- Duality in session types requires not only matching operations and message types but also compatible continuation protocols
+- The type system can detect potential protocol mismatches by checking if protocols are duals of each other
+- For Send<T, P>, the dual is Recv<T, P::Dual>, which enforces that both parties agree on what happens after the initial exchange
+- When one party expects to end communication but the other expects to continue, this creates a protocol mismatch
+- Compile-fail tests effectively verify that the type system correctly rejects protocols with mismatched continuations
+
+### Design Patterns
+- Error example pattern: Using compile-fail tests to demonstrate type-level safety properties
+- Visual protocol representation: Using ASCII diagrams to visualize communication patterns and potential errors
+- Type constraint verification: Using trait bounds to verify type-level properties at compile time
+- Dual protocol pattern with continuation matching: Enforcing that communicating parties agree on the entire protocol sequence
+
+### Best Practices
+- Documenting why protocols fail with detailed explanations helps users understand the type system
+- Creating visual diagrams of error cases makes complex concepts more understandable
+- Using compile-fail tests to verify that the type system rejects invalid protocols
+- Providing both the erroneous example and a correct reference example for comparison
+- Maintaining consistent error messages that clearly explain why a protocol is invalid
+- Using descriptive type aliases that clearly communicate protocol intent
+- Showing the consequences of protocol mismatches in runtime scenarios helps users understand the importance of compile-time checks
+
 ## 2025-04-26: Error Example 3 Implementation - Type Mismatch
 
 ### Technical Insights
