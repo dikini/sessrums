@@ -1,5 +1,28 @@
 # Insights and Learnings
 
+## 2025-04-26: Error Example 3 Implementation - Type Mismatch
+
+### Technical Insights
+- The Type Mismatch example demonstrates how session types prevent type errors at compile time
+- Duality in session types requires not only complementary operations (Send/Recv) but also matching message types
+- The type system can detect potential type mismatches by checking if protocols are duals of each other
+- For Send<T, P>, the dual is Recv<T, P::Dual> with the same type T, which enforces type safety across communication
+- Compile-fail tests effectively verify that the type system correctly rejects protocols with mismatched types
+
+### Design Patterns
+- Error example pattern: Using compile-fail tests to demonstrate type-level safety properties
+- Visual protocol representation: Using ASCII diagrams to visualize communication patterns and potential errors
+- Type constraint verification: Using trait bounds to verify type-level properties at compile time
+- Dual protocol pattern with type matching: Enforcing that communicating parties have compatible protocols with matching types
+
+### Best Practices
+- Documenting why protocols fail with detailed explanations helps users understand the type system
+- Creating visual diagrams of error cases makes complex concepts more understandable
+- Using compile-fail tests to verify that the type system rejects invalid protocols
+- Providing both the erroneous example and a correct reference example for comparison
+- Maintaining consistent error messages that clearly explain why a protocol is invalid
+- Using descriptive type aliases that clearly communicate protocol intent
+
 ## 2025-04-26: Error Example 2 Implementation - Send/Send Deadlock
 
 ### Technical Insights

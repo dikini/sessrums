@@ -1,5 +1,17 @@
 # Action Log
 
+## 2025-04-26: Completed Task 2.5.10 - Implement Error Example 3 - Type Mismatch
+
+- Created tests/compile_fail/error_3.rs with comprehensive documentation explaining why Type Mismatch should fail to compile
+- Added a visual ASCII diagram of the protocol showing the type mismatch situation
+- Created tests/compile_fail/error_3.stderr with expected error messages
+- Verified that the compile-fail test correctly identifies the type mismatch between Send<i32, End> and Recv<String, End>
+- The implementation demonstrates:
+  - How the session type system prevents type mismatches at compile time through duality checking
+  - The importance of type safety in session types
+  - Visual representation of protocol errors to aid understanding
+  - Type-level error detection without runtime overhead
+
 ## 2025-04-26: Completed Task 2.5.9 - Implement Error Example 2 - Send/Send Deadlock
 
 - Created tests/compile_fail/error_2.rs with comprehensive documentation explaining why Send/Send deadlock should fail to compile
