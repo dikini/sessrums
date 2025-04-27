@@ -64,9 +64,9 @@
 //! - `Recv<T, P>` receives a value of type T and continues with protocol P
 //! - `End` terminates the protocol
 
-use sez::chan::Chan;
-use sez::proto::{End, Protocol, Recv, Send};
-use sez::error::Error;
+use sessrums::chan::Chan;
+use sessrums::proto::{End, Protocol, Recv, Send};
+use sessrums::error::Error;
 use std::sync::mpsc;
 use std::thread;
 use futures_core::future::Future;
@@ -128,7 +128,7 @@ impl<T: Unpin> Future for BiChannelRecvFuture<T> {
 }
 
 // Implement AsyncSender for BiChannel
-impl<T: Default + Unpin> sez::io::AsyncSender<T> for BiChannel<T> {
+impl<T: Default + Unpin> sessrums::io::AsyncSender<T> for BiChannel<T> {
     type Error = mpsc::SendError<T>;
     type SendFuture<'a> = BiChannelSendFuture<T> where T: 'a, Self: 'a;
 
@@ -141,7 +141,7 @@ impl<T: Default + Unpin> sez::io::AsyncSender<T> for BiChannel<T> {
 }
 
 // Implement AsyncReceiver for BiChannel
-impl<T: Unpin> sez::io::AsyncReceiver<T> for BiChannel<T> {
+impl<T: Unpin> sessrums::io::AsyncReceiver<T> for BiChannel<T> {
     type Error = mpsc::RecvError;
     type RecvFuture<'a> = BiChannelRecvFuture<T> where T: 'a, Self: 'a;
 

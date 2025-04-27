@@ -1,4 +1,4 @@
-# Detailed Project Plan for Asynchronous Session Types Library (sez)
+# Detailed Project Plan for Asynchronous Session Types Library (sessrums)
 
 I've created a comprehensive project plan that breaks down each phase into micro-tasks with limited scope. Each task includes code implementation, documentation, and tests with clear completion criteria.
 

@@ -21,8 +21,8 @@ use crate::proto::Protocol;
 /// Creating a channel with a simple protocol:
 ///
 /// ```
-/// use sez::chan::Chan;
-/// use sez::proto::{Protocol, Send, Recv, End};
+/// use sessrums::chan::Chan;
+/// use sessrums::proto::{Protocol, Send, Recv, End};
 /// use std::sync::mpsc;
 ///
 /// // Define a protocol: Send an i32, then receive a String, then end
@@ -39,9 +39,9 @@ use crate::proto::Protocol;
 /// Using the channel with custom IO implementations:
 ///
 /// ```
-/// use sez::chan::Chan;
-/// use sez::proto::{Protocol, End};
-/// use sez::io::{Sender, Receiver};
+/// use sessrums::chan::Chan;
+/// use sessrums::proto::{Protocol, End};
+/// use sessrums::io::{Sender, Receiver};
 ///
 /// // A custom IO implementation
 /// struct MyIO {
@@ -87,8 +87,8 @@ impl<P: Protocol, IO> Chan<P, IO> {
     /// # Examples
     ///
     /// ```
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Protocol, End};
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Protocol, End};
     /// use std::sync::mpsc;
     ///
     /// // Create a channel with mpsc::Sender as the IO implementation
@@ -111,8 +111,8 @@ impl<P: Protocol, IO> Chan<P, IO> {
     /// # Examples
     ///
     /// ```
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Protocol, End};
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Protocol, End};
     /// use std::sync::mpsc;
     ///
     /// // Create a channel with mpsc::Sender as the IO implementation
@@ -135,9 +135,9 @@ impl<P: Protocol, IO> Chan<P, IO> {
     /// # Examples
     ///
     /// ```
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Protocol, End};
-    /// use sez::io::Sender;
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Protocol, End};
+    /// use sessrums::io::Sender;
     /// use std::sync::mpsc;
     ///
     /// // Create a channel with mpsc::Sender as the IO implementation
@@ -177,10 +177,10 @@ where
     /// # Examples
     ///
     /// ```no_run
-    /// # async fn example() -> Result<(), sez::error::Error> {
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Send, End};
-    /// use sez::io::AsyncSender;
+    /// # async fn example() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Send, End};
+    /// use sessrums::io::AsyncSender;
     /// use futures_core::future::Future;
     /// use std::pin::Pin;
     /// use futures_core::task::{Context, Poll};
@@ -288,10 +288,10 @@ where
     /// # Examples
     ///
     /// ```no_run
-    /// # async fn example() -> Result<(), sez::error::Error> {
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Recv, End};
-    /// use sez::io::AsyncReceiver;
+    /// # async fn example() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Recv, End};
+    /// use sessrums::io::AsyncReceiver;
     /// use futures_core::future::Future;
     /// use std::pin::Pin;
     /// use futures_core::task::{Context, Poll};
@@ -399,10 +399,10 @@ where
     /// # Examples
     ///
     /// ```no_run
-    /// # async fn example() -> Result<(), sez::error::Error> {
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Offer, Send, Recv, End};
-    /// use sez::io::AsyncReceiver;
+    /// # async fn example() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Offer, Send, Recv, End};
+    /// use sessrums::io::AsyncReceiver;
     /// use futures_core::future::Future;
     /// use std::pin::Pin;
     /// use futures_core::task::{Context, Poll};
@@ -463,13 +463,13 @@ where
     ///
     /// // Define handlers for the left and right branches as non-async functions
     /// // that return Result directly
-    /// let handle_left = |_chan: Chan<LeftProto, MyIO>| -> Result<String, sez::error::Error> {
+    /// let handle_left = |_chan: Chan<LeftProto, MyIO>| -> Result<String, sessrums::error::Error> {
     ///     // In a real implementation, we would send a string and then end
     ///     // But for this example, we just return a result directly
     ///     Ok("Left branch completed".to_string())
     /// };
     ///
-    /// let handle_right = |_chan: Chan<RightProto, MyIO>| -> Result<String, sez::error::Error> {
+    /// let handle_right = |_chan: Chan<RightProto, MyIO>| -> Result<String, sessrums::error::Error> {
     ///     // In a real implementation, we would send an integer and then end
     ///     // But for this example, we just return a result directly
     ///     Ok("Right branch completed".to_string())
@@ -526,9 +526,9 @@ impl<IO> Chan<crate::proto::End, IO> {
     /// # Examples
     ///
     /// ```
-    /// # fn example() -> Result<(), sez::error::Error> {
-    /// use sez::chan::Chan;
-    /// use sez::proto::End;
+    /// # fn example() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::End;
     /// use std::sync::mpsc;
     ///
     /// // Create a channel with an End protocol
@@ -565,10 +565,10 @@ where
     /// # Examples
     ///
     /// ```no_run
-    /// # async fn example() -> Result<(), sez::error::Error> {
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Choose, Send, End};
-    /// use sez::io::AsyncSender;
+    /// # async fn example() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Choose, Send, End};
+    /// use sessrums::io::AsyncSender;
     /// use futures_core::future::Future;
     /// use std::pin::Pin;
     /// use futures_core::task::{Context, Poll};
@@ -685,10 +685,10 @@ where
     /// # Examples
     ///
     /// ```no_run
-    /// # async fn example() -> Result<(), sez::error::Error> {
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Choose, Send, End};
-    /// use sez::io::AsyncSender;
+    /// # async fn example() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Choose, Send, End};
+    /// use sessrums::io::AsyncSender;
     /// use futures_core::future::Future;
     /// use std::pin::Pin;
     /// use futures_core::task::{Context, Poll};
@@ -807,8 +807,8 @@ impl<P: Protocol, IO> Chan<crate::proto::Rec<P>, IO> {
     /// # Examples
     ///
     /// ```
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Rec, Send, Var, End};
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Rec, Send, Var, End};
     /// use std::sync::mpsc;
     ///
     /// // Define a recursive protocol that sends an i32 and then loops
@@ -851,8 +851,8 @@ impl<IO> Chan<crate::proto::Var<0>, IO> {
     /// # Examples
     ///
     /// ```
-    /// use sez::chan::Chan;
-    /// use sez::proto::{Rec, Send, Var, End};
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Rec, Send, Var, End};
     /// use std::sync::mpsc;
     ///
     /// // Define a recursive protocol that sends an i32 and then loops

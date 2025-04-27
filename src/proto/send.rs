@@ -25,7 +25,7 @@ use super::recv::Recv;
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Protocol, Send, Recv, End};
+/// use sessrums::proto::{Protocol, Send, Recv, End};
 ///
 /// // Define a protocol that sends an i32, then a String, then ends
 /// type MyProtocol = Send<i32, Send<String, End>>;
@@ -41,7 +41,7 @@ use super::recv::Recv;
 /// patterns:
 ///
 /// ```
-/// use sez::proto::{Protocol, Send, Recv, End};
+/// use sessrums::proto::{Protocol, Send, Recv, End};
 ///
 /// // A protocol that sends an i32, receives a bool, then sends a String, then ends
 /// type ComplexProtocol = Send<i32, Recv<bool, Send<String, End>>>;

@@ -23,10 +23,10 @@
 //! 2. The server responds with an answer (String)
 //! 3. The communication ends
 
-use sez::chan::Chan;
-use sez::proto::{End, Protocol, Recv, Send};
-use sez::io::{AsyncSender, AsyncReceiver};
-use sez::error::Error;
+use sessrums::chan::Chan;
+use sessrums::proto::{End, Protocol, Recv, Send};
+use sessrums::io::{AsyncSender, AsyncReceiver};
+use sessrums::error::Error;
 use std::sync::mpsc;
 use std::thread;
 use futures_core::future::Future;
@@ -321,9 +321,9 @@ async fn main() -> Result<(), Error> {
 
 /// This module demonstrates how the type system ensures protocol adherence
 mod type_safety_examples {
-    use sez::chan::Chan;
-    use sez::proto::{End, Recv, Send};
-    use sez::io::{AsyncSender, AsyncReceiver};
+    use sessrums::chan::Chan;
+    use sessrums::proto::{End, Recv, Send};
+    use sessrums::io::{AsyncSender, AsyncReceiver};
     use futures_core::future::Future;
     use std::pin::Pin;
     use futures_core::task::{Context, Poll};

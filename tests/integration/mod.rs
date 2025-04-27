@@ -1,11 +1,11 @@
-//! Integration test infrastructure for the sez library.
+//! Integration test infrastructure for the sessrums library.
 //!
 //! This module provides helper functions and macros for testing session type protocols.
 //! It's designed to make it easy to write tests that verify both the type-level properties
 //! and runtime behavior of protocols.
 
 // No need for PhantomData import
-use sez::proto::Protocol;
+use sessrums::proto::Protocol;
 
 /// Assert that a type implements the Protocol trait.
 /// This is useful for verifying that protocol types are correctly defined.
@@ -40,11 +40,11 @@ where
 
 /// Helper function to create a channel with a specific protocol and IO type.
 /// This is useful for testing protocol types without needing actual IO.
-pub fn mock_channel<P: Protocol, IO>() -> sez::chan::Chan<P, IO>
+pub fn mock_channel<P: Protocol, IO>() -> sessrums::chan::Chan<P, IO>
 where
     IO: Default,
 {
-    sez::chan::Chan::new(IO::default())
+    sessrums::chan::Chan::new(IO::default())
 }
 
 // Re-export protocol modules for convenience

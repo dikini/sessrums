@@ -1,10 +1,10 @@
 # API Ergonomics Guide
 
-This guide explains the API ergonomics improvements provided by the SEZ library, including type aliases, helper functions, and macros that make the session type API more ergonomic and easier to use.
+This guide explains the API ergonomics improvements provided by the sessrums library, including type aliases, helper functions, and macros that make the session type API more ergonomic and easier to use.
 
 ## Type Aliases
 
-SEZ provides several type aliases for common protocol patterns:
+sessrums provides several type aliases for common protocol patterns:
 
 ### Request-Response Pattern
 
@@ -19,7 +19,7 @@ pub type RequestServer<Req, Resp> = Recv<Req, Send<Resp, End>>;
 Example usage:
 
 ```rust
-use sez::api::{RequestClient, RequestServer};
+use sessrums::api::{RequestClient, RequestServer};
 
 // Define a client that sends a String request and receives an i32 response
 type MyClient = RequestClient<String, i32>;
@@ -41,7 +41,7 @@ pub type PingServer<Ping, Pong> = Recv<Ping, Send<Pong, End>>;
 Example usage:
 
 ```rust
-use sez::api::{PingClient, PingServer};
+use sessrums::api::{PingClient, PingServer};
 
 // Define a client that sends an i32 ping and receives a String pong
 type MyClient = PingClient<i32, String>;
@@ -63,8 +63,8 @@ pub type OfferServer<P1, P2> = Offer<P1, P2>;
 Example usage:
 
 ```rust
-use sez::api::{ChoiceClient, OfferServer};
-use sez::proto::{Send, Recv, End};
+use sessrums::api::{ChoiceClient, OfferServer};
+use sessrums::proto::{Send, Recv, End};
 
 // Define a client that chooses between sending an i32 or a String
 type MyClient = ChoiceClient<Send<i32, End>, Send<String, End>>;
@@ -75,7 +75,7 @@ type MyServer = OfferServer<Recv<i32, End>, Recv<String, End>>;
 
 ## Helper Functions
 
-SEZ provides several helper functions for common operations:
+sessrums provides several helper functions for common operations:
 
 ### Channel Pair Creation
 
@@ -90,7 +90,7 @@ where
 Example usage:
 
 ```rust
-use sez::api::{channel_pair, RequestClient, RequestServer};
+use sessrums::api::{channel_pair, RequestClient, RequestServer};
 
 // Create a pair of channels for a request-response protocol
 let (client, server) = channel_pair::<RequestClient<String, i32>, ()>();
@@ -108,7 +108,7 @@ where
 Example usage:
 
 ```rust
-use sez::api::request_response_pair;
+use sessrums::api::request_response_pair;
 
 // Create a pair of channels for a request-response protocol
 let (client, server) = request_response_pair::<String, i32, ()>();
@@ -126,7 +126,7 @@ where
 Example usage:
 
 ```rust
-use sez::api::ping_pong_pair;
+use sessrums::api::ping_pong_pair;
 
 // Create a pair of channels for a ping-pong protocol
 let (client, server) = ping_pong_pair::<i32, String, ()>();
@@ -146,8 +146,8 @@ where
 Example usage:
 
 ```rust
-use sez::api::{connect_with_protocol, RequestClient};
-use sez::connect::TcpConnectInfo;
+use sessrums::api::{connect_with_protocol, RequestClient};
+use sessrums::connect::TcpConnectInfo;
 use std::net::SocketAddr;
 
 // Connect to a server with a request-response protocol
@@ -158,7 +158,7 @@ let client = connect_with_protocol::<RequestClient<String, i32>, _, _>(conn_info
 
 ## Macros
 
-SEZ provides macros for defining protocols with a more concise syntax:
+sessrums provides macros for defining protocols with a more concise syntax:
 
 ### Protocol Macro
 
@@ -218,10 +218,10 @@ It also includes a compile-time verification that the protocols are duals of eac
 Here's a complete example that demonstrates the use of the API ergonomics improvements:
 
 ```rust
-use sez::api::{RequestClient, RequestServer, request_response_pair};
-use sez::protocol;
-use sez::protocol_pair;
-use sez::error::Result;
+use sessrums::api::{RequestClient, RequestServer, request_response_pair};
+use sessrums::protocol;
+use sessrums::protocol_pair;
+use sessrums::error::Result;
 
 // Define protocol types using type aliases
 type MyClient = RequestClient<String, i32>;

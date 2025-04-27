@@ -67,8 +67,8 @@
 //! or receiving an f32, while the server offers to either receive a u64 or send
 //! an f32, depending on the client's choice.
 
-use sez::proto::{Choose, Offer, Send, Recv, End};
-use sez::chan::Chan;
+use sessrums::proto::{Choose, Offer, Send, Recv, End};
+use sessrums::chan::Chan;
 
 // Import helper functions from the integration test module
 use crate::integration::{assert_protocol, assert_dual, mock_channel};

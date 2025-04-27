@@ -27,7 +27,7 @@ use super::Protocol;
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Protocol, Rec, Var, Send, End};
+/// use sessrums::proto::{Protocol, Rec, Var, Send, End};
 ///
 /// // A protocol that sends an i32 and then repeats itself
 /// type LoopingSend = Rec<Send<i32, Var<0>>>;

@@ -1,6 +1,6 @@
-# SEZ: Session Types Quick Reference
+# sessrums: Session Types Quick Reference
 
-This document provides a concise reference for the SEZ session types library.
+This document provides a concise reference for the sessrums session types library.
 
 ## Protocol Types
 

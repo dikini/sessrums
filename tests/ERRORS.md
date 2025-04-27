@@ -1,6 +1,6 @@
 # Error Examples
 
-This document provides an overview of all the error examples implemented in the sez library tests. Each example demonstrates how the session type system prevents different kinds of protocol errors at compile time.
+This document provides an overview of all the error examples implemented in the sessrums library tests. Each example demonstrates how the session type system prevents different kinds of protocol errors at compile time.
 
 ## Error 1: Deadlock (Recv/Recv)
 

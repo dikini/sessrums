@@ -54,8 +54,8 @@
 //! This demonstrates how the types mirror the communication flow and ensure
 //! protocol adherence at compile time.
 
-use sez::proto::{Send, Recv, End};
-use sez::chan::Chan;
+use sessrums::proto::{Send, Recv, End};
+use sessrums::chan::Chan;
 
 // Import helper functions from the integration test module
 use crate::integration::{assert_protocol, assert_dual, mock_channel};

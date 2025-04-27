@@ -1,6 +1,6 @@
 # Testing Session Type Protocols
 
-This document provides guidance and examples for testing session type protocols in the SEZ library.
+This document provides guidance and examples for testing session type protocols in the sessrums library.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This document provides guidance and examples for testing session type protocols 
 
 ## Introduction
 
-Testing session type protocols is essential to ensure that your communication patterns work as expected. The SEZ library provides several approaches to testing protocols:
+Testing session type protocols is essential to ensure that your communication patterns work as expected. The sessrums library provides several approaches to testing protocols:
 
 1. **Type-level testing**: Verifying that protocol types have the expected properties
 2. **Runtime testing**: Testing the actual communication behavior at runtime
@@ -81,8 +81,8 @@ Example compile-fail test file:
 
 ```rust
 // tests/compile_fail/wrong_order.rs
-use sez::chan::Chan;
-use sez::proto::{Send, Recv, End};
+use sessrums::chan::Chan;
+use sessrums::proto::{Send, Recv, End};
 
 async fn incorrect_protocol_usage(chan: Chan<Send<i32, Recv<String, End>>, ()>) {
     // Error: The protocol requires sending an i32 first, but we're trying to receive
@@ -94,7 +94,7 @@ fn main() {}
 
 ## Helper Functions
 
-The SEZ library provides several helper functions for testing protocols:
+The sessrums library provides several helper functions for testing protocols:
 
 ```rust
 // Assert that a type implements the Protocol trait

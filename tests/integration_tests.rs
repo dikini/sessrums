@@ -1,4 +1,4 @@
-//! Main integration test file for the sez library.
+//! Main integration test file for the sessrums library.
 //!
 //! This file imports and re-exports all the integration test modules,
 //! allowing them to be run with `cargo test --test integration_tests`.

@@ -1,6 +1,6 @@
 # Protocol Examples
 
-This document provides an overview of all the protocol examples implemented in the sez library tests. Each example demonstrates different aspects of session types and how they can be used to model various communication patterns.
+This document provides an overview of all the protocol examples implemented in the sessrums library tests. Each example demonstrates different aspects of session types and how they can be used to model various communication patterns.
 
 ## Protocol 1: Simple Ping-Pong
 

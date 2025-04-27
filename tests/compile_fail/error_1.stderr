@@ -6,8 +6,8 @@ error[E0271]: type mismatch resolving `<Recv<i32, End> as Protocol>::Dual == Rec
    |     |
    |     required by a bound introduced by this call
    |
-   = note: expected struct `Recv<i32, sez::proto::End>`
-              found struct `sez::proto::Send<i32, sez::proto::End>`
+   = note: expected struct `Recv<i32, sessrums::proto::End>`
+              found struct `sessrums::proto::Send<i32, sessrums::proto::End>`
 note: required by a bound in `verify_dual_protocols`
   --> tests/compile_fail/error_1.rs:95:17
    |

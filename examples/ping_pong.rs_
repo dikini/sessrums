@@ -23,11 +23,11 @@
 //! 2. The server responds with a pong message
 //! 3. The communication ends
 
-use sez::chan::Chan;
-use sez::proto::{End, Protocol, Recv};
-use sez::proto::Send as ProtoSend;
-use sez::api::{PingClient, PingServer};
-use sez::error::Error;
+use sessrums::chan::Chan;
+use sessrums::proto::{End, Protocol, Recv};
+use sessrums::proto::Send as ProtoSend;
+use sessrums::api::{PingClient, PingServer};
+use sessrums::error::Error;
 use std::thread;
 use std::marker::Send;
 use tokio::sync::mpsc;
@@ -108,7 +108,7 @@ impl<T: std::marker::Unpin> Future for RecvFuture<T> {
 }
 
 // Implement AsyncSender for BiChannel
-impl<T: Clone + std::marker::Unpin> sez::io::AsyncSender<T> for BiChannel<T> {
+impl<T: Clone + std::marker::Unpin> sessrums::io::AsyncSender<T> for BiChannel<T> {
     type Error = Error;
     type SendFuture<'a> = SendFuture<T> where T: 'a, Self: 'a;
 
@@ -121,7 +121,7 @@ impl<T: Clone + std::marker::Unpin> sez::io::AsyncSender<T> for BiChannel<T> {
 }
 
 // Implement AsyncReceiver for BiChannel
-impl<T: std::marker::Unpin> sez::io::AsyncReceiver<T> for BiChannel<T> {
+impl<T: std::marker::Unpin> sessrums::io::AsyncReceiver<T> for BiChannel<T> {
     type Error = Error;
     type RecvFuture<'a> = RecvFuture<T> where T: 'a, Self: 'a;
 
@@ -229,7 +229,7 @@ fn demonstrate_ping_pong_pair() {
     println!("\nDemonstrating channel_pair function for ping-pong:");
     
     // Create a pair of channels for a ping-pong protocol using the helper function
-    let (client, server) = sez::api::channel_pair::<PingClient<i32, String>, ()>();
+    let (client, server) = sessrums::api::channel_pair::<PingClient<i32, String>, ()>();
     
     // Verify that the channels have the correct types
     let _: Chan<PingClient<i32, String>, ()> = client;

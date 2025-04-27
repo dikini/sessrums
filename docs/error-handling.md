@@ -1,6 +1,6 @@
-# Error Handling in SEZ
+# Error Handling in sessrums
 
-This document provides detailed information about error handling in the SEZ session types library.
+This document provides detailed information about error handling in the sessrums session types library.
 
 ## Error Type
 

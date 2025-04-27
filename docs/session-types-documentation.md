@@ -1,4 +1,4 @@
-# SEZ: Session Types EZ
+# sessrums: Session Types EZ
 
 A Rust library for asynchronous session types with minimal dependencies, focusing on expressing the process calculus in the types using Rust's type system features, including `const generics`.
 
@@ -38,7 +38,7 @@ A Rust library for asynchronous session types with minimal dependencies, focusin
 
 ## Introduction
 
-SEZ (Session Types EZ) is a Rust library that implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library focuses on expressing the process calculus in the types using Rust's type system features, with minimal dependencies.
+sessrums (Session Types EZ) is a Rust library that implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library focuses on expressing the process calculus in the types using Rust's type system features, with minimal dependencies.
 
 Session types provide a way to specify and verify communication protocols at compile time, ensuring that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks.
 
@@ -53,7 +53,7 @@ Session types are a formal method for describing communication protocols at the 
 3. The protocol is followed to completion
 4. Communication is free from deadlocks and race conditions
 
-In SEZ, session types are represented as Rust types that describe the communication behavior of a channel. These types are composed of primitive protocol types like `Send<T, P>`, `Recv<T, P>`, and `End`.
+In sessrums, session types are represented as Rust types that describe the communication behavior of a channel. These types are composed of primitive protocol types like `Send<T, P>`, `Recv<T, P>`, and `End`.
 
 ### Duality
 

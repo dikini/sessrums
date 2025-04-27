@@ -30,7 +30,7 @@ use super::offer::Offer;
 ///
 /// For example:
 /// ```
-/// use sez::proto::{Protocol, Send, Recv, End, Offer, Choose};
+/// use sessrums::proto::{Protocol, Send, Recv, End, Offer, Choose};
 ///
 /// // Original protocol
 /// type MyChoose = Choose<Send<i32, End>, Recv<String, End>>;
@@ -44,7 +44,7 @@ use super::offer::Offer;
 /// The duality relationship extends to nested Choose types:
 ///
 /// ```
-/// use sez::proto::{Protocol, Send, Recv, End, Offer, Choose};
+/// use sessrums::proto::{Protocol, Send, Recv, End, Offer, Choose};
 ///
 /// // A protocol with nested Choose
 /// type NestedChoose = Choose<
@@ -67,7 +67,7 @@ use super::offer::Offer;
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Protocol, Send, Recv, End, Choose};
+/// use sessrums::proto::{Protocol, Send, Recv, End, Choose};
 ///
 /// // A protocol that chooses between:
 /// // 1. Sending an i32 and then ending, or
@@ -86,7 +86,7 @@ use super::offer::Offer;
 /// communication patterns:
 ///
 /// ```
-/// use sez::proto::{Protocol, Send, Recv, End, Choose};
+/// use sessrums::proto::{Protocol, Send, Recv, End, Choose};
 ///
 /// // A protocol that first sends a boolean, then chooses between
 /// // sending an i32 or receiving a String

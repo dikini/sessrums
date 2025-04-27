@@ -51,9 +51,9 @@ pub trait ConnectInfo {
 /// # Examples
 ///
 /// ```no_run
-/// use sez::connect::StreamWrapper;
-/// use sez::chan::Chan;
-/// use sez::proto::{Send, Recv, End};
+/// use sessrums::connect::StreamWrapper;
+/// use sessrums::chan::Chan;
+/// use sessrums::proto::{Send, Recv, End};
 /// use std::net::TcpStream;
 ///
 /// // Define a protocol
@@ -361,8 +361,8 @@ mod unix {
 /// # Examples
 ///
 /// ```no_run
-/// use sez::connect::connect;
-/// use sez::proto::{Send, Recv, End};
+/// use sessrums::connect::connect;
+/// use sessrums::proto::{Send, Recv, End};
 /// use std::net::TcpStream;
 ///
 /// // Define a protocol
@@ -438,11 +438,11 @@ where
 /// # Examples
 ///
 /// ```no_run
-/// use sez::connect::{ConnectInfo, connect_with_protocol};
-/// use sez::proto::{Send, Recv, End};
-/// use sez::chan::Chan;
+/// use sessrums::connect::{ConnectInfo, connect_with_protocol};
+/// use sessrums::proto::{Send, Recv, End};
+/// use sessrums::chan::Chan;
 /// use std::net::{SocketAddr, TcpStream};
-/// use sez::connect::StreamWrapper;
+/// use sessrums::connect::StreamWrapper;
 ///
 /// // Define a protocol
 /// type MyProtocol = Send<String, Recv<i32, End>>;

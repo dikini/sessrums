@@ -1,6 +1,6 @@
-# Session Types Library (sez) Tests
+# Session Types Library (sessrums) Tests
 
-This directory contains tests for the sez library, organized into different categories. The tests are designed to verify both the type-level properties and runtime behavior of session types, ensuring that the library correctly enforces protocol adherence at compile time.
+This directory contains tests for the sessrums library, organized into different categories. The tests are designed to verify both the type-level properties and runtime behavior of session types, ensuring that the library correctly enforces protocol adherence at compile time.
 
 ## Test Structure
 

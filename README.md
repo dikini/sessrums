@@ -1,10 +1,10 @@
-# SEZ: Session Types EZ
+# sessrums: Session Types EZ
 
 A Rust library for asynchronous session types with minimal dependencies, focusing on expressing the process calculus in the types using Rust's type system features, including `const generics`.
 
 ## Overview
 
-SEZ implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks.
+sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks.
 
 ## Core Concepts
 
@@ -35,7 +35,7 @@ type ServerProtocol = <ClientProtocol as Protocol>::Dual;
 
 ## Protocol Types
 
-SEZ provides the following protocol types:
+sessrums provides the following protocol types:
 
 - **Send\<T, P\>**: Sends a value of type `T` and then continues with protocol `P`
 - **Recv\<T, P\>**: Receives a value of type `T` and then continues with protocol `P`
@@ -43,10 +43,10 @@ SEZ provides the following protocol types:
 - **Offer\<L, R\>**: Offers a choice between continuing with protocol `L` or protocol `R`
 - **Choose\<L, R\>**: Makes a choice between continuing with protocol `L` or protocol `R`
 
-Additionally, SEZ provides macros for defining protocols with a more concise syntax:
+Additionally, sessrums provides macros for defining protocols with a more concise syntax:
 
 ```rust
-use sez::protocol;
+use sessrums::protocol;
 
 // Define a protocol using the macro
 type ClientProto = protocol!(send(i32) >> recv(String) >> end);
@@ -67,7 +67,7 @@ type MyServer = MyProtocol::Server<String, i32>;
 
 ## Dependencies
 
-SEZ is designed with minimal dependencies:
+sessrums is designed with minimal dependencies:
 
 - **futures-core**: Provides core traits for asynchronous programming, enabling the implementation of async versions of communication traits.
 - **serde**: Provides serialization and deserialization capabilities for sending and receiving values over channels.
@@ -94,7 +94,7 @@ pub struct Chan<P: Protocol, IO> {
 
 ## Error Handling
 
-SEZ defines an `Error` enum that represents various error conditions:
+sessrums defines an `Error` enum that represents various error conditions:
 
 ```rust
 #[derive(Debug)]
@@ -178,7 +178,7 @@ Closes the channel, indicating that the communication session has ended.
 
 ### API Ergonomics
 
-SEZ provides several type aliases and helper functions to improve API ergonomics:
+sessrums provides several type aliases and helper functions to improve API ergonomics:
 
 #### Type Aliases
 
@@ -234,9 +234,9 @@ where
 ### Basic Example
 
 ```rust
-use sez::proto::{Send, Recv, End};
-use sez::chan::Chan;
-use sez::error::Result;
+use sessrums::proto::{Send, Recv, End};
+use sessrums::chan::Chan;
+use sessrums::error::Result;
 
 // Define the client's protocol: Send a query, receive a response, then end
 type ClientProtocol = Send<String, Recv<String, End>>;
@@ -280,8 +280,8 @@ async fn run_server(chan: Chan<ServerProtocol, BiChannel<String>>) -> Result<()>
 ### Using API Ergonomics
 
 ```rust
-use sez::api::{RequestClient, RequestServer, request_response_pair};
-use sez::error::Result;
+use sessrums::api::{RequestClient, RequestServer, request_response_pair};
+use sessrums::error::Result;
 
 // Use type aliases for request-response protocol
 type MyClient = RequestClient<String, i32>;
@@ -326,10 +326,10 @@ async fn run_server(chan: Chan<MyServer, IO>) -> Result<()> {
 ### Using Protocol Macros
 
 ```rust
-use sez::protocol;
-use sez::protocol_pair;
-use sez::chan::Chan;
-use sez::error::Result;
+use sessrums::protocol;
+use sessrums::protocol_pair;
+use sessrums::chan::Chan;
+use sessrums::error::Result;
 
 // Define protocol types using the macro
 type MyClient = protocol!(send(String) >> recv(i32) >> end);
@@ -368,7 +368,7 @@ For more visual diagrams illustrating session types concepts, see [Session Types
 
 ## Testing Framework
 
-SEZ provides a comprehensive testing framework for verifying both compile-time and runtime properties of session types:
+sessrums provides a comprehensive testing framework for verifying both compile-time and runtime properties of session types:
 
 ### Compile-Time Tests
 
@@ -423,7 +423,7 @@ async fn test_send_recv() {
 
 ### Compile-Fail Tests
 
-SEZ uses the `trybuild` crate to verify that invalid protocols fail to compile with the expected error messages:
+sessrums uses the `trybuild` crate to verify that invalid protocols fail to compile with the expected error messages:
 
 ```rust
 #[test]

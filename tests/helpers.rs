@@ -3,8 +3,8 @@
 //! This module provides helper functions and utilities to make it easier to write
 //! tests for the session type system.
 
-use sez::proto::Protocol;
-use sez::chan::Chan;
+use sessrums::proto::Protocol;
+use sessrums::chan::Chan;
 
 /// Verify that two protocols are duals of each other.
 ///
@@ -21,8 +21,8 @@ use sez::chan::Chan;
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Send, Recv, End};
-/// use sez::chan::Chan;
+/// use sessrums::proto::{Send, Recv, End};
+/// use sessrums::chan::Chan;
 /// use tests::helpers::verify_dual_protocols;
 ///
 /// // These protocols are duals of each other
@@ -56,7 +56,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Send, End};
+/// use sessrums::proto::{Send, End};
 /// use tests::helpers::assert_protocol;
 ///
 /// // This should compile
@@ -81,7 +81,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Send, Recv, End};
+/// use sessrums::proto::{Send, Recv, End};
 /// use tests::helpers::assert_dual;
 ///
 /// // This should compile
@@ -111,7 +111,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Send, End};
+/// use sessrums::proto::{Send, End};
 /// use tests::helpers::mock_channel;
 ///
 /// // Create a mock channel

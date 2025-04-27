@@ -60,8 +60,8 @@
 //!  End                    End
 //! ```
 
-use sez::proto::{Protocol, Send, End};
-use sez::chan::Chan;
+use sessrums::proto::{Protocol, Send, End};
+use sessrums::chan::Chan;
 
 // Define the protocol types
 type ClientProto = Send<i32, End>;

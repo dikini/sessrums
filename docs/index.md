@@ -1,6 +1,6 @@
-# SEZ Documentation Index
+# sessrums Documentation Index
 
-This document provides an index of all documentation files for the SEZ session types library.
+This document provides an index of all documentation files for the sessrums session types library.
 
 ## Core Documentation
 
@@ -59,7 +59,7 @@ If you're new to session types, we recommend starting with the following resourc
 
 ## Contributing
 
-If you'd like to contribute to the SEZ library, please read the following resources:
+If you'd like to contribute to the sessrums library, please read the following resources:
 
 - [Contributing Guidelines](../CONTRIBUTING.md) (if available)
 - [Code of Conduct](../CODE_OF_CONDUCT.md) (if available)

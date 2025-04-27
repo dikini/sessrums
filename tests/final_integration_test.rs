@@ -1,12 +1,12 @@
-//! Final integration test for the sez library.
+//! Final integration test for the sessrums library.
 //!
-//! This test demonstrates the use of all major features of the sez library,
+//! This test demonstrates the use of all major features of the sessrums library,
 //! including protocol definition, channel creation, sending and receiving messages,
 //! and error handling.
 
-use sez::proto::{Recv, Send, End};
-use sez::chan::Chan;
-use sez::api::{RequestClient};
+use sessrums::proto::{Recv, Send, End};
+use sessrums::chan::Chan;
+use sessrums::api::{RequestClient};
 use std::marker::PhantomData;
 use futures_core::future::Future;
 use std::pin::Pin;
@@ -74,7 +74,7 @@ impl<T: Clone + std::marker::Unpin + Default> Future for TestRecvFuture<T> {
 }
 
 /// Implement AsyncSender for TestIO
-impl<T: Clone + std::marker::Unpin + Default> sez::io::AsyncSender<T> for TestIO<T> {
+impl<T: Clone + std::marker::Unpin + Default> sessrums::io::AsyncSender<T> for TestIO<T> {
     type Error = TestError;
     type SendFuture<'a> = TestSendFuture<T> where Self: 'a;
 
@@ -87,7 +87,7 @@ impl<T: Clone + std::marker::Unpin + Default> sez::io::AsyncSender<T> for TestIO
 }
 
 /// Implement AsyncReceiver for TestIO
-impl<T: Clone + std::marker::Unpin + Default> sez::io::AsyncReceiver<T> for TestIO<T> {
+impl<T: Clone + std::marker::Unpin + Default> sessrums::io::AsyncReceiver<T> for TestIO<T> {
     type Error = TestError;
     type RecvFuture<'a> = TestRecvFuture<T> where Self: 'a;
 
@@ -178,7 +178,7 @@ async fn test_error_handling() {
     struct FailingTestIO;
     
     // Implement AsyncSender for FailingTestIO that always returns an error
-    impl<T: Clone + std::marker::Unpin + 'static> sez::io::AsyncSender<T> for FailingTestIO {
+    impl<T: Clone + std::marker::Unpin + 'static> sessrums::io::AsyncSender<T> for FailingTestIO {
         type Error = TestError;
         type SendFuture<'a> = Pin<Box<dyn Future<Output = std::result::Result<(), TestError>> + 'a>> where Self: 'a;
         

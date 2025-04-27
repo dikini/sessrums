@@ -20,7 +20,7 @@ use super::Protocol;
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Protocol, Send, End};
+/// use sessrums::proto::{Protocol, Send, End};
 ///
 /// // A protocol that sends an i32 and then ends
 /// type SimpleProtocol = Send<i32, End>;

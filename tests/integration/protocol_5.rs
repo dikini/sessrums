@@ -83,8 +83,8 @@
 //! offers to receive either binary data or an error code. The server receives
 //! the query string, then chooses to send either binary data or an error code.
 
-use sez::proto::{Send, Recv, Choose, Offer, End};
-use sez::chan::Chan;
+use sessrums::proto::{Send, Recv, Choose, Offer, End};
+use sessrums::chan::Chan;
 
 // Import helper functions from the integration test module
 use crate::integration::{assert_protocol, assert_dual, mock_channel};

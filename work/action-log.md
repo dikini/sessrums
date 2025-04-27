@@ -436,7 +436,7 @@ All Phase 3 tasks are now complete, with the implementation of send, recv, and c
 
 ## 2025-04-26: Completed Task 3.6 - Create Comprehensive Documentation
 
-- Created comprehensive documentation for the session types library (sez) Phase 3 implementation
+- Created comprehensive documentation for the session types library (sessrums) Phase 3 implementation
   - Created docs/session-types-documentation.md with detailed explanations of core concepts
   - Created docs/quick-reference.md with a concise summary of key concepts and API methods
   - Created docs/session-types-diagrams.md with visual representations of session types concepts

@@ -73,8 +73,8 @@
 //! then receives a token, while the server receives a username and password,
 //! then sends a token.
 
-use sez::proto::{Send, Recv, End};
-use sez::chan::Chan;
+use sessrums::proto::{Send, Recv, End};
+use sessrums::chan::Chan;
 
 // Import helper functions from the integration test module
 use crate::integration::{assert_protocol, assert_dual, mock_channel};

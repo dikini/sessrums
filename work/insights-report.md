@@ -1,4 +1,4 @@
-# Session Types Library (sez) - Insights Report
+# Session Types Library (sessrums) - Insights Report
 
 ## Project Overview
 

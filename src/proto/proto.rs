@@ -26,7 +26,7 @@
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Protocol, Send, Recv, End};
+/// use sessrums::proto::{Protocol, Send, Recv, End};
 ///
 /// // A protocol that sends an i32, then receives a String, then ends
 /// type MyProtocol = Send<i32, Recv<String, End>>;

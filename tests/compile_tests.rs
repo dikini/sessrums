@@ -1,4 +1,4 @@
-//! Compile-time tests for the sez library.
+//! Compile-time tests for the sessrums library.
 //!
 //! This file contains tests that verify the compile-time behavior of the session type system.
 //! These tests ensure that the type system correctly enforces protocol adherence and rejects
@@ -8,8 +8,8 @@
 //! of the session type system. For tests that should fail to compile, see the `compile_fail`
 //! directory.
 
-use sez::proto::{Send, Recv, Choose, Offer, End, Protocol};
-use sez::chan::Chan;
+use sessrums::proto::{Send, Recv, Choose, Offer, End, Protocol};
+use sessrums::chan::Chan;
 
 /// Test that verifies the basic protocol type definitions compile correctly.
 #[test]

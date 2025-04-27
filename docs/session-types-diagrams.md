@@ -1,6 +1,6 @@
 # Session Types Visual Diagrams
 
-This document provides visual representations of session types concepts to help understand how protocols work in the SEZ library.
+This document provides visual representations of session types concepts to help understand how protocols work in the sessrums library.
 
 ## Protocol Communication Flow
 
@@ -111,4 +111,4 @@ Client                                Server
         |                                       |
 ```
 
-These diagrams illustrate the key concepts of session types and how they are implemented in the SEZ library. The type-level representation ensures that communication follows the specified protocol, preventing errors at compile time.
+These diagrams illustrate the key concepts of session types and how they are implemented in the sessrums library. The type-level representation ensures that communication follows the specified protocol, preventing errors at compile time.

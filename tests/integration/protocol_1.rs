@@ -54,8 +54,8 @@
 //! This demonstrates how the types mirror the communication flow and ensure
 //! protocol adherence at compile time.
 
-use sez::proto::{Send, Recv, End};
-use sez::chan::Chan;
+use sessrums::proto::{Send, Recv, End};
+use sessrums::chan::Chan;
 use futures_core::future::Future;
 use std::pin::Pin;
 use futures_core::task::{Context, Poll};
@@ -177,7 +177,7 @@ async fn test_ping_pong_protocol() {
     }
 
     // Implement AsyncSender<i32> for TestIO (client sending to server)
-    impl sez::io::AsyncSender<i32> for TestIO {
+    impl sessrums::io::AsyncSender<i32> for TestIO {
         type Error = TestError;
         type SendFuture<'a> = TestSendFuture<i32> where Self: 'a;
 
@@ -194,7 +194,7 @@ async fn test_ping_pong_protocol() {
     }
     
     // Implement AsyncReceiver<i32> for TestIO (server receiving from client)
-    impl sez::io::AsyncReceiver<i32> for TestIO {
+    impl sessrums::io::AsyncReceiver<i32> for TestIO {
         type Error = TestError;
         type RecvFuture<'a> = TestRecvFuture<i32> where Self: 'a;
         
@@ -211,7 +211,7 @@ async fn test_ping_pong_protocol() {
     }
     
     // Implement AsyncSender<String> for TestIO (server sending to client)
-    impl sez::io::AsyncSender<String> for TestIO {
+    impl sessrums::io::AsyncSender<String> for TestIO {
         type Error = TestError;
         type SendFuture<'a> = TestSendFuture<String> where Self: 'a;
         
@@ -228,7 +228,7 @@ async fn test_ping_pong_protocol() {
     }
     
     // Implement AsyncReceiver<String> for TestIO (client receiving from server)
-    impl sez::io::AsyncReceiver<String> for TestIO {
+    impl sessrums::io::AsyncReceiver<String> for TestIO {
         type Error = TestError;
         type RecvFuture<'a> = TestRecvFuture<String> where Self: 'a;
         

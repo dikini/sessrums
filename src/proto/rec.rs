@@ -25,7 +25,7 @@ use super::Protocol;
 /// # Examples
 ///
 /// ```
-/// use sez::proto::{Protocol, Rec, Var, Send, Recv, End};
+/// use sessrums::proto::{Protocol, Rec, Var, Send, Recv, End};
 ///
 /// // A protocol that repeatedly sends an i32 until it decides to end
 /// // Rec<Send<i32, Choose<Var<0>, End>>>

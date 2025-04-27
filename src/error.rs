@@ -16,7 +16,7 @@ use std::io;
 /// # Examples
 ///
 /// ```
-/// use sez::error::Error;
+/// use sessrums::error::Error;
 /// use std::io;
 ///
 /// // Creating an IO error
@@ -48,7 +48,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     /// use std::io;
     ///
     /// let io_err = io::Error::new(io::ErrorKind::ConnectionReset, "Connection reset by peer");
@@ -64,7 +64,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     ///
     /// let err = Error::Protocol("Received unexpected message type");
     /// ```
@@ -78,7 +78,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     ///
     /// let err = Error::Connection("Failed to establish connection");
     /// ```
@@ -92,7 +92,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     ///
     /// let err = Error::Serialization("Failed to serialize complex data structure");
     /// ```
@@ -106,7 +106,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     ///
     /// let err = Error::Deserialization("Failed to deserialize received data");
     /// ```
@@ -120,7 +120,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     ///
     /// let err = Error::ChannelClosed;
     /// ```
@@ -134,7 +134,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     /// use std::time::Duration;
     ///
     /// let err = Error::Timeout(Duration::from_secs(30));
@@ -149,7 +149,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     ///
     /// let err = Error::Negotiation("Protocol version mismatch");
     /// ```
@@ -163,7 +163,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```
-    /// use sez::error::Error;
+    /// use sessrums::error::Error;
     ///
     /// let err = Error::StateMismatch("Expected Send state, but protocol is in Recv state");
     /// ```
@@ -230,7 +230,7 @@ impl From<std::time::Duration> for Error {
 /// # Examples
 ///
 /// ```
-/// use sez::error::{Error, Result};
+/// use sessrums::error::{Error, Result};
 ///
 /// fn example() -> Result<()> {
 ///     // Some operation that might fail

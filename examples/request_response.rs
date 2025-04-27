@@ -23,10 +23,10 @@
 //! 2. The server processes the request and sends a response
 //! 3. The communication ends
 
-use sez::chan::Chan;
-use sez::proto::{End, Protocol, Recv, Send};
-use sez::api::{RequestClient, RequestServer};
-use sez::error::Error;
+use sessrums::chan::Chan;
+use sessrums::proto::{End, Protocol, Recv, Send};
+use sessrums::api::{RequestClient, RequestServer};
+use sessrums::error::Error;
 use std::thread;
 use tokio::sync::mpsc;
 use std::sync::{Arc, Mutex};
@@ -118,7 +118,7 @@ impl<T: std::marker::Unpin> Future for RecvFuture<T> {
 }
 
 // Implement AsyncSender for BiChannel
-impl<T: Clone + std::marker::Unpin> sez::io::AsyncSender<T> for BiChannel<T> {
+impl<T: Clone + std::marker::Unpin> sessrums::io::AsyncSender<T> for BiChannel<T> {
     type Error = Error;
     type SendFuture<'a> = SendFuture<T> where T: 'a, Self: 'a;
 
@@ -131,7 +131,7 @@ impl<T: Clone + std::marker::Unpin> sez::io::AsyncSender<T> for BiChannel<T> {
 }
 
 // Implement AsyncReceiver for BiChannel
-impl<T: std::marker::Unpin> sez::io::AsyncReceiver<T> for BiChannel<T> {
+impl<T: std::marker::Unpin> sessrums::io::AsyncReceiver<T> for BiChannel<T> {
     type Error = Error;
     type RecvFuture<'a> = RecvFuture<T> where T: 'a, Self: 'a;
 
@@ -144,7 +144,7 @@ impl<T: std::marker::Unpin> sez::io::AsyncReceiver<T> for BiChannel<T> {
 }
 
 // Implement AsyncSender for RequestChannel
-impl sez::io::AsyncSender<Request> for RequestChannel {
+impl sessrums::io::AsyncSender<Request> for RequestChannel {
     type Error = Error;
     type SendFuture<'a> = SendFuture<Request> where Request: 'a, Self: 'a;
 
@@ -157,7 +157,7 @@ impl sez::io::AsyncSender<Request> for RequestChannel {
 }
 
 // Implement AsyncReceiver for RequestChannel
-impl sez::io::AsyncReceiver<Response> for RequestChannel {
+impl sessrums::io::AsyncReceiver<Response> for RequestChannel {
     type Error = Error;
     type RecvFuture<'a> = RecvFuture<Response> where Response: 'a, Self: 'a;
 
@@ -170,7 +170,7 @@ impl sez::io::AsyncReceiver<Response> for RequestChannel {
 }
 
 // Implement AsyncSender for ResponseChannel
-impl sez::io::AsyncSender<Response> for ResponseChannel {
+impl sessrums::io::AsyncSender<Response> for ResponseChannel {
     type Error = Error;
     type SendFuture<'a> = SendFuture<Response> where Response: 'a, Self: 'a;
 
@@ -183,7 +183,7 @@ impl sez::io::AsyncSender<Response> for ResponseChannel {
 }
 
 // Implement AsyncReceiver for ResponseChannel
-impl sez::io::AsyncReceiver<Request> for ResponseChannel {
+impl sessrums::io::AsyncReceiver<Request> for ResponseChannel {
     type Error = Error;
     type RecvFuture<'a> = RecvFuture<Request> where Request: 'a, Self: 'a;
 
@@ -364,7 +364,7 @@ fn demonstrate_request_response_pair() {
     println!("\nDemonstrating channel_pair function for request-response:");
     
     // Create a pair of channels for a request-response protocol using the helper function
-    let (client, server) = sez::api::channel_pair::<RequestClient<String, i32>, ()>();
+    let (client, server) = sessrums::api::channel_pair::<RequestClient<String, i32>, ()>();
     
     // Verify that the channels have the correct types
     let _: Chan<RequestClient<String, i32>, ()> = client;

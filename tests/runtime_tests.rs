@@ -1,11 +1,11 @@
-//! Runtime tests for the sez library.
+//! Runtime tests for the sessrums library.
 //!
 //! This file contains tests that verify the runtime behavior of the session type system.
 //! These tests ensure that the library correctly implements the semantics of session types
 //! at runtime, including sending and receiving messages, making choices, and offering choices.
 
-use sez::proto::{Send, Recv, End};
-use sez::chan::Chan;
+use sessrums::proto::{Send, Recv, End};
+use sessrums::chan::Chan;
 use std::marker::PhantomData;
 use futures_core::future::Future;
 use std::pin::Pin;
@@ -71,7 +71,7 @@ impl<T: Clone + std::marker::Unpin> Future for TestRecvFuture<T> {
 }
 
 /// Implement AsyncSender for TestIO
-impl<T: Clone + std::marker::Unpin> sez::io::AsyncSender<T> for TestIO<T> {
+impl<T: Clone + std::marker::Unpin> sessrums::io::AsyncSender<T> for TestIO<T> {
     type Error = TestError;
     type SendFuture<'a> = TestSendFuture<T> where Self: 'a;
 
@@ -84,7 +84,7 @@ impl<T: Clone + std::marker::Unpin> sez::io::AsyncSender<T> for TestIO<T> {
 }
 
 /// Implement AsyncReceiver for TestIO
-impl<T: Clone + std::marker::Unpin> sez::io::AsyncReceiver<T> for TestIO<T> {
+impl<T: Clone + std::marker::Unpin> sessrums::io::AsyncReceiver<T> for TestIO<T> {
     type Error = TestError;
     type RecvFuture<'a> = TestRecvFuture<T> where Self: 'a;
 
@@ -213,7 +213,7 @@ async fn test_error_handling() {
     }
     
     // Implement AsyncSender for FailingTestIO that always returns an error
-    impl<T: Clone + std::marker::Unpin + 'static> sez::io::AsyncSender<T> for FailingTestIO {
+    impl<T: Clone + std::marker::Unpin + 'static> sessrums::io::AsyncSender<T> for FailingTestIO {
         type Error = TestError;
         type SendFuture<'a> = std::pin::Pin<Box<dyn futures_core::Future<Output = Result<(), TestError>> + 'a>> where Self: 'a;
         

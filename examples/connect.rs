@@ -14,9 +14,9 @@
 //! cargo run --example connect
 //! ```
 
-use sez::chan::Chan;
-use sez::connect::StreamWrapper;
-use sez::proto::{Send, Recv, End};
+use sessrums::chan::Chan;
+use sessrums::connect::StreamWrapper;
+use sessrums::proto::{Send, Recv, End};
 use std::net::{TcpListener, TcpStream};
 
 // Define the protocol types for the client and server
@@ -112,7 +112,7 @@ fn connect_example() {
     let stream = TcpStream::connect("127.0.0.1:8080").unwrap();
     
     // Use the connect function to create a channel
-    let _chan = sez::connect::connect::<ClientProto, _, String>(stream);
+    let _chan = sessrums::connect::connect::<ClientProto, _, String>(stream);
     
     // The rest would be the same as in client_example()
 }

@@ -1,4 +1,4 @@
-//! API ergonomics improvements for the sez library.
+//! API ergonomics improvements for the sessrums library.
 //!
 //! This module provides type aliases, helper functions, and macros to make the
 //! session type API more ergonomic and easier to use.
@@ -37,7 +37,7 @@ use crate::connect;
 /// # Examples
 ///
 /// ```
-/// use sez::api::RequestClient;
+/// use sessrums::api::RequestClient;
 ///
 /// // A client that sends a String request and receives an i32 response
 /// type MyClient = RequestClient<String, i32>;
@@ -57,7 +57,7 @@ pub type RequestClient<Req, Resp> = Send<Req, Recv<Resp, End>>;
 /// # Examples
 ///
 /// ```
-/// use sez::api::RequestServer;
+/// use sessrums::api::RequestServer;
 ///
 /// // A server that receives a String request and sends an i32 response
 /// type MyServer = RequestServer<String, i32>;
@@ -85,7 +85,7 @@ pub type RequestServer<Req, Resp> = Recv<Req, Send<Resp, End>>;
 /// # Examples
 ///
 /// ```
-/// use sez::api::{channel_pair, RequestClient, RequestServer};
+/// use sessrums::api::{channel_pair, RequestClient, RequestServer};
 ///
 /// // Create a pair of channels for a request-response protocol
 /// let (client, server) = channel_pair::<RequestClient<String, i32>, ()>();
@@ -156,7 +156,7 @@ mod tests {
     /// # Examples
     ///
     /// ```
-    /// use sez::api::PingClient;
+    /// use sessrums::api::PingClient;
     ///
     /// // A client that sends an i32 ping and receives a String pong
     /// type MyClient = PingClient<i32, String>;
@@ -176,7 +176,7 @@ mod tests {
     /// # Examples
     ///
     /// ```
-    /// use sez::api::PingServer;
+    /// use sessrums::api::PingServer;
     ///
     /// // A server that receives an i32 ping and sends a String pong
     /// type MyServer = PingServer<i32, String>;
@@ -196,8 +196,8 @@ mod tests {
     /// # Examples
     ///
     /// ```
-    /// use sez::api::ChoiceClient;
-    /// use sez::proto::{Send, End};
+    /// use sessrums::api::ChoiceClient;
+    /// use sessrums::proto::{Send, End};
     ///
     /// // A client that chooses between sending an i32 or a String
     /// type MyClient = ChoiceClient<Send<i32, End>, Send<String, End>>;
@@ -217,8 +217,8 @@ mod tests {
     /// # Examples
     ///
     /// ```
-    /// use sez::api::OfferServer;
-    /// use sez::proto::{Recv, End};
+    /// use sessrums::api::OfferServer;
+    /// use sessrums::proto::{Recv, End};
     ///
     /// // A server that offers to receive either an i32 or a String
     /// type MyServer = OfferServer<Recv<i32, End>, Recv<String, End>>;

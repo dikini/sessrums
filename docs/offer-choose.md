@@ -1,6 +1,6 @@
 # Offer and Choose Protocol Types
 
-This document provides detailed information about the `Offer` and `Choose` protocol types in the SEZ session types library.
+This document provides detailed information about the `Offer` and `Choose` protocol types in the sessrums session types library.
 
 ## Table of Contents
 

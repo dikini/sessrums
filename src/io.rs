@@ -21,7 +21,7 @@
 /// # Examples
 ///
 /// ```
-/// use sez::io::Sender;
+/// use sessrums::io::Sender;
 ///
 /// // Define a custom sender type
 /// struct MySender<T> {
@@ -85,7 +85,7 @@ pub trait Sender<T> {
 /// # Examples
 ///
 /// ```
-/// use sez::io::Receiver;
+/// use sessrums::io::Receiver;
 ///
 /// // Define a custom receiver type
 /// struct MyReceiver<T> {
@@ -149,7 +149,7 @@ pub trait Receiver<T> {
 /// # Examples
 ///
 /// ```
-/// use sez::io::AsyncReceiver;
+/// use sessrums::io::AsyncReceiver;
 /// use futures_core::future::Future;
 /// use std::pin::Pin;
 /// use futures_core::task::{Context, Poll};
@@ -252,7 +252,7 @@ pub trait AsyncReceiver<T> {
 /// # Examples
 ///
 /// ```
-/// use sez::io::AsyncSender;
+/// use sessrums::io::AsyncSender;
 /// use futures_core::future::Future;
 /// use std::pin::Pin;
 /// use futures_core::task::{Context, Poll};

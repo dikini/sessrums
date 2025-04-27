@@ -26,10 +26,10 @@
 
 use futures_core::future::Future;
 use futures_core::task::{Context, Poll};
-use sez::chan::Chan;
-use sez::error::Error;
-use sez::io::{AsyncReceiver, AsyncSender};
-use sez::proto::{End, Protocol, Recv, Send};
+use sessrums::chan::Chan;
+use sessrums::error::Error;
+use sessrums::io::{AsyncReceiver, AsyncSender};
+use sessrums::proto::{End, Protocol, Recv, Send};
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use async_std::channel;

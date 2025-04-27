@@ -1,4 +1,4 @@
-//! # SEZ: Session Types EZ
+//! # sessrums: Session Types EZ
 //!
 //! A Rust library for asynchronous session types with minimal dependencies,
 //! focusing on expressing the process calculus in the types using Rust's type system features,
