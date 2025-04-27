@@ -1,5 +1,87 @@
 # Action Log
 
+## 2025-04-27: Completed Phase 8 - Testing & Refinement
+
+- Completed Task 8.1: Create Compile-Time Tests
+  - Created tests/compile_tests.rs with comprehensive compile-time tests
+  - Implemented tests for protocol type definitions, duality, Choose/Offer types, nested protocols, and more
+  - Added detailed documentation explaining the purpose of each test
+  - Ensured all tests verify important compile-time properties of the session type system
+
+- Completed Task 8.2: Create Runtime Tests
+  - Created tests/runtime_tests.rs with comprehensive runtime tests
+  - Implemented tests for send/recv operations, choice/offer operations, error handling, and channel closing
+  - Created a custom TestIO implementation for simulating communication
+  - Added detailed documentation explaining the runtime behavior being tested
+
+- Completed Task 8.3: Refine Error Handling
+  - Updated src/error.rs with additional error variants (Timeout, Negotiation, StateMismatch)
+  - Improved error messages with more detailed information
+  - Added a Result type alias for convenience
+  - Added From implementations for common error conversions
+  - Updated tests to verify the new error handling functionality
+
+- Completed Task 8.4: Refine API Ergonomics
+  - Created src/api.rs with type aliases, helper functions, and macros
+  - Implemented type aliases for common protocol patterns (RequestClient, RequestServer, etc.)
+  - Created helper functions for channel creation and connection establishment
+  - Implemented macros for defining protocols with a more concise syntax
+  - Added comprehensive documentation and tests for all API improvements
+
+- Completed Task 8.5: Complete Documentation
+  - Updated README.md with comprehensive information about the library
+  - Created docs/api-ergonomics.md with detailed documentation on API improvements
+  - Updated docs/index.md to include the new documentation
+  - Ensured all public items have rustdoc comments
+  - Verified that documentation builds correctly
+
+- Completed Task 8.6: Final Integration Test
+  - Created tests/final_integration_test.rs with a comprehensive test using all library features
+  - Implemented tests for API ergonomics, protocol macros, and error handling
+  - Demonstrated the use of API ergonomics improvements
+  - Added detailed documentation explaining the test scenarios
+  - Ensured all tests pass, verifying the library's functionality
+
+- Completed Task 8.1: Create Compile-Time Tests
+  - Created tests/compile_tests.rs with comprehensive compile-time tests
+  - Implemented tests for protocol type definitions, duality, Choose/Offer types, nested protocols, and more
+  - Added detailed documentation explaining the purpose of each test
+  - Ensured all tests verify important compile-time properties of the session type system
+
+- Completed Task 8.2: Create Runtime Tests
+  - Created tests/runtime_tests.rs with comprehensive runtime tests
+  - Implemented tests for send/recv operations, choice/offer operations, error handling, and channel closing
+  - Created a custom TestIO implementation for simulating communication
+  - Added detailed documentation explaining the runtime behavior being tested
+
+- Completed Task 8.3: Refine Error Handling
+  - Updated src/error.rs with additional error variants (Timeout, Negotiation, StateMismatch)
+  - Improved error messages with more detailed information
+  - Added a Result type alias for convenience
+  - Added From implementations for common error conversions
+  - Updated tests to verify the new error handling functionality
+
+- Completed Task 8.4: Refine API Ergonomics
+  - Created src/api.rs with type aliases, helper functions, and macros
+  - Implemented type aliases for common protocol patterns (RequestClient, RequestServer, etc.)
+  - Created helper functions for channel creation and connection establishment
+  - Implemented macros for defining protocols with a more concise syntax
+  - Added comprehensive documentation and tests for all API improvements
+
+- Completed Task 8.5: Complete Documentation
+  - Updated README.md with comprehensive information about the library
+  - Created docs/api-ergonomics.md with detailed documentation on API improvements
+  - Updated docs/index.md to include the new documentation
+  - Ensured all public items have rustdoc comments
+  - Verified that documentation builds correctly
+
+- Completed Task 8.6: Final Integration Test
+  - Created tests/final_integration_test.rs with a comprehensive test using all library features
+  - Implemented a complex protocol with authentication, choice, and data exchange
+  - Demonstrated the use of API ergonomics improvements
+  - Added detailed documentation explaining the protocol flow
+  - Ensured the test passes, verifying the library's functionality
+
 ## 2025-04-27: Completed Phase 7 - Asynchronous Runtime Integration & Examples
 
 - Completed Task 7.1: Add Dev Dependencies
