@@ -793,6 +793,150 @@ where
     }
 }
 
+// Implementation for recursive protocols
+impl<P: Protocol, IO> Chan<crate::proto::Rec<P>, IO> {
+    /// Unwraps a recursive protocol, allowing the inner protocol to be used.
+    ///
+    /// This method transforms a `Chan<Rec<P>, IO>` into a `Chan<P, IO>`, essentially
+    /// "entering" the recursive protocol to access its inner structure.
+    ///
+    /// # Returns
+    ///
+    /// A new channel with the unwrapped protocol.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::chan::Chan;
+    /// use sez::proto::{Rec, Send, Var, End};
+    /// use std::sync::mpsc;
+    ///
+    /// // Define a recursive protocol that sends an i32 and then loops
+    /// type LoopingSend = Rec<Send<i32, Var<0>>>;
+    ///
+    /// // Create a channel with the recursive protocol
+    /// let (tx, _) = mpsc::channel::<i32>();
+    /// let chan = Chan::<LoopingSend, _>::new(tx);
+    ///
+    /// // Enter the recursive protocol to access the inner Send<i32, Var<0>>
+    /// let chan = chan.enter();
+    ///
+    /// // Now we can send an i32
+    /// // (In a real implementation, we would await the send operation)
+    /// ```
+    pub fn enter(self) -> Chan<P, IO> {
+        // Simply transform the channel to use the inner protocol
+        Chan {
+            io: self.io,
+            _marker: PhantomData,
+        }
+    }
+}
+
+// Implementation for variable references at depth 0
+impl<IO> Chan<crate::proto::Var<0>, IO> {
+    /// Converts a variable reference at depth 0 back to a recursive protocol.
+    ///
+    /// This method handles the base case of recursion, transforming a `Chan<Var<0>, IO>`
+    /// into a `Chan<Rec<P>, IO>`, which allows for continuing the recursive protocol.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The protocol type to wrap in `Rec<P>`.
+    ///
+    /// # Returns
+    ///
+    /// A new channel with the recursive protocol.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::chan::Chan;
+    /// use sez::proto::{Rec, Send, Var, End};
+    /// use std::sync::mpsc;
+    ///
+    /// // Define a recursive protocol that sends an i32 and then loops
+    /// type LoopingSend = Rec<Send<i32, Var<0>>>;
+    ///
+    /// // Create a channel with the recursive protocol
+    /// let (tx, _) = mpsc::channel::<i32>();
+    /// let chan = Chan::<LoopingSend, _>::new(tx);
+    ///
+    /// // Enter the recursive protocol
+    /// let chan = chan.enter();
+    ///
+    /// // After sending an i32, we would reach Var<0>
+    /// // We can then use zero to loop back to the recursive protocol
+    /// // let chan = chan.send(42).await?;
+    /// // let chan = chan.zero::<Send<i32, Var<0>>>();
+    /// ```
+    pub fn zero<P>(self) -> Chan<crate::proto::Rec<P>, IO> {
+        // Transform the channel to use the recursive protocol
+        Chan {
+            io: self.io,
+            _marker: PhantomData,
+        }
+    }
+}
+
+// Helper traits for recursion with const generics
+
+/// A trait for incrementing recursion indices.
+///
+/// This trait is used to increment the depth of variable references in recursive protocols.
+/// It's particularly useful when working with nested recursive protocols.
+pub trait Inc {
+    /// The type with incremented recursion index.
+    type Result;
+}
+
+/// Implementation of `Inc` for `Var<N>` that increments the index.
+impl<const N: usize> Inc for crate::proto::Var<N> {
+    type Result = crate::proto::Var<{N + 1}>;
+}
+
+/// A trait for decrementing recursion indices.
+///
+/// This trait is used to decrement the depth of variable references in recursive protocols.
+/// It's particularly useful when working with nested recursive protocols.
+pub trait Dec {
+    /// The type with decremented recursion index.
+    type Result;
+}
+
+/// Implementation of `Dec` for `Var<N>` that decrements the index for N > 0.
+impl<const N: usize> Dec for crate::proto::Var<N>
+where
+    N: IsGreaterThanZero,
+{
+    type Result = crate::proto::Var<{N - 1}>;
+}
+
+/// A marker trait to ensure that N > 0 for decrementing recursion indices.
+///
+/// This trait is implemented only for usize values greater than 0, which
+/// ensures that we can't decrement a recursion index below 0.
+pub trait IsGreaterThanZero {}
+
+// Implement IsGreaterThanZero for all usize values except 0
+// This is done using a macro to generate implementations for a range of values
+macro_rules! impl_is_greater_than_zero {
+    ($($n:literal),*) => {
+        $(
+            impl IsGreaterThanZero for $n {}
+        )*
+    };
+}
+
+// Implement for values 1 through 100 (can be extended if needed)
+impl_is_greater_than_zero!(
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+    61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+    81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1333,5 +1477,135 @@ mod protocol_methods {
         // Close the channel
         let result = chan.close();
         assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_recursive_protocols() {
+        use crate::proto::{Rec, Var, Send, End};
+
+        // Define a simple recursive protocol: Rec<Send<i32, Var<0>>>
+        // This protocol repeatedly sends an i32 and then loops back to itself
+        type LoopingSend = Rec<Send<i32, Var<0>>>;
+
+        // Create a channel with the recursive protocol
+        let io = TestIO::<i32> { value: None };
+        let chan = Chan::<LoopingSend, _>::new(io);
+
+        // Enter the recursive protocol
+        let chan = chan.enter();
+
+        // The protocol should now be Send<i32, Var<0>>
+        let _: Chan<Send<i32, Var<0>>, _> = chan;
+
+        // Create a new channel for the next step
+        let io = TestIO::<i32> { value: None };
+        let chan = Chan::<Send<i32, Var<0>>, _>::new(io);
+
+        // Send an i32
+        let chan = chan.send(42).await.unwrap();
+
+        // The protocol should now be Var<0>
+        let _: Chan<Var<0>, _> = chan;
+
+        // Use zero to loop back to the recursive protocol
+        let chan = chan.zero::<Send<i32, Var<0>>>();
+
+        // The protocol should now be Rec<Send<i32, Var<0>>>
+        let _: Chan<Rec<Send<i32, Var<0>>>, _> = chan;
+
+        // We can enter the recursive protocol again
+        let chan = chan.enter();
+
+        // The protocol should now be Send<i32, Var<0>> again
+        let _: Chan<Send<i32, Var<0>>, _> = chan;
+    }
+
+    #[test]
+    fn test_recursion_helper_traits() {
+        use crate::proto::Var;
+        use super::{Inc, Dec};
+
+        // Test Inc trait
+        fn assert_inc<T: Inc, R>()
+        where
+            T: Inc<Result = R>,
+        {}
+
+        // Verify that Var<0>::Inc::Result is Var<1>
+        assert_inc::<Var<0>, Var<1>>();
+        // Verify that Var<1>::Inc::Result is Var<2>
+        assert_inc::<Var<1>, Var<2>>();
+        // Verify that Var<5>::Inc::Result is Var<6>
+        assert_inc::<Var<5>, Var<6>>();
+
+        // Test Dec trait
+        fn assert_dec<T: Dec, R>()
+        where
+            T: Dec<Result = R>,
+        {}
+
+        // Verify that Var<1>::Dec::Result is Var<0>
+        assert_dec::<Var<1>, Var<0>>();
+        // Verify that Var<2>::Dec::Result is Var<1>
+        assert_dec::<Var<2>, Var<1>>();
+        // Verify that Var<10>::Dec::Result is Var<9>
+        assert_dec::<Var<10>, Var<9>>();
+
+        // Verify that Dec is not implemented for Var<0>
+        // This would cause a compilation error if uncommented:
+        // assert_dec::<Var<0>, Var<0>>();
+    }
+
+    #[tokio::test]
+    async fn test_nested_recursive_protocols() {
+        use crate::proto::{Rec, Var, Send, End};
+
+        // Define a nested recursive protocol:
+        // Outer recursion: Rec<Send<i32, Inner>>
+        // Inner recursion: Rec<Send<String, Var<0>>>
+        type InnerRec = Rec<Send<String, Var<0>>>;
+        type OuterRec = Rec<Send<i32, InnerRec>>;
+
+        // Create a channel with the outer recursive protocol
+        let io = TestIO::<i32> { value: None };
+        let chan = Chan::<OuterRec, _>::new(io);
+
+        // Enter the outer recursive protocol
+        let chan = chan.enter();
+
+        // The protocol should now be Send<i32, InnerRec>
+        let _: Chan<Send<i32, InnerRec>, _> = chan;
+
+        // Create a new channel for the next step
+        let io = TestIO::<i32> { value: None };
+        let chan = Chan::<Send<i32, InnerRec>, _>::new(io);
+
+        // Send an i32
+        let chan = chan.send(42).await.unwrap();
+
+        // The protocol should now be InnerRec
+        let _: Chan<InnerRec, _> = chan;
+
+        // Enter the inner recursive protocol
+        let chan = chan.enter();
+
+        // The protocol should now be Send<String, Var<0>>
+        let _: Chan<Send<String, Var<0>>, _> = chan;
+
+        // Create a new channel for the next step
+        let io = TestIO::<String> { value: None };
+        let chan = Chan::<Send<String, Var<0>>, _>::new(io);
+
+        // Send a String
+        let chan = chan.send("Hello".to_string()).await.unwrap();
+
+        // The protocol should now be Var<0>
+        let _: Chan<Var<0>, _> = chan;
+
+        // Use zero to loop back to the inner recursive protocol
+        let chan = chan.zero::<Send<String, Var<0>>>();
+
+        // The protocol should now be Rec<Send<String, Var<0>>>
+        let _: Chan<Rec<Send<String, Var<0>>>, _> = chan;
     }
 }

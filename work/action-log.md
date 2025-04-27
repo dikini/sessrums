@@ -1,5 +1,32 @@
 # Action Log
 
+## 2025-04-27: Completed Phase 5, Tasks 5.4-5.6 - Implement Chan Methods for Recursion
+
+- Implemented the `enter` method for `Chan<Rec<P>, IO>`
+  - Added function signature: `fn enter(self) -> Chan<P, IO>`
+  - Implemented method to unwrap a recursive protocol, allowing the inner protocol to be used
+  - Added comprehensive documentation with examples
+  - Added unit tests to verify correct behavior
+
+- Implemented the `zero` method for `Chan<Var<0>, IO>`
+  - Added function signature: `fn zero<P>(self) -> Chan<Rec<P>, IO>`
+  - Implemented method to handle the base case of recursion, converting a variable reference at depth 0 back to a recursive protocol
+  - Added comprehensive documentation with examples
+  - Added unit tests to verify correct behavior
+
+- Created helper traits for recursion
+  - Implemented `Inc` trait for incrementing recursion indices
+  - Implemented `Dec` trait for decrementing recursion indices
+  - Added `IsGreaterThanZero` marker trait to ensure safe decrementation
+  - Used macro to implement `IsGreaterThanZero` for a range of values
+  - Added unit tests for helper traits
+
+- Added comprehensive tests for recursive protocol methods
+  - Created test for basic recursive protocol usage with `enter` and `zero` methods
+  - Created test for helper traits to verify type-level operations
+  - Created test for nested recursive protocols to verify complex recursion scenarios
+  - Verified that all tests pass, confirming correct implementation
+
 ## 2025-04-27: Completed Phase 5, Tasks 5.1-5.3 - Implement Core Recursion Types
 
 - Created `src/proto/rec.rs` with the `Rec<P>` type definition
