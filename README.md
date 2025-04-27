@@ -1,10 +1,8 @@
-# sessrums: Session Types EZ
-
-A Rust library for asynchronous session types with minimal dependencies, focusing on expressing the process calculus in the types using Rust's type system features, including `const generics`.
+# sessrums: Session Types 
 
 ## Overview
 
-sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks.
+sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks. The current implementation is mostly hallucinated, hence the name. Feedback is welcome.
 
 ## Core Concepts
 
