@@ -1,5 +1,38 @@
 # Action Log
 
+## 2025-04-27: Completed Task 4.4 - Update send and recv Methods
+
+- Updated the send method in src/chan/mod.rs to use the AsyncSender trait
+  - Changed trait bound from `IO: crate::io::Sender<T>` to `IO: crate::io::AsyncSender<T>`
+  - Modified implementation to await the future returned by `self.io_mut().send(value)`
+  - Updated documentation to reflect the use of asynchronous traits
+  - Updated examples in documentation to demonstrate AsyncSender usage
+
+- Updated the recv method in src/chan/mod.rs to use the AsyncReceiver trait
+  - Changed trait bound from `IO: crate::io::Receiver<T>` to `IO: crate::io::AsyncReceiver<T>`
+  - Modified implementation to await the future returned by `self.io_mut().recv()`
+  - Updated documentation to reflect the use of asynchronous traits
+  - Updated examples in documentation to demonstrate AsyncReceiver usage
+
+- Updated the test module in src/chan/mod.rs
+  - Implemented AsyncSender and AsyncReceiver for TestIO
+  - Created TestSendFuture and TestRecvFuture implementations
+  - Added proper Unpin trait bounds to prevent issues with Pin<&mut Self>
+  - Ensured all tests pass with the new asynchronous implementation
+
+- Updated integration tests to use the asynchronous traits
+  - Modified TestIO implementation in tests/integration/protocol_1.rs
+  - Added futures implementations for async operations
+  - Ensured backward compatibility with existing tests
+
+- Fixed various issues during implementation:
+  - Added Unpin trait bounds to futures to ensure safe use with Pin<&mut Self>
+  - Fixed doctests to use proper async trait implementations
+  - Added 'static bounds where needed for TypeId usage
+  - Used raw pointers carefully to handle non-cloneable types like mpsc::Receiver
+
+- All tests are now passing, including unit tests, integration tests, and doctests
+
 ## 2025-04-27: Completed Tasks 4.2 and 4.3 - Define AsyncSender and AsyncReceiver Traits
 
 - Implemented AsyncSender<T> trait in src/io.rs

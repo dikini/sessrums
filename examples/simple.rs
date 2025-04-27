@@ -25,10 +25,14 @@
 
 use sez::chan::Chan;
 use sez::proto::{End, Protocol, Recv, Send};
-use sez::io::{Sender, Receiver};
+use sez::io::{AsyncSender, AsyncReceiver};
 use sez::error::Error;
 use std::sync::mpsc;
 use std::thread;
+use futures_core::future::Future;
+use std::pin::Pin;
+use futures_core::task::{Context, Poll};
+use std::marker::PhantomData;
 
 // A bidirectional channel that can both send and receive values
 struct BiChannel<T> {
@@ -36,21 +40,72 @@ struct BiChannel<T> {
     receiver: mpsc::Receiver<T>,
 }
 
-// Implement Sender for BiChannel
-impl<T> Sender<T> for BiChannel<T> {
-    type Error = mpsc::SendError<T>;
+// Define futures for BiChannel
+struct BiChannelSendFuture<T: Default + Unpin> {
+    sender: mpsc::Sender<T>,
+    value: Option<T>,
+}
 
-    fn send(&mut self, value: T) -> Result<(), Self::Error> {
-        self.sender.send(value)
+struct BiChannelRecvFuture<T: Unpin> {
+    receiver: *mut mpsc::Receiver<T>,
+    _marker: PhantomData<T>,
+}
+
+// Implement Future for BiChannelSendFuture
+impl<T: Default + Unpin> Future for BiChannelSendFuture<T> {
+    type Output = Result<(), mpsc::SendError<T>>;
+
+    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.get_mut();
+        if let Some(value) = this.value.take() {
+            match this.sender.send(value) {
+                Ok(()) => Poll::Ready(Ok(())),
+                Err(e) => Poll::Ready(Err(e)),
+            }
+        } else {
+            Poll::Ready(Err(mpsc::SendError(Default::default())))
+        }
     }
 }
 
-// Implement Receiver for BiChannel
-impl<T> Receiver<T> for BiChannel<T> {
-    type Error = mpsc::RecvError;
+// Implement Future for BiChannelRecvFuture
+impl<T: Unpin> Future for BiChannelRecvFuture<T> {
+    type Output = Result<T, mpsc::RecvError>;
 
-    fn recv(&mut self) -> Result<T, Self::Error> {
-        self.receiver.recv()
+    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.get_mut();
+        // Safety: We know the pointer is valid for the lifetime of the future
+        let receiver = unsafe { &mut *this.receiver };
+        match receiver.recv() {
+            Ok(value) => Poll::Ready(Ok(value)),
+            Err(e) => Poll::Ready(Err(e)),
+        }
+    }
+}
+
+// Implement AsyncSender for BiChannel
+impl<T: Default + Unpin> AsyncSender<T> for BiChannel<T> {
+    type Error = mpsc::SendError<T>;
+    type SendFuture<'a> = BiChannelSendFuture<T> where T: 'a, Self: 'a;
+
+    fn send(&mut self, value: T) -> Self::SendFuture<'_> {
+        BiChannelSendFuture {
+            sender: self.sender.clone(),
+            value: Some(value),
+        }
+    }
+}
+
+// Implement AsyncReceiver for BiChannel
+impl<T: Unpin> AsyncReceiver<T> for BiChannel<T> {
+    type Error = mpsc::RecvError;
+    type RecvFuture<'a> = BiChannelRecvFuture<T> where T: 'a, Self: 'a;
+
+    fn recv(&mut self) -> Self::RecvFuture<'_> {
+        BiChannelRecvFuture {
+            receiver: &mut self.receiver as *mut mpsc::Receiver<T>,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -145,21 +200,66 @@ async fn demonstrate_error_handling() -> Result<(), Error> {
     // Create a custom IO implementation that fails on recv
     struct FailingIO;
     
-    impl Sender<String> for FailingIO {
+    // Define futures for FailingIO
+    struct FailingIOSendFuture {
+        success: bool,
+    }
+
+    struct FailingIORecvFuture {
+        success: bool,
+    }
+
+    // Implement Future for FailingIOSendFuture
+    impl Future for FailingIOSendFuture {
+        type Output = Result<(), ()>;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+            if self.success {
+                println!("Send operation succeeded");
+                Poll::Ready(Ok(()))
+            } else {
+                println!("Send operation failed");
+                Poll::Ready(Err(()))
+            }
+        }
+    }
+
+    // Implement Future for FailingIORecvFuture
+    impl Future for FailingIORecvFuture {
+        type Output = Result<String, ()>;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+            if self.success {
+                println!("Receive operation succeeded");
+                Poll::Ready(Ok("Success".to_string()))
+            } else {
+                println!("Receive operation failed");
+                Poll::Ready(Err(()))
+            }
+        }
+    }
+
+    // Implement AsyncSender for FailingIO
+    impl AsyncSender<String> for FailingIO {
         type Error = ();
-        
-        fn send(&mut self, _value: String) -> Result<(), Self::Error> {
-            println!("Send operation succeeded");
-            Ok(())
+        type SendFuture<'a> = FailingIOSendFuture where Self: 'a;
+
+        fn send(&mut self, _value: String) -> Self::SendFuture<'_> {
+            FailingIOSendFuture {
+                success: true,
+            }
         }
     }
     
-    impl Receiver<String> for FailingIO {
+    // Implement AsyncReceiver for FailingIO
+    impl AsyncReceiver<String> for FailingIO {
         type Error = ();
-        
-        fn recv(&mut self) -> Result<String, Self::Error> {
-            println!("Receive operation failed");
-            Err(())
+        type RecvFuture<'a> = FailingIORecvFuture where Self: 'a;
+
+        fn recv(&mut self) -> Self::RecvFuture<'_> {
+            FailingIORecvFuture {
+                success: false,
+            }
         }
     }
     
@@ -223,7 +323,11 @@ async fn main() -> Result<(), Error> {
 mod type_safety_examples {
     use sez::chan::Chan;
     use sez::proto::{End, Recv, Send};
-    use sez::io::{Sender, Receiver};
+    use sez::io::{AsyncSender, AsyncReceiver};
+    use futures_core::future::Future;
+    use std::pin::Pin;
+    use futures_core::task::{Context, Poll};
+    use std::marker::PhantomData;
     
     // Define a protocol: Send an i32, then receive a String, then end
     type MyProtocol = Send<i32, Recv<String, End>>;
@@ -232,21 +336,54 @@ mod type_safety_examples {
     // In a real application, you would use a proper bidirectional channel
     struct DummyIO;
     
-    // Implement Sender<i32> for DummyIO
-    impl Sender<i32> for DummyIO {
+    // Define futures for DummyIO
+    struct DummyIOSendFuture<T> {
+        _marker: PhantomData<T>,
+    }
+
+    struct DummyIORecvFuture {
+        response: String,
+    }
+
+    // Implement Future for DummyIOSendFuture<i32>
+    impl Future for DummyIOSendFuture<i32> {
+        type Output = Result<(), ()>;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+            Poll::Ready(Ok(()))
+        }
+    }
+
+    // Implement Future for DummyIORecvFuture
+    impl Future for DummyIORecvFuture {
+        type Output = Result<String, ()>;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+            Poll::Ready(Ok(self.response.clone()))
+        }
+    }
+
+    // Implement AsyncSender<i32> for DummyIO
+    impl AsyncSender<i32> for DummyIO {
         type Error = ();
+        type SendFuture<'a> = DummyIOSendFuture<i32> where Self: 'a;
         
-        fn send(&mut self, _value: i32) -> Result<(), Self::Error> {
-            Ok(())
+        fn send(&mut self, _value: i32) -> Self::SendFuture<'_> {
+            DummyIOSendFuture {
+                _marker: PhantomData,
+            }
         }
     }
     
-    // Implement Receiver<String> for DummyIO
-    impl Receiver<String> for DummyIO {
+    // Implement AsyncReceiver<String> for DummyIO
+    impl AsyncReceiver<String> for DummyIO {
         type Error = ();
+        type RecvFuture<'a> = DummyIORecvFuture where Self: 'a;
         
-        fn recv(&mut self) -> Result<String, Self::Error> {
-            Ok("dummy response".to_string())
+        fn recv(&mut self) -> Self::RecvFuture<'_> {
+            DummyIORecvFuture {
+                response: "dummy response".to_string(),
+            }
         }
     }
     

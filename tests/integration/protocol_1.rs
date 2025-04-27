@@ -56,6 +56,10 @@
 
 use sez::proto::{Send, Recv, End};
 use sez::chan::Chan;
+use futures_core::future::Future;
+use std::pin::Pin;
+use futures_core::task::{Context, Poll};
+use std::marker::PhantomData;
 
 // Import helper functions from the integration test module
 use crate::integration::{assert_protocol, assert_dual, mock_channel};
@@ -81,6 +85,7 @@ async fn test_ping_pong_protocol() {
     
     // Create a pair of channels with the PingPongClient and PingPongServer types
     // We'll use a custom IO implementation for testing
+    #[derive(Clone)]
     struct TestIO {
         client_to_server: Option<i32>,
         server_to_client: Option<String>,
@@ -90,41 +95,152 @@ async fn test_ping_pong_protocol() {
     #[derive(Debug)]
     struct TestError;
     
-    // Implement Sender<i32> for TestIO (client sending to server)
-    impl sez::io::Sender<i32> for TestIO {
+    // Define futures for async operations
+    struct TestSendFuture<T> {
+        io: TestIO,
+        value: Option<T>,
+        is_client_to_server: bool,
+    }
+
+    struct TestRecvFuture<T> {
+        io: TestIO,
+        is_client_to_server: bool,
+        _marker: PhantomData<T>,
+    }
+
+    // Implement Future for TestSendFuture<i32>
+    impl Future for TestSendFuture<i32> {
+        type Output = Result<(), TestError>;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+            let this = self.get_mut();
+            if let Some(value) = this.value.take() {
+                if this.is_client_to_server {
+                    this.io.client_to_server = Some(value);
+                }
+                Poll::Ready(Ok(()))
+            } else {
+                Poll::Ready(Err(TestError))
+            }
+        }
+    }
+
+    // Implement Future for TestSendFuture<String>
+    impl Future for TestSendFuture<String> {
+        type Output = Result<(), TestError>;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+            let this = self.get_mut();
+            if let Some(value) = this.value.take() {
+                if !this.is_client_to_server {
+                    this.io.server_to_client = Some(value);
+                }
+                Poll::Ready(Ok(()))
+            } else {
+                Poll::Ready(Err(TestError))
+            }
+        }
+    }
+
+    // Implement Future for TestRecvFuture<i32>
+    impl Future for TestRecvFuture<i32> {
+        type Output = Result<i32, TestError>;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+            let this = self.get_mut();
+            if this.is_client_to_server {
+                match this.io.client_to_server.take() {
+                    Some(value) => Poll::Ready(Ok(value)),
+                    None => Poll::Ready(Err(TestError)),
+                }
+            } else {
+                Poll::Ready(Err(TestError))
+            }
+        }
+    }
+
+    // Implement Future for TestRecvFuture<String>
+    impl Future for TestRecvFuture<String> {
+        type Output = Result<String, TestError>;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+            let this = self.get_mut();
+            if !this.is_client_to_server {
+                match this.io.server_to_client.take() {
+                    Some(value) => Poll::Ready(Ok(value)),
+                    None => Poll::Ready(Err(TestError)),
+                }
+            } else {
+                Poll::Ready(Err(TestError))
+            }
+        }
+    }
+
+    // Implement AsyncSender<i32> for TestIO (client sending to server)
+    impl sez::io::AsyncSender<i32> for TestIO {
         type Error = TestError;
-        
-        fn send(&mut self, value: i32) -> Result<(), Self::Error> {
-            self.client_to_server = Some(value);
-            Ok(())
+        type SendFuture<'a> = TestSendFuture<i32> where Self: 'a;
+
+        fn send(&mut self, value: i32) -> Self::SendFuture<'_> {
+            TestSendFuture {
+                io: TestIO {
+                    client_to_server: self.client_to_server,
+                    server_to_client: self.server_to_client.clone(),
+                },
+                value: Some(value),
+                is_client_to_server: true,
+            }
         }
     }
     
-    // Implement Receiver<i32> for TestIO (server receiving from client)
-    impl sez::io::Receiver<i32> for TestIO {
+    // Implement AsyncReceiver<i32> for TestIO (server receiving from client)
+    impl sez::io::AsyncReceiver<i32> for TestIO {
         type Error = TestError;
+        type RecvFuture<'a> = TestRecvFuture<i32> where Self: 'a;
         
-        fn recv(&mut self) -> Result<i32, Self::Error> {
-            self.client_to_server.take().ok_or(TestError)
+        fn recv(&mut self) -> Self::RecvFuture<'_> {
+            TestRecvFuture {
+                io: TestIO {
+                    client_to_server: self.client_to_server,
+                    server_to_client: self.server_to_client.clone(),
+                },
+                is_client_to_server: true,
+                _marker: PhantomData,
+            }
         }
     }
     
-    // Implement Sender<String> for TestIO (server sending to client)
-    impl sez::io::Sender<String> for TestIO {
+    // Implement AsyncSender<String> for TestIO (server sending to client)
+    impl sez::io::AsyncSender<String> for TestIO {
         type Error = TestError;
+        type SendFuture<'a> = TestSendFuture<String> where Self: 'a;
         
-        fn send(&mut self, value: String) -> Result<(), Self::Error> {
-            self.server_to_client = Some(value);
-            Ok(())
+        fn send(&mut self, value: String) -> Self::SendFuture<'_> {
+            TestSendFuture {
+                io: TestIO {
+                    client_to_server: self.client_to_server,
+                    server_to_client: self.server_to_client.clone(),
+                },
+                value: Some(value),
+                is_client_to_server: false,
+            }
         }
     }
     
-    // Implement Receiver<String> for TestIO (client receiving from server)
-    impl sez::io::Receiver<String> for TestIO {
+    // Implement AsyncReceiver<String> for TestIO (client receiving from server)
+    impl sez::io::AsyncReceiver<String> for TestIO {
         type Error = TestError;
+        type RecvFuture<'a> = TestRecvFuture<String> where Self: 'a;
         
-        fn recv(&mut self) -> Result<String, Self::Error> {
-            self.server_to_client.take().ok_or(TestError)
+        fn recv(&mut self) -> Self::RecvFuture<'_> {
+            TestRecvFuture {
+                io: TestIO {
+                    client_to_server: self.client_to_server,
+                    server_to_client: self.server_to_client.clone(),
+                },
+                is_client_to_server: false,
+                _marker: PhantomData,
+            }
         }
     }
     
