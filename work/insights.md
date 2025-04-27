@@ -1,5 +1,34 @@
 # Insights and Learnings
 
+## 2025-04-27: Phase 5, Tasks 5.1-5.3 Completion - Implement Core Recursion Types
+
+### Technical Insights
+- Recursive types are essential for expressing protocols with repetitive or looping behavior
+- The `Rec<P>` type acts as a binder for recursive protocols, allowing self-reference through `Var<N>` types
+- The recursion depth parameter `N` in `Var<const N: usize>` enables referring to different enclosing `Rec` layers
+- Duality for recursive types preserves the recursive structure: `Rec<P>::Dual` is `Rec<P::Dual>`
+- Variable references maintain their position in dual protocols: `Var<N>::Dual` is `Var<N>`
+- Const generics provide a clean way to represent recursion depth without runtime overhead
+- The combination of `Rec<P>` and `Var<N>` enables expressing complex protocols with loops and repetition
+
+### Design Patterns
+- The recursive type pattern allows for expressing infinite or repeating protocols
+- The binding pattern is implemented through `Rec<P>` which binds variables in its scope
+- The variable reference pattern is implemented through `Var<N>` which refers back to enclosing binders
+- The de Bruijn index pattern is used for variable references, where the index represents the nesting level
+- The phantom type pattern continues to be used to carry type information without runtime overhead
+- The duality pattern extends naturally to recursive types, preserving the recursive structure
+
+### Best Practices
+- Using const generics for recursion depth provides type safety without runtime overhead
+- Comprehensive documentation with examples helps users understand recursive protocols
+- Testing recursive types with different compositions ensures the type system works as expected
+- Testing nested recursion verifies that variable references work correctly at different depths
+- Maintaining the duality relationship for recursive types ensures protocol compatibility
+- Using PhantomData in `Rec<P>` allows carrying type information without runtime overhead
+- Implementing `Var<N>` as a zero-sized type minimizes runtime overhead
+- Providing clear examples of recursive protocols helps users understand how to use these types
+
 ## 2025-04-27: Task 4.7 Completion - Create Async Protocol Example
 
 ### Technical Insights

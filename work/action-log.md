@@ -1,5 +1,35 @@
 # Action Log
 
+## 2025-04-27: Completed Phase 5, Tasks 5.1-5.3 - Implement Core Recursion Types
+
+- Created `src/proto/rec.rs` with the `Rec<P>` type definition
+  - Implemented a recursive protocol type that can refer to itself
+  - Added comprehensive documentation with examples
+  - Implemented the Protocol trait with proper duality relationship
+  - Added unit tests for the Rec type and its duality properties
+
+- Created `src/proto/var.rs` with the `Var<const N: usize>` type definition
+  - Implemented a variable reference type for recursive protocols
+  - Used const generic parameter to specify recursion depth
+  - Added comprehensive documentation with examples
+  - Implemented the Protocol trait with proper duality relationship
+  - Added unit tests for the Var type and its duality properties
+
+- Updated `src/proto/mod.rs` to uncomment and expose the new types
+  - Uncommented the mod and pub use statements for rec and var modules
+  - Verified that all tests pass with the new types
+
+- Implemented duality for both types:
+  - `Rec<P>::Dual` is `Rec<P::Dual>`, preserving the recursive structure while dualizing the inner protocol
+  - `Var<N>::Dual` is `Var<N>`, as variable references correspond to the same position in dual protocols
+
+- Added comprehensive tests for both types:
+  - Basic protocol implementation tests
+  - Duality symmetry tests
+  - Tests with Send/Recv composition
+  - Tests with complex protocol compositions
+  - Tests with nested recursion and variable references at different depths
+
 ## 2025-04-27: Completed Task 4.7 - Create Async Protocol Example
 
 - Created examples/async.rs with a comprehensive asynchronous protocol example

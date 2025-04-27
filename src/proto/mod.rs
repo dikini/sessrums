@@ -24,8 +24,8 @@ mod choose;
 pub use choose::Choose;
 
 // These will be uncommented in Phase 5
-// mod rec;
-// pub use rec::Rec;
+mod rec;
+pub use rec::Rec;
 
-// mod var;
-// pub use var::Var;
+mod var;
+pub use var::Var;
