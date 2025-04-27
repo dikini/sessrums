@@ -18,3 +18,6 @@ pub mod error;
 
 // This will be uncommented in Phase 2
 pub mod io;
+
+// Phase 6 implementation
+pub mod connect;

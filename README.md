@@ -48,6 +48,16 @@ SEZ provides the following protocol types:
 SEZ is designed with minimal dependencies:
 
 - **futures-core**: Provides core traits for asynchronous programming, enabling the implementation of async versions of communication traits.
+- **serde**: Provides serialization and deserialization capabilities for sending and receiving values over channels.
+- **bincode**: Provides binary encoding and decoding for efficient data transmission.
+
+### Dev Dependencies
+
+For development and examples, the following dependencies are used:
+
+- **tokio**: A runtime for asynchronous programming in Rust, used in examples and tests.
+- **async-std**: An asynchronous runtime and utilities, providing an alternative to tokio for examples.
+- **trybuild**: A tool for testing compile failures, used for testing the type system.
 
 ## Channel Implementation
 

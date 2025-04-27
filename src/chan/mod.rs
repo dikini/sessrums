@@ -870,7 +870,7 @@ impl<IO> Chan<crate::proto::Var<0>, IO> {
     /// // let chan = chan.send(42).await?;
     /// // let chan = chan.zero::<Send<i32, Var<0>>>();
     /// ```
-    pub fn zero<P>(self) -> Chan<crate::proto::Rec<P>, IO> {
+    pub fn zero<P: Protocol>(self) -> Chan<crate::proto::Rec<P>, IO> {
         // Transform the channel to use the recursive protocol
         Chan {
             io: self.io,
@@ -885,57 +885,23 @@ impl<IO> Chan<crate::proto::Var<0>, IO> {
 ///
 /// This trait is used to increment the depth of variable references in recursive protocols.
 /// It's particularly useful when working with nested recursive protocols.
+// Note: The Inc and Dec traits are temporarily disabled due to limitations
+// with const generics in the current Rust version.
+// These will be re-enabled in a future version.
+
+/// A trait for incrementing recursion indices.
 pub trait Inc {
     /// The type with incremented recursion index.
     type Result;
 }
 
-/// Implementation of `Inc` for `Var<N>` that increments the index.
-impl<const N: usize> Inc for crate::proto::Var<N> {
-    type Result = crate::proto::Var<{N + 1}>;
-}
-
 /// A trait for decrementing recursion indices.
-///
-/// This trait is used to decrement the depth of variable references in recursive protocols.
-/// It's particularly useful when working with nested recursive protocols.
 pub trait Dec {
     /// The type with decremented recursion index.
     type Result;
 }
 
-/// Implementation of `Dec` for `Var<N>` that decrements the index for N > 0.
-impl<const N: usize> Dec for crate::proto::Var<N>
-where
-    N: IsGreaterThanZero,
-{
-    type Result = crate::proto::Var<{N - 1}>;
-}
-
-/// A marker trait to ensure that N > 0 for decrementing recursion indices.
-///
-/// This trait is implemented only for usize values greater than 0, which
-/// ensures that we can't decrement a recursion index below 0.
-pub trait IsGreaterThanZero {}
-
-// Implement IsGreaterThanZero for all usize values except 0
-// This is done using a macro to generate implementations for a range of values
-macro_rules! impl_is_greater_than_zero {
-    ($($n:literal),*) => {
-        $(
-            impl IsGreaterThanZero for $n {}
-        )*
-    };
-}
-
-// Implement for values 1 through 100 (can be extended if needed)
-impl_is_greater_than_zero!(
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-    61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
-    81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100
-);
+// Placeholder implementations that will be expanded in the future
 
 #[cfg(test)]
 mod tests {

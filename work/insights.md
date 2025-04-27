@@ -1,5 +1,67 @@
 # Insights and Learnings
 
+## 2025-04-27: Phase 7 Completion - Asynchronous Runtime Integration & Examples
+
+### Technical Insights
+- Integrating with multiple async runtimes (Tokio and async-std) provides flexibility for users
+- The Send trait is crucial for futures that need to be moved across thread boundaries
+- Custom channel implementations can adapt different async runtimes to the session types library
+- Recursive protocols require careful handling of type transformations when using zero() and enter() methods
+- Complex protocols with multiple branches demonstrate the full power of session types
+- Proper error handling is essential for robust async communication
+- Type-level programming in Rust can be challenging but provides strong compile-time guarantees
+
+### Design Patterns
+- The adapter pattern is used to adapt different async runtimes to the session types library
+- The future-based design pattern allows for non-blocking IO operations
+- The trait bounds pattern ensures type safety across different implementations
+- The boxed future pattern enables type erasure for async blocks
+- The trait object pattern (dyn Future<...>) allows for flexible async handlers
+- The bidirectional channel pattern provides a clean way to implement full-duplex communication
+- The type-state pattern continues to ensure protocol adherence at compile time
+
+### Best Practices
+- Creating examples for multiple async runtimes demonstrates the library's flexibility
+- Implementing the Send trait for futures ensures they can be used across thread boundaries
+- Using custom channel implementations for different message types provides type safety
+- Handling async block type uniqueness through boxed futures with trait objects
+- Resolving naming conflicts by renaming imports (Send as ProtoSend)
+- Adding proper Send + 'static bounds for boxed futures ensures thread safety
+- Creating simplified examples for complex features helps users understand the library
+- Providing detailed documentation with visual diagrams improves understanding
+- Testing with both Tokio and async-std ensures compatibility with different runtimes
+
+## 2025-04-27: Phase 6 Completion - Connection Establishment
+
+### Technical Insights
+- Network communication requires careful handling of serialization and deserialization
+- Adapting stream types to the session type system can be done through wrapper types
+- Feature flags provide a clean way to conditionally include platform-specific code
+- Asynchronous IO operations are essential for efficient network communication
+- Proper error handling is crucial for robust network protocols
+- The combination of session types and network streams provides type-safe network protocols
+- Serialization formats like bincode provide efficient binary encoding for network communication
+
+### Design Patterns
+- The adapter pattern is used to adapt stream types to the session type system
+- The wrapper pattern encapsulates stream types with additional functionality
+- The feature flag pattern allows for conditional compilation of platform-specific code
+- The serialization pattern handles conversion between Rust types and binary data
+- The connection establishment pattern provides a clean API for creating connections
+- The error handling pattern ensures robust network communication
+- The type-safe protocol pattern ensures protocol adherence at compile time
+
+### Best Practices
+- Separating connection establishment from protocol implementation improves modularity
+- Using feature flags for platform-specific code improves portability
+- Implementing both client and server sides of a protocol demonstrates complete functionality
+- Adding comprehensive documentation with examples helps users understand the API
+- Including detailed comments in examples explains the protocol flow
+- Testing with mock streams ensures the implementation works correctly
+- Handling network errors appropriately ensures robust communication
+- Using serialization libraries like serde and bincode simplifies data encoding/decoding
+- Creating a dedicated example for connection establishment demonstrates practical usage
+
 ## 2025-04-27: Phase 5, Task 5.7 Completion - Create Recursive Protocol Example
 
 ### Technical Insights

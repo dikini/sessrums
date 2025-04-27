@@ -1,5 +1,69 @@
 # Action Log
 
+## 2025-04-27: Completed Phase 7 - Asynchronous Runtime Integration & Examples
+
+- Completed Task 7.1: Add Dev Dependencies
+  - Updated Cargo.toml to include async-std as a dev-dependency
+  - Documented the dev-dependencies in README.md
+  - Verified that the project builds successfully with the new dev-dependencies
+
+- Completed Task 7.2: Create Tokio Integration Example
+  - Created examples/tokio_integration.rs with a comprehensive Tokio integration example
+  - Implemented a custom IO implementation using Tokio's mpsc channels
+  - Demonstrated a complete client-server protocol with Tokio
+  - Added detailed documentation with comments explaining the protocol flow
+  - Ensured the example compiles and runs correctly with Tokio
+
+- Completed Task 7.3: Create async-std Integration Example
+  - Created examples/async_std_integration.rs with a comprehensive async-std integration example
+  - Implemented a custom IO implementation using async-std's channels
+  - Demonstrated a complete client-server protocol with async-std
+  - Added detailed documentation with comments explaining the protocol flow
+  - Ensured the example compiles and runs correctly with async-std
+
+- Completed Task 7.4: Implement Send Trait for Futures
+  - Created examples/send_trait_simple.rs to demonstrate Send trait implementation
+  - Implemented futures that implement the Send trait for cross-thread usage
+  - Demonstrated using these futures with both Tokio and async-std
+  - Added detailed documentation explaining the importance of Send trait for async code
+  - Added tests to verify Send trait implementation
+
+- Completed Task 7.5: Create Complex Protocol Example
+  - Created examples/complex.rs with a complex protocol example
+  - Implemented a calculator service with multiple operation choices
+  - Demonstrated protocol branching with Choose and Offer types
+  - Added detailed documentation with comments explaining the protocol flow
+  - Ensured the example compiles and runs correctly
+
+## 2025-04-27: Completed Phase 6 - Connection Establishment
+
+- Completed Task 6.1: Define Connection Functions
+  - Created `src/connect.rs` with connection establishment functions
+  - Implemented `connect` function to create a channel with a specified protocol and stream
+  - Implemented `accept` function to accept connections from a listener
+  - Added comprehensive documentation with examples
+  - Added unit tests for connection functions
+
+- Completed Task 6.2: Implement Stream Wrappers
+  - Created `StreamWrapper<S, T>` to adapt stream types to the session type system
+  - Implemented `AsyncSender` and `AsyncReceiver` traits for `StreamWrapper<TcpStream, T>`
+  - Implemented `AsyncSender` and `AsyncReceiver` traits for `StreamWrapper<UnixStream, T>`
+  - Added serialization and deserialization support using serde and bincode
+  - Added comprehensive documentation with examples
+  - Added unit tests for stream wrappers
+
+- Completed Task 6.3: Create Connection Example
+  - Created `examples/connect.rs` with a comprehensive connection example
+  - Implemented a client-server protocol using TCP streams
+  - Added detailed documentation with comments explaining the protocol flow
+  - Demonstrated proper error handling for network communication
+  - Ensured the example compiles and runs correctly
+
+- Updated project configuration:
+  - Added serde and bincode dependencies for serialization
+  - Added feature flags for TCP and Unix socket support
+  - Updated lib.rs to export the connect module
+
 ## 2025-04-27: Completed Phase 5, Task 5.7 - Create Recursive Protocol Example
 
 - Created `examples/recursion.rs` with a comprehensive example demonstrating recursive protocols
