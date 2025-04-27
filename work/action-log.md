@@ -1,5 +1,33 @@
 # Action Log
 
+## 2025-04-27: Completed Tasks 4.2 and 4.3 - Define AsyncSender and AsyncReceiver Traits
+
+- Implemented AsyncSender<T> trait in src/io.rs
+  - Defined the trait with an async send method that returns a Future
+  - Added the SendFuture associated type to represent the asynchronous operation
+  - Documented the trait with comprehensive examples
+  - Added proper lifetime and trait bounds for type safety
+
+- Implemented AsyncReceiver<T> trait in src/io.rs
+  - Defined the trait with an async recv method that returns a Future
+  - Added the RecvFuture associated type to represent the asynchronous operation
+  - Documented the trait with comprehensive examples
+  - Added proper lifetime and trait bounds for type safety
+
+- Added unit tests for both traits
+  - Created a simple in-memory async sender/receiver implementation for testing
+  - Implemented the traits for tokio's mpsc channels
+  - Added tests for sending and receiving single values
+  - Added tests for sending and receiving multiple values
+
+- Fixed various issues during implementation:
+  - Added required Self: 'a bound to the trait definitions
+  - Fixed Pin handling in the Future implementations
+  - Corrected where clause locations in trait implementations
+  - Ensured proper Unpin bounds for types used in Pin contexts
+
+- All tests are now passing, including unit tests and doctests
+
 ## 2025-04-27: Completed Task 4.1 - Add futures-core Dependency
 
 - Added futures-core v0.3 as a main dependency in Cargo.toml
