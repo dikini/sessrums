@@ -16,6 +16,28 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+/// A trait for types that can be used to establish a connection.
+///
+/// This trait is implemented by types that provide connection information
+/// for establishing a connection between two endpoints.
+///
+/// # Type Parameters
+///
+/// * `IO` - The IO implementation type that will be used for communication.
+///
+pub trait ConnectInfo {
+    /// The IO implementation type that will be used for communication.
+    type IO;
+    
+    /// Establishes a connection using the provided connection information.
+    ///
+    /// # Returns
+    ///
+    /// A result containing the IO implementation if successful, or an error if the connection
+    /// could not be established.
+    fn connect(&self) -> std::io::Result<Self::IO>;
+}
+
 /// A wrapper for a bidirectional stream that implements both `AsyncSender` and `AsyncReceiver`.
 ///
 /// This wrapper can be used to adapt any stream type that provides read and write methods
@@ -380,22 +402,6 @@ where
 ///
 /// A result containing a channel with the specified protocol and the accepted stream.
 ///
-/// # Examples
-///
-/// ```no_run
-/// use sez::connect::accept;
-/// use sez::proto::{Send, Recv, End};
-/// use std::net::{TcpListener, TcpStream};
-///
-/// // Define a protocol
-/// type MyProtocol = Recv<String, Send<i32, End>>;
-///
-/// // Create a TCP listener
-/// let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
-///
-/// // Accept a connection
-/// let chan = accept::<MyProtocol, _, _, String>(&listener).unwrap();
-/// ```
 #[cfg(feature = "tcp")]
 pub fn accept<P, L, S, T>(listener: &L) -> io::Result<Chan<P, StreamWrapper<S, T>>>
 where
@@ -407,6 +413,77 @@ where
     let (stream, _) = tcp_listener.accept()?;
     let stream = S::from(stream);
     Ok(connect::<P, S, T>(stream))
+}
+
+/// Establishes a connection with a specific protocol using the provided connection information.
+///
+/// This function uses the provided connection information to establish a connection and
+/// creates a channel with the specified protocol.
+///
+/// # Type Parameters
+///
+/// * `P` - The protocol type.
+/// * `IO` - The IO implementation type.
+/// * `C` - The connection info type.
+///
+/// # Parameters
+///
+/// * `conn_info` - The connection information to use for establishing the connection.
+///
+/// # Returns
+///
+/// A result containing a channel with the specified protocol if successful, or an error
+/// if the connection could not be established.
+///
+/// # Examples
+///
+/// ```no_run
+/// use sez::connect::{ConnectInfo, connect_with_protocol};
+/// use sez::proto::{Send, Recv, End};
+/// use sez::chan::Chan;
+/// use std::net::{SocketAddr, TcpStream};
+/// use sez::connect::StreamWrapper;
+///
+/// // Define a protocol
+/// type MyProtocol = Send<String, Recv<i32, End>>;
+///
+/// // Define a connection info type
+/// struct TcpConnectInfo {
+///     addr: SocketAddr,
+/// }
+///
+/// impl TcpConnectInfo {
+///     fn new(addr: SocketAddr) -> Self {
+///         TcpConnectInfo { addr }
+///     }
+/// }
+///
+/// impl ConnectInfo for TcpConnectInfo {
+///     type IO = StreamWrapper<TcpStream, String>;
+///
+///     fn connect(&self) -> std::io::Result<Self::IO> {
+///         let stream = TcpStream::connect(&self.addr)?;
+///         Ok(StreamWrapper::new(stream))
+///     }
+/// }
+///
+/// // Use the connection info to establish a connection
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// let addr = "127.0.0.1:8080".parse::<SocketAddr>()?;
+/// let conn_info = TcpConnectInfo::new(addr);
+/// let chan = connect_with_protocol::<MyProtocol, _, _>(conn_info).await?;
+/// # Ok(())
+/// # }
+/// ```
+pub async fn connect_with_protocol<P, IO, C>(conn_info: C) -> Result<Chan<P, IO>, Error>
+where
+    P: Protocol,
+    C: ConnectInfo<IO = IO>,
+{
+    match conn_info.connect() {
+        Ok(io) => Ok(Chan::new(io)),
+        Err(_) => Err(Error::Connection("Failed to establish connection")),
+    }
 }
 
 #[cfg(test)]

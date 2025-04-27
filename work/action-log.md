@@ -1,5 +1,16 @@
 # Action Log
 
+## 2025-04-27: Refactored API Examples to Dedicated Files
+
+- Refactored protocol examples from src/api.rs to dedicated example files
+  - Identified and extracted ping-pong and request-response protocol examples
+  - Created examples/ping_pong.rs with a comprehensive implementation of the ping-pong protocol
+  - Created examples/request_response.rs with a comprehensive implementation of the request-response protocol
+  - Ensured the extracted code is properly organized and documented in the new files
+  - Updated src/api.rs to remove the extracted code while maintaining the core API functionality
+  - Updated module documentation in src/api.rs to reference the new example files
+# Action Log
+
 ## 2025-04-27: Completed Phase 8 - Testing & Refinement
 
 - Completed Task 8.1: Create Compile-Time Tests

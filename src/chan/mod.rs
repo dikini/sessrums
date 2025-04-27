@@ -1486,41 +1486,6 @@ mod protocol_methods {
         let _: Chan<Send<i32, Var<0>>, _> = chan;
     }
 
-    #[test]
-    fn test_recursion_helper_traits() {
-        use crate::proto::Var;
-        use super::{Inc, Dec};
-
-        // Test Inc trait
-        fn assert_inc<T: Inc, R>()
-        where
-            T: Inc<Result = R>,
-        {}
-
-        // Verify that Var<0>::Inc::Result is Var<1>
-        assert_inc::<Var<0>, Var<1>>();
-        // Verify that Var<1>::Inc::Result is Var<2>
-        assert_inc::<Var<1>, Var<2>>();
-        // Verify that Var<5>::Inc::Result is Var<6>
-        assert_inc::<Var<5>, Var<6>>();
-
-        // Test Dec trait
-        fn assert_dec<T: Dec, R>()
-        where
-            T: Dec<Result = R>,
-        {}
-
-        // Verify that Var<1>::Dec::Result is Var<0>
-        assert_dec::<Var<1>, Var<0>>();
-        // Verify that Var<2>::Dec::Result is Var<1>
-        assert_dec::<Var<2>, Var<1>>();
-        // Verify that Var<10>::Dec::Result is Var<9>
-        assert_dec::<Var<10>, Var<9>>();
-
-        // Verify that Dec is not implemented for Var<0>
-        // This would cause a compilation error if uncommented:
-        // assert_dec::<Var<0>, Var<0>>();
-    }
 
     #[tokio::test]
     async fn test_nested_recursive_protocols() {

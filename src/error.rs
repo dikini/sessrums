@@ -44,37 +44,130 @@ pub enum Error {
     ///
     /// This variant represents errors that occur during the actual sending or
     /// receiving of data through the underlying IO implementation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    /// use std::io;
+    ///
+    /// let io_err = io::Error::new(io::ErrorKind::ConnectionReset, "Connection reset by peer");
+    /// let err = Error::Io(io_err);
+    /// ```
     Io(io::Error),
 
     /// A protocol violation occurred.
     ///
     /// This variant represents errors related to protocol violations, such as
     /// unexpected messages or type mismatches.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    ///
+    /// let err = Error::Protocol("Received unexpected message type");
+    /// ```
     Protocol(&'static str),
 
     /// A connection error occurred.
     ///
     /// This variant represents errors related to connection establishment or
     /// termination.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    ///
+    /// let err = Error::Connection("Failed to establish connection");
+    /// ```
     Connection(&'static str),
 
     /// A serialization error occurred.
     ///
     /// This variant represents errors that occur when serializing data to be
     /// sent over the channel.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    ///
+    /// let err = Error::Serialization("Failed to serialize complex data structure");
+    /// ```
     Serialization(&'static str),
 
     /// A deserialization error occurred.
     ///
     /// This variant represents errors that occur when deserializing received
     /// data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    ///
+    /// let err = Error::Deserialization("Failed to deserialize received data");
+    /// ```
     Deserialization(&'static str),
 
     /// The channel was closed.
     ///
     /// This variant represents the error that occurs when attempting to
     /// communicate on a closed channel.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    ///
+    /// let err = Error::ChannelClosed;
+    /// ```
     ChannelClosed,
+
+    /// A timeout occurred during a communication operation.
+    ///
+    /// This variant represents errors that occur when a communication operation
+    /// times out.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    /// use std::time::Duration;
+    ///
+    /// let err = Error::Timeout(Duration::from_secs(30));
+    /// ```
+    Timeout(std::time::Duration),
+
+    /// An error occurred during protocol negotiation.
+    ///
+    /// This variant represents errors that occur during the negotiation phase
+    /// of a protocol, such as version mismatches or unsupported features.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    ///
+    /// let err = Error::Negotiation("Protocol version mismatch");
+    /// ```
+    Negotiation(&'static str),
+
+    /// An error occurred due to a protocol state mismatch.
+    ///
+    /// This variant represents errors that occur when the protocol state
+    /// doesn't match the expected state for an operation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sez::error::Error;
+    ///
+    /// let err = Error::StateMismatch("Expected Send state, but protocol is in Recv state");
+    /// ```
+    StateMismatch(&'static str),
 }
 
 impl fmt::Display for Error {
@@ -85,7 +178,10 @@ impl fmt::Display for Error {
             Error::Connection(msg) => write!(f, "Connection error: {}", msg),
             Error::Serialization(msg) => write!(f, "Serialization error: {}", msg),
             Error::Deserialization(msg) => write!(f, "Deserialization error: {}", msg),
-            Error::ChannelClosed => write!(f, "Channel closed"),
+            Error::ChannelClosed => write!(f, "Channel closed: The channel has been closed and cannot be used for further communication"),
+            Error::Timeout(duration) => write!(f, "Timeout error: Operation timed out after {:?}", duration),
+            Error::Negotiation(msg) => write!(f, "Protocol negotiation error: {}", msg),
+            Error::StateMismatch(msg) => write!(f, "Protocol state mismatch: {}", msg),
         }
     }
 }
@@ -97,6 +193,20 @@ impl StdError for Error {
             _ => None,
         }
     }
+
+    fn description(&self) -> &str {
+        match self {
+            Error::Io(_) => "IO error during communication",
+            Error::Protocol(_) => "Protocol violation error",
+            Error::Connection(_) => "Connection establishment or termination error",
+            Error::Serialization(_) => "Data serialization error",
+            Error::Deserialization(_) => "Data deserialization error",
+            Error::ChannelClosed => "Channel closed error",
+            Error::Timeout(_) => "Communication timeout error",
+            Error::Negotiation(_) => "Protocol negotiation error",
+            Error::StateMismatch(_) => "Protocol state mismatch error",
+        }
+    }
 }
 
 impl From<io::Error> for Error {
@@ -105,9 +215,34 @@ impl From<io::Error> for Error {
     }
 }
 
+/// Convert a timeout duration to a session type error.
+impl From<std::time::Duration> for Error {
+    fn from(duration: std::time::Duration) -> Self {
+        Error::Timeout(duration)
+    }
+}
+
+/// Result type for session type operations.
+///
+/// This type alias makes it easier to work with results that may contain
+/// session type errors.
+///
+/// # Examples
+///
+/// ```
+/// use sez::error::{Error, Result};
+///
+/// fn example() -> Result<()> {
+///     // Some operation that might fail
+///     Ok(())
+/// }
+/// ```
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
     #[test]
     fn test_error_display() {
@@ -129,7 +264,17 @@ mod tests {
         assert_eq!(format!("{}", err), "Deserialization error: test deserialization error");
 
         let err = Error::ChannelClosed;
-        assert_eq!(format!("{}", err), "Channel closed");
+        assert!(format!("{}", err).contains("Channel closed"));
+
+        let err = Error::Timeout(Duration::from_secs(10));
+        assert!(format!("{}", err).contains("Timeout error"));
+        assert!(format!("{}", err).contains("10s"));
+
+        let err = Error::Negotiation("version mismatch");
+        assert_eq!(format!("{}", err), "Protocol negotiation error: version mismatch");
+
+        let err = Error::StateMismatch("expected Send state");
+        assert_eq!(format!("{}", err), "Protocol state mismatch: expected Send state");
     }
 
     #[test]
@@ -144,6 +289,20 @@ mod tests {
                 assert_eq!(e.to_string(), "file not found");
             },
             _ => panic!("Expected Error::Io variant"),
+        }
+    }
+
+    #[test]
+    fn test_error_from_duration() {
+        // Test the From<Duration> implementation
+        let duration = Duration::from_secs(30);
+        let err = Error::from(duration);
+        
+        match err {
+            Error::Timeout(d) => {
+                assert_eq!(d, Duration::from_secs(30));
+            },
+            _ => panic!("Expected Error::Timeout variant"),
         }
     }
 
@@ -169,5 +328,37 @@ mod tests {
 
         let err = Error::ChannelClosed;
         assert!(err.source().is_none());
+
+        let err = Error::Timeout(Duration::from_secs(10));
+        assert!(err.source().is_none());
+
+        let err = Error::Negotiation("version mismatch");
+        assert!(err.source().is_none());
+
+        let err = Error::StateMismatch("expected Send state");
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    fn test_result_type_alias() {
+        // Test that the Result type alias works correctly
+        fn returns_ok() -> Result<i32> {
+            Ok(42)
+        }
+
+        fn returns_err() -> Result<i32> {
+            Err(Error::ChannelClosed)
+        }
+
+        let ok_result = returns_ok();
+        assert!(ok_result.is_ok());
+        assert_eq!(ok_result.unwrap(), 42);
+
+        let err_result = returns_err();
+        assert!(err_result.is_err());
+        match err_result.unwrap_err() {
+            Error::ChannelClosed => {},
+            _ => panic!("Expected Error::ChannelClosed"),
+        }
     }
 }

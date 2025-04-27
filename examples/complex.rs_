@@ -1,11 +1,12 @@
-//! # Complex Protocol Example
-//!
-//! This example demonstrates a complex protocol using the session types library.
-//! It showcases multiple features of the library, including:
-//!
-//! 1. Offering and choosing between protocol branches
-//! 2. Sending and receiving different types of data
-//! 3. Integration with Tokio for asynchronous execution
+use futures::future::{FutureExt, TryFutureExt};
+/// # Complex Protocol Example
+///
+/// This example demonstrates a complex protocol using the session types library.
+/// It showcases multiple features of the library, including:
+///
+/// 1. Offering and choosing between protocol branches
+/// 2. Sending and receiving different types of data
+/// 3. Integration with Tokio for asynchronous execution
 
 use futures_core::future::Future;
 use futures_core::task::{Context, Poll};
@@ -359,65 +360,65 @@ async fn run_server(chan: Chan<ServerProtocol, MathChannel>) -> Result<(), Error
     // Offer different operations to the client
     chan.offer(
         // Add operation
-        |chan| Ok(async move {
+        |chan| async move {
             println!("Server: Client chose Add operation");
-            
+
             // Receive the numbers
             println!("Server: Waiting for numbers");
             let ((a, b), chan) = chan.recv().await?;
             println!("Server: Received numbers: {} and {}", a, b);
-            
+
             // Calculate the sum
             let sum = a + b;
-            
+
             // Send the result
             println!("Server: Sending result: {}", sum);
             let chan = chan.send(sum).await?;
             println!("Server: Result sent successfully");
-            
+
             // Close the channel
             chan.close()?;
             println!("Server: Protocol completed successfully");
-            
+
             Ok(())
-        }),
-        |chan| Ok(async move {
-            // Offer other operations
-            chan.offer(
-                // Multiply operation
-                |chan| Ok(async move {
-                    println!("Server: Client chose Multiply operation");
-                    
-                    // Receive the numbers
-                    println!("Server: Waiting for numbers");
-                    let ((a, b), chan) = chan.recv().await?;
-                    println!("Server: Received numbers: {} and {}", a, b);
-                    
-                    // Calculate the product
-                    let product = a * b;
-                    
-                    // Send the result
-                    println!("Server: Sending result: {}", product);
-                    let chan = chan.send(product).await?;
-                    println!("Server: Result sent successfully");
-                    
-                    // Close the channel
-                    chan.close()?;
-                    println!("Server: Protocol completed successfully");
-                    
-                    Ok(())
-                }),
-                // Quit operation
-                |chan| Ok(async move {
-                    println!("Server: Client chose Quit operation");
-                    println!("Server: Closing connection");
-                    chan.close()?;
-                    println!("Server: Protocol completed successfully");
-                    
-                    Ok(())
-                })
-            ).await
-        })
+        }.boxed(),
+        |chan| async move {
+            // // Offer other operations
+            // chan.offer(
+            //     // Multiply operation
+            //     |chan| async move {
+            //         println!("Server: Client chose Multiply operation");
+            //
+            //         // Receive the numbers
+            //         println!("Server: Waiting for numbers");
+            //         let ((a, b), chan) = chan.recv().await?;
+            //         println!("Server: Received numbers: {} and {}", a, b);
+            //
+            //         // Calculate the product
+            //         let product = a * b;
+            //
+            //         // Send the result
+            //         println!("Server: Sending result: {}", product);
+            //         let chan = chan.send(product).await?;
+            //         println!("Server: Result sent successfully");
+            //
+            //         // Close the channel
+            //         chan.close()?;
+            //         println!("Server: Protocol completed successfully");
+            //
+            //         Ok(())
+            //     }.boxed(),
+            //     // Quit operation
+            //     |chan| async move {
+            //         println!("Server: Client chose Quit operation");
+            //         println!("Server: Closing connection");
+            //         chan.close()?;
+            //         println!("Server: Protocol completed successfully");
+            //
+            //         Ok(())
+            //     }.boxed(),
+            // ).await
+        }.boxed(),
     ).await
 }
 

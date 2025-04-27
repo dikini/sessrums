@@ -1,5 +1,63 @@
 # Insights and Learnings
 
+## 2025-04-27: Refactoring API Examples to Dedicated Files
+
+### Technical Insights
+- Separating example implementations from core API code improves code organization and maintainability
+- Dedicated example files provide more space for comprehensive implementations and documentation
+- Type aliases in the API module can remain as a reference point while moving implementation details to examples
+- Maintaining core API functionality while removing example-specific code keeps the API module focused
+- Cross-referencing between API documentation and example files helps users find relevant examples
+
+### Design Patterns
+- The separation of concerns pattern improves code organization by separating API definitions from example implementations
+- The reference documentation pattern uses type aliases as a reference point with links to full implementations
+- The comprehensive example pattern provides complete, runnable examples that demonstrate real-world usage
+- The modular design pattern allows for independent evolution of API and examples
+
+### Best Practices
+- Keeping API modules focused on their core functionality improves maintainability
+- Creating dedicated example files for different protocol patterns improves discoverability
+- Following consistent structure and style across example files improves readability
+- Providing comprehensive documentation in example files helps users understand the implementation
+- Cross-referencing between API documentation and example files creates a cohesive documentation system
+- Maintaining type aliases in the API module provides a quick reference for common protocol patterns
+- Updating module documentation to reflect changes ensures users can find the moved examples
+# Insights and Learnings
+
+## 2025-04-27: Phase 8 Completion - Testing & Refinement
+
+### Technical Insights
+- Comprehensive testing is essential for both compile-time and runtime behavior of session types
+- Compile-time tests verify that the type system correctly enforces protocol adherence
+- Runtime tests verify that the protocol communication works correctly during execution
+- Error handling is a critical component of robust protocol communication
+- API ergonomics improvements like type aliases and macros significantly reduce boilerplate code
+- Macros can provide a more concise and readable syntax for defining complex protocol types
+- The combination of compile-time and runtime tests provides comprehensive verification of the library
+- Documentation is a crucial component of library development, especially for complex concepts like session types
+
+### Design Patterns
+- The type alias pattern simplifies common protocol patterns (request-response, ping-pong)
+- The helper function pattern provides convenient ways to create channels and establish connections
+- The macro-based DSL pattern enables concise protocol definitions with a domain-specific syntax
+- The test fixture pattern (TestIO) simulates communication for testing without actual IO
+- The comprehensive error handling pattern with specific error variants improves debugging
+- The result type alias pattern simplifies error handling throughout the codebase
+- The documentation pattern with multiple layers (overview, detailed docs, examples) helps different users
+
+### Best Practices
+- Creating both compile-time and runtime tests ensures comprehensive verification
+- Using custom test implementations (TestIO) simplifies testing without actual IO
+- Implementing macros for common patterns reduces boilerplate and improves readability
+- Providing type aliases for common protocol patterns makes the library more accessible
+- Creating helper functions for common operations improves ergonomics
+- Adding detailed documentation with examples helps users understand complex concepts
+- Using a final integration test to verify all library features working together
+- Refining error handling with specific error variants and improved messages
+- Creating a dedicated API module for ergonomics improvements keeps the codebase organized
+- Ensuring all public items have comprehensive documentation improves usability
+
 ## 2025-04-27: Phase 7 Completion - Asynchronous Runtime Integration & Examples
 
 ### Technical Insights
