@@ -1,5 +1,23 @@
 # Action Log
 
+## 2025-04-27: Completed Task 4.5 - Implement offer Method
+
+- Implemented `async fn offer<F, G, T>(self, f: F, g: G) -> Result<T, Error>` for `Chan<Offer<L, R>, IO>`
+  - Added implementation that receives a boolean indicator from the other party
+  - Implemented function to call either handler `f` or `g` based on the received choice
+  - Used the AsyncReceiver trait for receiving the boolean indicator
+  - Added proper error handling for the receive operation
+  - Added comprehensive documentation with examples
+  - Added unit tests for the offer method, testing both branches and error cases
+
+- Fixed issues during implementation:
+  - Ensured the handler functions are non-async functions that return `Result<T, Error>` directly
+  - Fixed doctests to use non-async handler functions to match the implementation
+  - Added tests for both left and right branch selection
+  - Added tests for error handling when the receive operation fails
+
+- All tests are now passing, including unit tests and doctests, confirming that the offer method is correctly implemented.
+
 ## 2025-04-27: Completed Task 4.4 - Update send and recv Methods
 
 - Updated the send method in src/chan/mod.rs to use the AsyncSender trait

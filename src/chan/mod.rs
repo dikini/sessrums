@@ -369,6 +369,149 @@ where
     }
 }
 
+impl<L: Protocol, R: Protocol, IO> Chan<crate::proto::Offer<L, R>, IO>
+where
+    IO: crate::io::AsyncReceiver<bool>,
+    <IO as crate::io::AsyncReceiver<bool>>::Error: std::fmt::Debug,
+{
+    /// Offers a choice between two continuations, `L` and `R`, and processes the chosen branch.
+    ///
+    /// This method allows the other party to choose between two possible continuations of the
+    /// protocol. It receives a boolean indicator from the other party and then calls either
+    /// function `f` or function `g` based on the choice.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - A function type that takes `Chan<L, IO>` and returns `Result<T, Error>`
+    /// * `G` - A function type that takes `Chan<R, IO>` and returns `Result<T, Error>`
+    /// * `T` - The return type of both functions `f` and `g`
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - The function to call if the left branch is chosen
+    /// * `g` - The function to call if the right branch is chosen
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(T)` - The result of calling either function `f` or function `g`
+    /// * `Err(Error)` - An error if the receive operation fails or if the chosen branch function returns an error
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # async fn example() -> Result<(), sez::error::Error> {
+    /// use sez::chan::Chan;
+    /// use sez::proto::{Offer, Send, Recv, End};
+    /// use sez::io::AsyncReceiver;
+    /// use futures_core::future::Future;
+    /// use std::pin::Pin;
+    /// use futures_core::task::{Context, Poll};
+    /// use std::marker::Unpin;
+    ///
+    /// // Define protocols for the left and right branches
+    /// type LeftProto = Send<String, End>;
+    /// type RightProto = Send<i32, End>;
+    /// type OfferProto = Offer<LeftProto, RightProto>;
+    ///
+    /// // Define a custom IO implementation
+    /// struct MyIO {
+    ///     choice: Option<bool>,
+    ///     string_value: Option<String>,
+    ///     int_value: Option<i32>,
+    /// }
+    ///
+    /// // Define a custom error type
+    /// #[derive(Debug)]
+    /// struct MyError;
+    ///
+    /// // Define a future for the async receive operation
+    /// struct RecvFuture<T> {
+    ///     value: Option<T>,
+    /// }
+    ///
+    /// impl<T: Unpin> Future for RecvFuture<T> {
+    ///     type Output = Result<T, MyError>;
+    ///
+    ///     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+    ///         let this = self.get_mut();
+    ///         match this.value.take() {
+    ///             Some(value) => Poll::Ready(Ok(value)),
+    ///             None => Poll::Ready(Err(MyError)),
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// // Implement AsyncReceiver for our custom IO
+    /// impl AsyncReceiver<bool> for MyIO {
+    ///     type Error = MyError;
+    ///     type RecvFuture<'a> = RecvFuture<bool> where bool: 'a, Self: 'a;
+    ///
+    ///     fn recv(&mut self) -> Self::RecvFuture<'_> {
+    ///         RecvFuture {
+    ///             value: self.choice.take(),
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// // Create a channel with an Offer protocol
+    /// let io = MyIO {
+    ///     choice: Some(true), // The other party will choose the left branch
+    ///     string_value: Some("Hello".to_string()),
+    ///     int_value: Some(42),
+    /// };
+    /// let chan = Chan::<OfferProto, _>::new(io);
+    ///
+    /// // Define handlers for the left and right branches as non-async functions
+    /// // that return Result directly
+    /// let handle_left = |_chan: Chan<LeftProto, MyIO>| -> Result<String, sez::error::Error> {
+    ///     // In a real implementation, we would send a string and then end
+    ///     // But for this example, we just return a result directly
+    ///     Ok("Left branch completed".to_string())
+    /// };
+    ///
+    /// let handle_right = |_chan: Chan<RightProto, MyIO>| -> Result<String, sez::error::Error> {
+    ///     // In a real implementation, we would send an integer and then end
+    ///     // But for this example, we just return a result directly
+    ///     Ok("Right branch completed".to_string())
+    /// };
+    ///
+    /// // Offer a choice between the left and right branches
+    /// let result = chan.offer(handle_left, handle_right).await?;
+    /// println!("Result: {}", result);
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn offer<F, G, T>(mut self, f: F, g: G) -> Result<T, crate::error::Error>
+    where
+        F: FnOnce(Chan<L, IO>) -> Result<T, crate::error::Error>,
+        G: FnOnce(Chan<R, IO>) -> Result<T, crate::error::Error>,
+    {
+        // Receive a boolean value indicating which branch to take
+        let choice = self.io_mut().recv().await.map_err(|e| {
+            crate::error::Error::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Offer error: {:?}", e),
+            ))
+        })?;
+
+        // Call either function f or function g based on the choice
+        if choice {
+            // Left branch chosen
+            f(Chan {
+                io: self.io,
+                _marker: PhantomData,
+            })
+        } else {
+            // Right branch chosen
+            g(Chan {
+                io: self.io,
+                _marker: PhantomData,
+            })
+        }
+    }
+}
+
 impl<IO> Chan<crate::proto::End, IO> {
     /// Closes the channel, indicating that the communication session has ended.
     ///
@@ -505,6 +648,123 @@ mod protocol_methods {
     struct TestSendFuture<T> {
         io: TestIO<T>,
         value: Option<T>,
+    }
+    
+    #[tokio::test]
+    async fn test_offer_method() {
+        use super::*;
+        use crate::proto::{Offer, Send, End};
+        
+        // Define test protocols
+        type LeftProto = Send<String, End>;
+        type RightProto = Send<i32, End>;
+        type OfferProto = Offer<LeftProto, RightProto>;
+        
+        // Custom IO implementation for testing
+        struct TestOfferIO {
+            choice: Option<bool>,
+        }
+        
+        // Custom error type
+        #[derive(Debug)]
+        struct TestOfferError;
+        
+        // Define future for async receive operation
+        struct TestOfferRecvFuture {
+            value: Option<bool>,
+        }
+        
+        impl Future for TestOfferRecvFuture {
+            type Output = Result<bool, TestOfferError>;
+            
+            fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+                let this = unsafe { self.get_unchecked_mut() };
+                match this.value.take() {
+                    Some(value) => Poll::Ready(Ok(value)),
+                    None => Poll::Ready(Err(TestOfferError)),
+                }
+            }
+        }
+        
+        // Implement AsyncReceiver for TestOfferIO
+        impl AsyncReceiver<bool> for TestOfferIO {
+            type Error = TestOfferError;
+            type RecvFuture<'a> = TestOfferRecvFuture where bool: 'a, Self: 'a;
+            
+            fn recv(&mut self) -> Self::RecvFuture<'_> {
+                TestOfferRecvFuture {
+                    value: self.choice.take(),
+                }
+            }
+        }
+        
+        // Test the left branch
+        {
+            // Create a channel with Offer protocol and choice set to true (left)
+            let io = TestOfferIO { choice: Some(true) };
+            let chan = Chan::<OfferProto, _>::new(io);
+            
+            // Define handlers for left and right branches
+            let handle_left = |_chan: Chan<LeftProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+                // We don't actually send here since our TestOfferIO doesn't support String
+                // Just verify we got the correct branch
+                Ok("Left branch taken".to_string())
+            };
+            
+            let handle_right = |_: Chan<RightProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+                // This should not be called
+                panic!("Right branch handler should not be called when left branch is chosen");
+            };
+            
+            // Offer a choice
+            let result = chan.offer(handle_left, handle_right).await;
+            assert!(result.is_ok());
+            assert_eq!(result.unwrap(), "Left branch taken");
+        }
+        
+        // Test the right branch
+        {
+            // Create a channel with Offer protocol and choice set to false (right)
+            let io = TestOfferIO { choice: Some(false) };
+            let chan = Chan::<OfferProto, _>::new(io);
+            
+            // Define handlers for left and right branches
+            let handle_left = |_: Chan<LeftProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+                // This should not be called
+                panic!("Left branch handler should not be called when right branch is chosen");
+            };
+            
+            let handle_right = |_chan: Chan<RightProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+                // We don't actually send here since our TestOfferIO doesn't support i32 for this test
+                // Just verify we got the correct branch
+                Ok("Right branch taken".to_string())
+            };
+            
+            // Offer a choice
+            let result = chan.offer(handle_left, handle_right).await;
+            assert!(result.is_ok());
+            assert_eq!(result.unwrap(), "Right branch taken");
+        }
+        
+        // Test error handling
+        {
+            // Create a channel with Offer protocol but no value to receive
+            let io = TestOfferIO { choice: None };
+            let chan = Chan::<OfferProto, _>::new(io);
+            
+            // Define handlers for left and right branches
+            let handle_left = |_: Chan<LeftProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+                Ok("Left branch taken".to_string())
+            };
+            
+            let handle_right = |_: Chan<RightProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+                Ok("Right branch taken".to_string())
+            };
+            
+            // Attempt to offer a choice (should fail)
+            let result = chan.offer(handle_left, handle_right).await;
+            assert!(result.is_err());
+        }
     }
 
     struct TestRecvFuture<T> {
