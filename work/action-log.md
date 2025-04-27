@@ -1,5 +1,38 @@
 # Action Log
 
+## 2025-04-27: Completed Task 4.7 - Create Async Protocol Example
+
+- Created examples/async.rs with a comprehensive asynchronous protocol example
+  - Implemented a client-server protocol with request-response pattern and choice branching
+  - Created a specialized ProtocolChannel implementation supporting String, i32, and bool communication
+  - Implemented AsyncSender and AsyncReceiver traits for the channel types
+  - Used boxed futures with proper Send + 'static bounds for async handlers
+  - Added proper error handling for all communication operations
+  - Demonstrated type safety through the type system
+
+- Implemented protocol features:
+  - Asynchronous communication using AsyncSender and AsyncReceiver traits
+  - Used send and recv methods for basic communication
+  - Demonstrated offer and choose methods for protocol branching
+  - Implemented error handling for various scenarios
+  - Created a visual diagram in comments to illustrate the protocol flow
+
+- Added a demonstration of error handling:
+  - Created a custom FailingIO implementation that fails on receive operations
+  - Showed how to handle errors in async protocol communication
+  - Demonstrated the error propagation mechanism
+
+- Added type safety examples:
+  - Created examples showing how the type system enforces protocol adherence
+  - Added commented-out examples of protocol violations that would not compile
+  - Demonstrated how the type system prevents common protocol errors
+
+- Ensured the example compiles and runs correctly:
+  - Fixed issues with trait bounds and async block types
+  - Added proper Send + 'static bounds for boxed futures
+  - Resolved naming conflicts with the Send trait
+  - Fixed warnings about unused variables
+
 ## 2025-04-27: Completed Task 4.6 - Implement choose Methods
 
 - Implemented `async fn choose_left(self) -> Result<Chan<L, IO>, Error>` for `Chan<Choose<L, R>, IO>`
