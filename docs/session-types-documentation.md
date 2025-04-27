@@ -17,24 +17,28 @@ A Rust library for asynchronous session types with minimal dependencies, focusin
    - [Recv](#recv)
    - [End](#end)
    - [Offer & Choose](#offer--choose)
-6. [Channel Implementation](#channel-implementation)
+6. [Multiparty Session Types](#multiparty-session-types)
+   - [Roles](#roles)
+   - [Global Protocol](#global-protocol)
+   - [Projection](#projection)
+7. [Channel Implementation](#channel-implementation)
    - [Chan Type](#chan-type)
    - [IO Abstraction](#io-abstraction)
-7. [Error Handling](#error-handling)
+8. [Error Handling](#error-handling)
    - [Error Type](#error-type)
    - [Error Variants](#error-variants)
-8. [API Reference](#api-reference)
+9. [API Reference](#api-reference)
    - [send Method](#send-method)
    - [recv Method](#recv-method)
    - [close Method](#close-method)
-9. [Usage Examples](#usage-examples)
-   - [Simple Client-Server Protocol](#simple-client-server-protocol)
-   - [Error Handling](#error-handling-example)
-   - [Type Safety Examples](#type-safety-examples)
-10. [Visual Protocol Representation](#visual-protocol-representation)
-11. [Advanced Topics](#advanced-topics)
-    - [Custom IO Implementations](#custom-io-implementations)
-    - [Protocol Testing](#protocol-testing)
+10. [Usage Examples](#usage-examples)
+    - [Simple Client-Server Protocol](#simple-client-server-protocol)
+    - [Error Handling](#error-handling-example)
+    - [Type Safety Examples](#type-safety-examples)
+11. [Visual Protocol Representation](#visual-protocol-representation)
+12. [Advanced Topics](#advanced-topics)
+     - [Custom IO Implementations](#custom-io-implementations)
+     - [Protocol Testing](#protocol-testing)
 
 ## Introduction
 
@@ -43,6 +47,19 @@ sessrums (Session Types EZ) is a Rust library that implements session types, a t
 Session types provide a way to specify and verify communication protocols at compile time, ensuring that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks.
 
 ## Core Concepts
+
+### Roles
+
+In an MPST protocol, each participant is represented by a unique role. Roles are used to define the structure of the session types from each participant's perspective and ensure that communication is correctly directed between the intended parties.
+
+The `Role` trait defines the basic requirements for a type to be used as a role in sessrums. Concrete role types (e.g., `RoleA`, `RoleB`) implement this trait.
+
+```rust
+pub trait Role: Send + 'static {
+    /// Returns a string representation of the role.
+    fn name(&self) -> &'static str;
+}
+```
 
 ### What are Session Types?
 
@@ -172,6 +189,290 @@ The `Offer<L, R>` and `Choose<L, R>` types represent protocols for making and of
 The dual of `Offer<L, R>` is `Choose<L::Dual, R::Dual>`, and the dual of `Choose<L, R>` is `Offer<L::Dual, R::Dual>`.
 
 For detailed information about the Offer and Choose protocol types, including API methods and usage examples, see the [Offer and Choose Guide](offer-choose.md).
+
+## Multiparty Session Types
+
+Multiparty Session Types (MPST) extend the binary session type system to support communication protocols involving multiple participants. This section describes the core components of MPST in sessrums.
+
+### Roles
+
+In an MPST protocol, each participant is represented by a unique role. Roles are used to define the structure of the session types from each participant's perspective and ensure that communication is correctly directed between the intended parties.
+
+The `Role` trait defines the basic requirements for a type to be used as a role in sessrums. Concrete role types (e.g., `RoleA`, `RoleB`) implement this trait.
+
+```rust
+pub trait Role: Send + 'static {
+    /// Returns a string representation of the role.
+    fn name() -> &'static str;
+}
+```
+
+### Global Protocol
+
+A global protocol describes the communication behavior between multiple roles in a distributed system. It specifies the sequence and types of messages exchanged between participants, as well as control flow structures like choices and recursion.
+
+The `GlobalProtocol` trait defines the interface for all global protocol types:
+
+```rust
+pub trait GlobalProtocol {
+    /// Returns a string representation of the protocol for debugging.
+    fn protocol_name(&self) -> &'static str;
+    
+    /// Validates the structure of the global protocol.
+    ///
+    /// This method checks for structural errors like choices with no branches,
+    /// mismatched recursion labels, etc.
+    fn validate(&self) -> Result<()>;
+    
+    /// Returns the roles involved in this protocol.
+    ///
+    /// This method returns a vector of role names that participate in the protocol.
+    fn involved_roles(&self) -> Vec<&'static str>;
+}
+```
+
+#### Global Protocol Types
+
+sessrums provides several types that implement the `GlobalProtocol` trait, representing different communication patterns:
+
+- **GSend<T, From, To, Next>**: Represents sending a value of type `T` from role `From` to role `To`, then continuing with protocol `Next`.
+- **GRecv<T, From, To, Next>**: Represents receiving a value of type `T` by role `To` from role `From`, then continuing with protocol `Next`.
+- **GChoice<Chooser, Branches>**: Represents a choice made by role `Chooser` between different protocol branches. The `Branches` parameter is a tuple of global protocols representing the different possible continuations.
+- **GOffer<Offeree, Branches>**: Represents an offer received by role `Offeree` with different protocol branches. The `Branches` parameter is a tuple of global protocols representing the different possible continuations.
+- **GRec<Label, Protocol>**: Represents a recursive protocol definition with label `Label` and protocol `Protocol`.
+- **GVar<Label>**: Represents a reference to a recursive protocol definition with label `Label`.
+- **GEnd**: Represents the end of a global protocol path.
+
+#### Example: Defining a Global Protocol
+
+Here's an example of defining a simple global protocol using the provided types:
+
+```rust
+// Define roles
+struct Client;
+struct Server;
+
+impl Role for Client {
+    fn name() -> &'static str { "Client" }
+}
+
+impl Role for Server {
+    fn name() -> &'static str { "Server" }
+}
+
+// Define a global protocol: Client sends a String to Server, Server sends an i32 back to Client, then ends
+type RequestResponseProtocol = GSend<String, Client, Server, GRecv<i32, Server, Client, GEnd>>;
+```
+
+#### GlobalProtocolBuilder
+
+To make it easier to construct global protocols, sessrums provides a `GlobalProtocolBuilder` helper:
+
+```rust
+let builder = GlobalProtocolBuilder::new();
+
+// Build a simple protocol: Client sends a String to Server, then ends
+let protocol = builder.send::<String, Client, Server, GEnd>();
+
+// Build a more complex protocol: Client sends a String to Server,
+// Server sends an i32 back to Client, then ends
+let protocol = builder.send::<String, Client, Server, _>(
+    builder.recv::<i32, Server, Client, _>(
+        builder.end()
+    )
+);
+```
+
+#### Validating Global Protocols
+
+Global protocols can be validated to ensure they are well-formed:
+
+```rust
+let protocol = GSend::<String, Client, Server, GEnd>::new();
+match validate_global_protocol(&protocol) {
+    Ok(_) => println!("Protocol is valid"),
+    Err(e) => println!("Protocol validation error: {:?}", e),
+}
+```
+
+### Projection
+
+Projection is the process of extracting a local protocol for a specific role from a global protocol. This allows each participant to know exactly what actions they need to perform in the protocol.
+
+The `Project` trait defines the interface for projecting a global protocol to a local protocol:
+
+```rust
+pub trait Project<R: Role> {
+    /// The resulting local protocol type after projection.
+    type LocalProtocol;
+}
+```
+
+#### Projection Rules
+
+The projection of a global protocol to a local protocol follows these rules:
+
+1. **GSend<T, From, To, Next>**:
+   - For the `From` role: `Send<T, <Next as Project<From>>::LocalProtocol>`
+   - For the `To` role: `Recv<T, <Next as Project<To>>::LocalProtocol>`
+   - For any other role R: `<Next as Project<R>>::LocalProtocol>`
+
+2. **GRecv<T, From, To, Next>**:
+   - For the `From` role: `Send<T, <Next as Project<From>>::LocalProtocol>`
+   - For the `To` role: `Recv<T, <Next as Project<To>>::LocalProtocol>`
+   - For any other role R: `<Next as Project<R>>::LocalProtocol>`
+
+3. **GChoice<Chooser, Branches>**:
+   - For the `Chooser` role: `Choose<Branches::LocalProtocolTuple>` where `Branches::LocalProtocolTuple` is the tuple of projected branches
+   - For any other role R: `Offer<Branches::LocalProtocolTuple>` where `Branches::LocalProtocolTuple` is the tuple of projected branches
+
+   This reflects the fact that the chooser role makes a choice between different continuations, while all other roles must offer the corresponding branches.
+
+4. **GOffer<Offeree, Branches>**:
+   - For the `Offeree` role: `Offer<Branches::LocalProtocolTuple>` where `Branches::LocalProtocolTuple` is the tuple of projected branches
+   - For any other role R: `Choose<Branches::LocalProtocolTuple>` where `Branches::LocalProtocolTuple` is the tuple of projected branches
+
+   This reflects the fact that the offeree role offers different continuations, while all other roles must choose between the corresponding branches.
+
+5. **GRec<Label, Protocol>**:
+   - For any role R: `Rec<<Protocol as Project<R>>::LocalProtocol>`
+
+6. **GVar<Label>**:
+   - For any role R: `Var<N>` where N is the recursion depth
+
+7. **GEnd**:
+   - For any role R: `End`
+
+#### Helper Traits
+
+To support projection of complex global protocols, the library provides helper traits:
+
+- `ProjectTuple<R: Role>`: Projects each element of a tuple of global protocols.
+- `Into<T>`: Converts a tuple of local protocols to a `Choose` or `Offer` type.
+
+#### The `project` Function
+
+The library provides a `project` function that can be used to project a global protocol for a specific role:
+
+```rust
+pub fn project<G: GlobalProtocol + Project<R>, R: Role>() -> <G as Project<R>>::LocalProtocol
+```
+
+This function takes a global protocol type `G` and a role type `R` and returns the local protocol type that results from projecting `G` for role `R`.
+
+#### Example: Projecting a Global Protocol
+
+```rust
+// Define a global protocol
+type GlobalProtocol = GSend<String, Client, Server, GRecv<i32, Server, Client, GEnd>>;
+
+// Project for the Client role
+type ClientProtocol = <GlobalProtocol as Project<Client>>::LocalProtocol;
+// Equivalent to: Send<String, Recv<i32, End>>
+
+// Project for the Server role
+type ServerProtocol = <GlobalProtocol as Project<Server>>::LocalProtocol;
+// Equivalent to: Recv<String, Send<i32, End>>
+```
+
+#### Example: Using the `project` Function
+
+```rust
+use sessrums::proto::{global::*, roles::*, projection::project};
+
+// Define a global protocol
+type MyGlobalProtocol = GSend<String, RoleA, RoleB, GEnd>;
+
+// Project it for RoleA
+let local_protocol_a = project::<MyGlobalProtocol, RoleA>();
+
+// Project it for RoleB
+let local_protocol_b = project::<MyGlobalProtocol, RoleB>();
+```
+
+#### Example: Projecting a Complex Protocol with Branching
+
+```rust
+// Define a complex global protocol with a choice
+type ComplexProtocol = GSend<String, RoleA, RoleB, GChoice<RoleB, (
+    GSend<i32, RoleB, RoleA, GEnd>,
+    GSend<bool, RoleB, RoleA, GEnd>
+)>>;
+
+// Project for RoleA
+type RoleAProtocol = <ComplexProtocol as Project<RoleA>>::LocalProtocol;
+// Equivalent to: Send<String, Offer<Recv<i32, End>, Recv<bool, End>>>
+
+// Project for RoleB
+type RoleBProtocol = <ComplexProtocol as Project<RoleB>>::LocalProtocol;
+// Equivalent to: Recv<String, Choose<Send<i32, End>, Send<bool, End>>>
+```
+
+In this example:
+1. RoleA sends a String to RoleB
+2. RoleB then makes a choice between:
+   - Sending an i32 to RoleA and ending
+   - Sending a bool to RoleA and ending
+
+When projected for RoleA, this becomes:
+1. Send a String to RoleB
+2. Offer a choice between:
+   - Receiving an i32 from RoleB and ending
+   - Receiving a bool from RoleB and ending
+
+When projected for RoleB, this becomes:
+1. Receive a String from RoleA
+2. Choose between:
+   - Sending an i32 to RoleA and ending
+   - Sending a bool to RoleA and ending
+
+#### Example: Multiparty Branching
+
+```rust
+// Define a global protocol with three roles
+type MultipartyProtocol = GSend<bool, RoleA, RoleB, GChoice<RoleB, (
+    GSend<String, RoleB, RoleC, GEnd>,
+    GSend<i32, RoleB, RoleA, GEnd>
+)>>;
+
+// Project for RoleA
+type RoleAProtocol = <MultipartyProtocol as Project<RoleA>>::LocalProtocol;
+// Equivalent to: Send<bool, Offer<End, Recv<i32, End>>>
+
+// Project for RoleB
+type RoleBProtocol = <MultipartyProtocol as Project<RoleB>>::LocalProtocol;
+// Equivalent to: Recv<bool, Choose<Send<String, End>, Send<i32, End>>>
+
+// Project for RoleC
+type RoleCProtocol = <MultipartyProtocol as Project<RoleC>>::LocalProtocol;
+// Equivalent to: Offer<Recv<String, End>, End>
+```
+
+In this example with three roles:
+1. RoleA sends a bool to RoleB
+2. RoleB then makes a choice between:
+   - Sending a String to RoleC and ending
+   - Sending an i32 to RoleA and ending
+
+When projected for each role, the protocol captures exactly what each role needs to do, including which messages to send/receive and which choices to make/offer.
+
+#### Example: Projecting a Recursive Protocol
+
+```rust
+// Define a recursive global protocol
+type RecursiveProtocol = GRec<(), GSend<String, RoleA, RoleB, GChoice<RoleA, (
+    GVar<()>,
+    GEnd
+)>>>;
+
+// Project for RoleA
+type RoleAProtocol = <RecursiveProtocol as Project<RoleA>>::LocalProtocol;
+// Equivalent to: Rec<Send<String, Choose<Var<0>, End>>>
+
+// Project for RoleB
+type RoleBProtocol = <RecursiveProtocol as Project<RoleB>>::LocalProtocol;
+// Equivalent to: Rec<Recv<String, Offer<Var<0>, End>>>
+```
 
 ## Channel Implementation
 
