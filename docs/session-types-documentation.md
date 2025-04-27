@@ -458,10 +458,22 @@ When projected for each role, the protocol captures exactly what each role needs
 
 #### Example: Projecting a Recursive Protocol
 
+Recursive protocols allow for expressing repetitive behavior in communication protocols. They are defined using the `GRec<Label, Protocol>` and `GVar<Label>` types, where `Label` is a type used to identify the recursion point and `Protocol` is the body of the recursive protocol.
+
+The `GRec<Label, Protocol>` type defines a recursive protocol with label `Label` and body `Protocol`. The `GVar<Label>` type is used within `Protocol` to refer back to the enclosing `GRec<Label, Protocol>`, creating a loop.
+
+When projecting a recursive protocol, the `GRec<Label, Protocol>` type is projected to a `Rec<P>` type, where `P` is the projection of `Protocol`. The `GVar<Label>` type is projected to a `Var<N>` type, where `N` is the recursion depth (0 for the immediately enclosing `Rec`).
+
 ```rust
 // Define a recursive global protocol
-type RecursiveProtocol = GRec<(), GSend<String, RoleA, RoleB, GChoice<RoleA, (
-    GVar<()>,
+// This protocol represents:
+// 1. RoleA sends a String to RoleB
+// 2. RoleA then chooses to either:
+//    a. Loop back to the beginning (GVar<RecursionLabel>)
+//    b. End the protocol (GEnd)
+struct RecursionLabel;
+type RecursiveProtocol = GRec<RecursionLabel, GSend<String, RoleA, RoleB, GChoice<RoleA, (
+    GVar<RecursionLabel>,
     GEnd
 )>>>;
 
@@ -473,6 +485,51 @@ type RoleAProtocol = <RecursiveProtocol as Project<RoleA>>::LocalProtocol;
 type RoleBProtocol = <RecursiveProtocol as Project<RoleB>>::LocalProtocol;
 // Equivalent to: Rec<Recv<String, Offer<Var<0>, End>>>
 ```
+
+In this example:
+1. We define a recursive protocol where RoleA sends a String to RoleB and then chooses to either loop back to the beginning or end the protocol.
+2. When projected for RoleA, this becomes a recursive protocol where RoleA sends a String and then chooses between looping back or ending.
+3. When projected for RoleB, this becomes a recursive protocol where RoleB receives a String and then offers a choice between looping back or ending.
+
+#### Nested Recursion
+
+Recursive protocols can also be nested, allowing for more complex communication patterns:
+
+```rust
+// Define nested recursive protocols
+struct OuterLoop;
+struct InnerLoop;
+
+// Inner loop: Server sends an i32 to Client repeatedly until Server chooses to end
+type InnerProtocol = GRec<InnerLoop,
+    GSend<i32, Server, Client,
+        GChoice<Server, (
+            GVar<InnerLoop>,
+            GEnd
+        )>
+    >
+>;
+
+// Outer loop: Client sends a String to Server, then enters the inner loop
+type GlobalProtocol = GRec<OuterLoop,
+    GSend<String, Client, Server,
+        InnerProtocol
+    >
+>;
+
+// Project for Client
+type ClientLocal = <GlobalProtocol as Project<Client>>::LocalProtocol;
+// Equivalent to: Rec<Send<String, Rec<Recv<i32, Offer<Var<0>, End>>>>>
+
+// Project for Server
+type ServerLocal = <GlobalProtocol as Project<Server>>::LocalProtocol;
+// Equivalent to: Rec<Recv<String, Rec<Send<i32, Choose<Var<0>, End>>>>>
+```
+
+In this nested recursion example:
+1. We define an inner recursive protocol where Server repeatedly sends an i32 to Client until Server chooses to end.
+2. We define an outer recursive protocol where Client sends a String to Server and then enters the inner recursive protocol.
+3. When projected, the nested structure is preserved, with each role having the appropriate local protocol.
 
 ## Channel Implementation
 

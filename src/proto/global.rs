@@ -345,12 +345,54 @@ impl<G1: GlobalProtocol, G2: GlobalProtocol> GlobalProtocolBranches for (G1, G2)
 }
 
 /// Represents a recursive protocol definition
+///
+/// The `GRec<Label, Protocol>` type allows for the definition of recursive protocols where
+/// the protocol can refer to itself. This is achieved by using `GVar<Label>` types
+/// within the protocol definition to reference back to the enclosing `GRec`.
+///
+/// # Type Parameters
+///
+/// * `Label` - A type used as a label for the recursive protocol.
+/// * `Protocol` - The protocol body that may contain references to itself via `GVar<Label>`.
+///
+/// # Examples
+///
+/// ```
+/// use sessrums::proto::global::{GlobalProtocolBuilder, GEnd};
+/// use sessrums::proto::roles::{RoleA, RoleB};
+///
+/// // Define a builder
+/// let builder = GlobalProtocolBuilder::new();
+///
+/// // Define a recursive protocol where RoleA repeatedly sends an i32 to RoleB
+/// // until it decides to end
+/// struct RecursionLabel;
+/// let protocol = builder.rec::<RecursionLabel, _>(
+///     builder.send::<i32, RoleA, RoleB, _>(
+///         builder.choice::<RoleA, _>((
+///             builder.var::<RecursionLabel>(),
+///             builder.end()
+///         ))
+///     )
+/// );
+/// ```
 pub struct GRec<Label, Protocol>(PhantomData<(Label, Protocol)>);
 
 impl<Label, Protocol> GRec<Label, Protocol> {
     /// Creates a new GRec protocol step.
     pub fn new() -> Self {
         GRec(PhantomData)
+    }
+    
+    /// Returns the inner protocol.
+    ///
+    /// This is a conceptual method that would allow access to the inner protocol
+    /// in a real implementation. Since we're using PhantomData, we can't actually
+    /// return the protocol, but this method illustrates the concept.
+    pub fn inner_protocol(&self) -> Option<&Protocol> {
+        // In a real implementation, we would return a reference to the inner protocol
+        // For now, we just return None since we're using PhantomData
+        None
     }
 }
 
@@ -360,27 +402,65 @@ impl<Label, Protocol: GlobalProtocol> GlobalProtocol for GRec<Label, Protocol> {
     }
     
     fn validate(&self) -> Result<()> {
-        // Validate the recursive protocol
-        // This would be implemented by calling validate on the Protocol type
-        // For now, we'll just return Ok
+        // In a real implementation, we would need to:
+        // 1. Check that the Protocol is well-formed
+        // 2. Verify that all GVar<Label> references within Protocol refer to this GRec
+        // 3. Ensure that the recursion is productive (i.e., not immediately recursive)
+        
+        // For now, we'll just return Ok since we can't validate the inner protocol
+        // without requiring Protocol to implement Default
         Ok(())
     }
     
     fn involved_roles(&self) -> Vec<&'static str> {
-        // Get roles from the recursive protocol
-        // This would be implemented by calling involved_roles on the Protocol type
-        // For now, we'll just return an empty vector
+        // In a real implementation, we would need to get roles from the inner protocol
+        // For now, we'll just return an empty vector since we can't access the inner protocol
+        // without requiring Protocol to implement Default
         vec![]
     }
 }
 
 /// Represents a reference to a recursive protocol definition
+///
+/// The `GVar<Label>` type is used to refer back to an enclosing `GRec<Label, P>` protocol,
+/// where the `Label` type matches the label of the `GRec` to refer to.
+///
+/// # Type Parameters
+///
+/// * `Label` - A type used as a label to identify which `GRec` to refer to.
+///
+/// # Examples
+///
+/// ```
+/// use sessrums::proto::global::{GlobalProtocolBuilder, GEnd};
+/// use sessrums::proto::roles::{RoleA, RoleB};
+///
+/// // Define a builder
+/// let builder = GlobalProtocolBuilder::new();
+///
+/// // Define a recursive protocol where RoleA repeatedly sends an i32 to RoleB
+/// struct RecursionLabel;
+/// let protocol = builder.rec::<RecursionLabel, _>(
+///     builder.send::<i32, RoleA, RoleB, _>(
+///         builder.var::<RecursionLabel>() // Refers back to the enclosing GRec
+///     )
+/// );
+/// ```
 pub struct GVar<Label>(PhantomData<Label>);
 
 impl<Label> GVar<Label> {
     /// Creates a new GVar protocol step.
     pub fn new() -> Self {
         GVar(PhantomData)
+    }
+    
+    /// Returns the label type as a string for debugging.
+    ///
+    /// This is a conceptual method that would allow access to the label
+    /// in a real implementation. Since we're using PhantomData, we can't actually
+    /// return the label, but this method illustrates the concept.
+    pub fn label_type(&self) -> &'static str {
+        std::any::type_name::<Label>()
     }
 }
 
@@ -390,21 +470,28 @@ impl<Label> GlobalProtocol for GVar<Label> {
     }
     
     fn validate(&self) -> Result<()> {
-        // Validate that the label refers to a valid recursive protocol
-        // This would require context about defined recursive protocols
+        // In a real implementation, we would need to:
+        // 1. Check that there is an enclosing GRec<Label, P> with a matching Label
+        // 2. Verify that the recursion is well-formed
+        
         // For now, we'll just return Ok
+        // In a more complete implementation, this would require context about defined recursive protocols
         Ok(())
     }
     
     fn involved_roles(&self) -> Vec<&'static str> {
-        // Get roles from the referenced recursive protocol
-        // This would require context about defined recursive protocols
+        // In a real implementation, we would need to:
+        // 1. Find the enclosing GRec<Label, P> with a matching Label
+        // 2. Return the roles involved in P
+        
         // For now, we'll just return an empty vector
+        // In a more complete implementation, this would require context about defined recursive protocols
         vec![]
     }
 }
 
 /// Represents the end of a global protocol path
+#[derive(Default)]
 pub struct GEnd;
 
 impl GEnd {
