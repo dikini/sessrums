@@ -35,11 +35,29 @@ type ServerProtocol = <ClientProtocol as Protocol>::Dual;
 
 sessrums provides the following protocol types:
 
+### Binary Session Types
+
 - **Send\<T, P\>**: Sends a value of type `T` and then continues with protocol `P`
 - **Recv\<T, P\>**: Receives a value of type `T` and then continues with protocol `P`
 - **End**: Represents the end of a communication session
 - **Offer\<L, R\>**: Offers a choice between continuing with protocol `L` or protocol `R`
 - **Choose\<L, R\>**: Makes a choice between continuing with protocol `L` or protocol `R`
+- **Rec\<P\>**: Represents a recursive protocol definition
+- **Var\<N\>**: Represents a reference to a recursive protocol definition
+
+### Multiparty Session Types (MPST)
+
+- **Role**: A trait representing a participant in a multiparty protocol
+- **GlobalProtocol**: A trait representing a global protocol that describes the communication behavior between multiple roles
+- **GSend\<T, From, To, Next\>**: Represents sending a value of type `T` from role `From` to role `To`, then continuing with protocol `Next`
+- **GRecv\<T, From, To, Next\>**: Represents receiving a value of type `T` by role `To` from role `From`, then continuing with protocol `Next`
+- **GChoice\<Chooser, Branches\>**: Represents a choice made by role `Chooser` between different protocol branches
+- **GOffer\<Offeree, Branches\>**: Represents an offer received by role `Offeree` with different protocol branches
+- **GRec\<Label, Protocol\>**: Represents a recursive global protocol definition
+- **GVar\<Label\>**: Represents a reference to a recursive global protocol definition
+- **GSeq\<First, Second\>**: Represents sequential composition of two protocols
+- **GPar\<First, Second\>**: Represents parallel composition of two protocols
+- **GEnd**: Represents the end of a global protocol path
 
 Additionally, sessrums provides macros for defining protocols with a more concise syntax:
 
@@ -81,12 +99,54 @@ For development and examples, the following dependencies are used:
 
 ## Channel Implementation
 
-The `Chan<P, IO>` type represents a communication channel that follows protocol `P` using the underlying IO implementation `IO`:
+### Binary Session Types
+
+The `Chan<P, R, IO>` type represents a communication channel that follows protocol `P` from the perspective of role `R` using the underlying IO implementation `IO`:
 
 ```rust
-pub struct Chan<P: Protocol, IO> {
+pub struct Chan<P: Protocol, R: Role, IO> {
     io: IO,
+    role: R,
     _marker: PhantomData<P>,
+}
+```
+
+### Multiparty Session Types
+
+For multiparty session types, the `Chan` type is used with local protocols that are projected from global protocols:
+
+```rust
+// Define a global protocol: RoleA sends a String to RoleB, then ends
+type GlobalProtocol = GSend<String, RoleA, RoleB, GEnd>;
+
+// Project it for RoleA
+type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
+
+// Create a channel for RoleA
+let chan = Chan::<RoleALocal, RoleA, _>::new(io);
+```
+
+The `Project` trait is used to project a global protocol to a local protocol for a specific role:
+
+```rust
+pub trait Project<R: Role> {
+    /// The resulting local protocol type after projection.
+    type LocalProtocol;
+}
+```
+
+The `ProtocolCompat` trait allows for seamless conversion between binary and multiparty session types:
+
+```rust
+pub trait ProtocolCompat<R: Role> {
+    /// The binary protocol type that is compatible with this multiparty protocol.
+    type BinaryProtocol: Protocol;
+    
+    /// Converts a multiparty protocol to a binary protocol.
+    fn to_binary(self) -> Self::BinaryProtocol;
+    
+    /// Converts a binary protocol to a multiparty protocol.
+    fn from_binary(binary: Self::BinaryProtocol) -> Self;
 }
 ```
 
@@ -364,6 +424,86 @@ Client                                Server
 
 For more visual diagrams illustrating session types concepts, see [Session Types Diagrams](docs/session-types-diagrams.md).
 
+## Multiparty Session Types Examples
+
+### Basic MPST Example
+
+```rust
+// Define the roles in our protocol
+struct Client;
+struct Server;
+struct Logger;
+
+impl Role for Client {
+    fn name(&self) -> &'static str { "Client" }
+}
+
+impl Role for Server {
+    fn name(&self) -> &'static str { "Server" }
+}
+
+impl Role for Logger {
+    fn name(&self) -> &'static str { "Logger" }
+}
+
+// Define the global protocol
+// Client sends a Request to Server
+// Server sends a Response to Client
+// Server sends a LogMessage to Logger
+type GlobalProtocol = GSend<Request, Client, Server,
+    GSend<Response, Server, Client,
+        GSend<LogMessage, Server, Logger, GEnd>
+    >
+>;
+
+// Project the global protocol to local protocols for each role
+type ClientProtocol = <GlobalProtocol as Project<Client>>::LocalProtocol;
+type ServerProtocol = <GlobalProtocol as Project<Server>>::LocalProtocol;
+type LoggerProtocol = <GlobalProtocol as Project<Logger>>::LocalProtocol;
+
+// Create channels for each role
+let client_chan = Chan::<ClientProtocol, Client, _>::new(client_io);
+let server_chan = Chan::<ServerProtocol, Server, _>::new(server_io);
+let logger_chan = Chan::<LoggerProtocol, Logger, _>::new(logger_io);
+```
+
+### Using the Global Protocol Macro
+
+```rust
+// Define the global protocol using the macro
+global_protocol! {
+    protocol OnlineStore {
+        // Client sends a request to Server
+        Client -> Server: Request;
+        
+        // Server makes a choice
+        choice at Server {
+            // Success branch
+            option Success {
+                // Server sends a response to Client
+                Server -> Client: Response;
+                // Server logs the successful transaction
+                Server -> Logger: LogMessage;
+            }
+            // Error branch
+            option Error {
+                // Server sends an error response to Client
+                Server -> Client: Response;
+                // Server logs the error
+                Server -> Logger: LogMessage;
+            }
+        }
+    }
+}
+
+// Project the global protocol to local protocols for each role
+type ClientProtocol = <OnlineStore as Project<Client>>::LocalProtocol;
+type ServerProtocol = <OnlineStore as Project<Server>>::LocalProtocol;
+type LoggerProtocol = <OnlineStore as Project<Logger>>::LocalProtocol;
+```
+
+For more examples of multiparty session types, see the [MPST Examples](examples/mpst/) directory.
+
 ## Testing Framework
 
 sessrums provides a comprehensive testing framework for verifying both compile-time and runtime properties of session types:
@@ -442,6 +582,9 @@ For a complete list of all documentation resources, see the [Documentation Index
 - [Testing Protocols Guide](docs/testing-protocols.md) - Examples and best practices for testing protocols
 - [Offer and Choose Guide](docs/offer-choose.md) - Detailed information about the Offer and Choose protocol types
 - [API Ergonomics Guide](docs/api-ergonomics.md) - Guide to using the API ergonomics improvements
+- [MPST Concepts](docs/mpst-concepts.md) - Introduction to Multiparty Session Types concepts
+- [MPST Design](docs/mpst-design.md) - Design and architecture of MPST support
+- [MPST Macro](docs/mpst-macro.md) - Guide to using the global protocol macro
 
 ## License
 

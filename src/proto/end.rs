@@ -25,6 +25,7 @@ use super::Protocol;
 /// // A protocol that sends an i32 and then ends
 /// type SimpleProtocol = Send<i32, End>;
 /// ```
+#[derive(Debug)]
 pub struct End;
 
 impl Protocol for End {

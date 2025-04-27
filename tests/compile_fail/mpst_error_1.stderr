@@ -1,0 +1,7 @@
+error: Sender and receiver must be different roles in GSend
+ --> $DIR/mpst_error_1.rs:17:5
+  |
+17 |     let protocol = GSend::<String, Client, Client, GEnd>::new();
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the method `validate` (in Nightly builds, run with -Z macro-backtrace for more info)

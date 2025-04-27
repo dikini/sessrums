@@ -168,6 +168,15 @@ pub enum Error {
     /// let err = Error::StateMismatch("Expected Send state, but protocol is in Recv state");
     /// ```
     StateMismatch(&'static str),
+
+    /// An unknown role was specified for an operation (e.g., projection).
+    UnknownRole(&'static str),
+
+    /// The global protocol definition has an invalid structure.
+    InvalidProtocolStructure(&'static str),
+
+    /// A role mismatch occurred in the protocol definition.
+    RoleMismatch(&'static str),
 }
 
 impl fmt::Display for Error {
@@ -182,6 +191,9 @@ impl fmt::Display for Error {
             Error::Timeout(duration) => write!(f, "Timeout error: Operation timed out after {:?}", duration),
             Error::Negotiation(msg) => write!(f, "Protocol negotiation error: {}", msg),
             Error::StateMismatch(msg) => write!(f, "Protocol state mismatch: {}", msg),
+            Error::UnknownRole(role) => write!(f, "Unknown role: {}", role),
+            Error::InvalidProtocolStructure(msg) => write!(f, "Invalid protocol structure: {}", msg),
+            Error::RoleMismatch(msg) => write!(f, "Role mismatch: {}", msg),
         }
     }
 }
@@ -205,6 +217,9 @@ impl StdError for Error {
             Error::Timeout(_) => "Communication timeout error",
             Error::Negotiation(_) => "Protocol negotiation error",
             Error::StateMismatch(_) => "Protocol state mismatch error",
+            Error::UnknownRole(_) => "Unknown role error",
+            Error::InvalidProtocolStructure(_) => "Invalid protocol structure error",
+            Error::RoleMismatch(_) => "Role mismatch error",
         }
     }
 }
@@ -336,6 +351,32 @@ mod tests {
         assert!(err.source().is_none());
 
         let err = Error::StateMismatch("expected Send state");
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    fn test_mpst_error_display() {
+        // Test the Display implementation for new MPST error variants
+        let err = Error::UnknownRole("Client");
+        assert_eq!(format!("{}", err), "Unknown role: Client");
+
+        let err = Error::InvalidProtocolStructure("Choice with no branches");
+        assert_eq!(format!("{}", err), "Invalid protocol structure: Choice with no branches");
+
+        let err = Error::RoleMismatch("Sender and receiver roles do not match");
+        assert_eq!(format!("{}", err), "Role mismatch: Sender and receiver roles do not match");
+    }
+
+    #[test]
+    fn test_mpst_error_source() {
+        // Test the source method for new MPST error variants
+        let err = Error::UnknownRole("Client");
+        assert!(err.source().is_none());
+
+        let err = Error::InvalidProtocolStructure("Choice with no branches");
+        assert!(err.source().is_none());
+
+        let err = Error::RoleMismatch("Sender and receiver roles do not match");
         assert!(err.source().is_none());
     }
 

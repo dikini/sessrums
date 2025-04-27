@@ -2,9 +2,12 @@
 //!
 //! This module contains the channel implementations that allow
 //! communication according to the protocols defined in the `proto` module.
+//! It supports both binary session types and multiparty session types (MPST).
 
 use std::marker::PhantomData;
 use crate::proto::Protocol;
+use crate::proto::roles::Role;
+use crate::proto::compat::ProtocolCompat;
 
 /// A channel with protocol `P` and underlying IO implementation `IO`.
 ///
@@ -30,7 +33,7 @@ use crate::proto::Protocol;
 ///
 /// // Create a channel using mpsc::Sender as the IO implementation
 /// let (tx, _) = mpsc::channel::<i32>();
-/// let chan = Chan::<MyProtocol, _>::new(tx);
+/// let chan = Chan::<MyProtocol, RoleA, _>::new(tx);
 ///
 /// // Access the underlying IO implementation
 /// let io_ref = chan.io();
@@ -64,16 +67,73 @@ use crate::proto::Protocol;
 ///
 /// // Create a channel with our custom IO implementation
 /// let io = MyIO { value: None };
-/// let chan = Chan::<End, _>::new(io);
+/// let chan = Chan::<End, RoleA, _>::new(io);
 /// ```
-pub struct Chan<P: Protocol, IO> {
+/// A channel with protocol `P`, role `R`, and underlying IO implementation `IO`.
+///
+/// The `Chan` type represents a communication channel that follows protocol `P`
+/// from the perspective of role `R`. The `IO` type parameter represents the
+/// underlying communication primitive.
+///
+/// This channel can be used with both binary session types and multiparty session types (MPST).
+/// For MPST, the protocol `P` is typically the result of projecting a global protocol
+/// for the role `R`.
+///
+/// # Type Parameters
+///
+/// * `P` - The protocol type that this channel follows. Must implement the `Protocol` trait.
+/// * `R` - The role that this channel represents in the protocol. Must implement the `Role` trait.
+/// * `IO` - The underlying IO implementation that handles the actual communication.
+///
+/// # Examples
+///
+/// Creating a channel with a simple protocol:
+///
+/// ```
+/// use sessrums::chan::Chan;
+/// use sessrums::proto::{Protocol, Send, Recv, End, RoleA, RoleB};
+/// use std::sync::mpsc;
+///
+/// // Define a protocol: Send an i32, then receive a String, then end
+/// type MyProtocol = Send<i32, Recv<String, End>>;
+///
+/// // Create a channel using mpsc::Sender as the IO implementation for RoleA
+/// let (tx, _) = mpsc::channel::<i32>();
+/// let chan = Chan::<MyProtocol, RoleA, _>::new(tx);
+///
+/// // Access the underlying IO implementation
+/// let io_ref = chan.io();
+/// ```
+///
+/// Using with MPST:
+///
+/// ```
+/// use sessrums::chan::Chan;
+/// use sessrums::proto::{Send, Recv, End, RoleA, RoleB};
+/// use sessrums::proto::global::{GSend, GEnd};
+/// use sessrums::proto::projection::Project;
+/// use std::sync::mpsc;
+///
+/// // Define a global protocol: RoleA sends an i32 to RoleB, then ends
+/// type GlobalProtocol = GSend<i32, RoleA, RoleB, GEnd>;
+///
+/// // Project it for RoleA
+/// type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
+///
+/// // Create a channel for RoleA
+/// let (tx, _) = mpsc::channel::<i32>();
+/// let chan = Chan::<RoleALocal, RoleA, _>::new(tx);
+/// ```
+pub struct Chan<P: Protocol, R: Role, IO> {
     /// The underlying IO implementation.
     io: IO,
+    /// The role that this channel represents.
+    role: R,
     /// Phantom data to carry the protocol type.
     _marker: PhantomData<P>,
 }
 
-impl<P: Protocol, IO> Chan<P, IO> {
+impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     /// Create a new channel with the given IO implementation.
     ///
     /// # Parameters
@@ -93,13 +153,60 @@ impl<P: Protocol, IO> Chan<P, IO> {
     ///
     /// // Create a channel with mpsc::Sender as the IO implementation
     /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<End, _>::new(tx);
+    /// let chan = Chan::<End, RoleA, _>::new(tx);
+    /// ```
+    /// Create a new channel with the given IO implementation and role.
+    ///
+    /// # Parameters
+    ///
+    /// * `io` - The IO implementation to use for communication.
+    ///
+    /// # Returns
+    ///
+    /// A new `Chan` instance with the specified protocol type, role, and IO implementation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Protocol, End, RoleA};
+    /// use std::sync::mpsc;
+    ///
+    /// // Create a channel with mpsc::Sender as the IO implementation
+    /// let (tx, _) = mpsc::channel::<i32>();
+    /// let chan = Chan::<End, RoleA, _>::new(tx);
     /// ```
     pub fn new(io: IO) -> Self {
         Chan {
             io,
+            role: R::default(),
             _marker: PhantomData,
         }
+    }
+    
+    /// Get a reference to the role that this channel represents.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the role that this channel represents.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Protocol, End, RoleA};
+    /// use std::sync::mpsc;
+    ///
+    /// // Create a channel with mpsc::Sender as the IO implementation
+    /// let (tx, _) = mpsc::channel::<i32>();
+    /// let chan = Chan::<End, RoleA, _>::new(tx);
+    ///
+    /// // Get a reference to the role
+    /// let role_ref = chan.role();
+    /// assert_eq!(role_ref.name(), "RoleA");
+    /// ```
+    pub fn role(&self) -> &R {
+        &self.role
     }
 
     /// Get a reference to the underlying IO implementation.
@@ -117,7 +224,7 @@ impl<P: Protocol, IO> Chan<P, IO> {
     ///
     /// // Create a channel with mpsc::Sender as the IO implementation
     /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<End, _>::new(tx);
+    /// let chan = Chan::<End, RoleA, _>::new(tx);
     ///
     /// // Get a reference to the underlying IO implementation
     /// let io_ref = chan.io();
@@ -142,7 +249,7 @@ impl<P: Protocol, IO> Chan<P, IO> {
     ///
     /// // Create a channel with mpsc::Sender as the IO implementation
     /// let (mut tx, _) = mpsc::channel::<i32>();
-    /// let mut chan = Chan::<End, _>::new(tx);
+    /// let mut chan = Chan::<End, RoleA, _>::new(tx);
     ///
     /// // Get a mutable reference to the underlying IO implementation
     /// let io_mut = chan.io_mut();
@@ -150,9 +257,158 @@ impl<P: Protocol, IO> Chan<P, IO> {
     pub fn io_mut(&mut self) -> &mut IO {
         &mut self.io
     }
+    
+    /// Create a new channel with the given IO implementation and a specific role instance.
+    ///
+    /// This is useful when you need to use a custom role instance rather than the default.
+    ///
+    /// # Parameters
+    ///
+    /// * `io` - The IO implementation to use for communication.
+    /// * `role` - The specific role instance to use.
+    ///
+    /// # Returns
+    ///
+    /// A new `Chan` instance with the specified protocol type, role, and IO implementation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Protocol, End, RoleA};
+    /// use std::sync::mpsc;
+    ///
+    /// // Create a channel with mpsc::Sender as the IO implementation and a specific role
+    /// let (tx, _) = mpsc::channel::<i32>();
+    /// let role = RoleA;
+    /// let chan = Chan::<End, RoleA, _>::with_role(tx, role);
+    /// ```
+    pub fn with_role(io: IO, role: R) -> Self {
+        Chan {
+            io,
+            role,
+            _marker: PhantomData,
+        }
+    }
+    
+    /// Convert this channel to use a different protocol type.
+    ///
+    /// This is useful for converting between binary and multiparty session types.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Q` - The new protocol type.
+    ///
+    /// # Returns
+    ///
+    /// A new `Chan` instance with the specified protocol type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Protocol, End, Send, RoleA};
+    /// use sessrums::proto::compat::{BinaryWrapper, MPSTWrapper};
+    /// use std::sync::mpsc;
+    ///
+    /// // Create a channel with a binary protocol
+    /// let (tx, _) = mpsc::channel::<i32>();
+    /// let chan = Chan::<Send<i32, End>, RoleA, _>::new(tx);
+    ///
+    /// // Convert it to use an MPST wrapper
+    /// let mpst_chan = chan.convert::<MPSTWrapper<Send<i32, End>, RoleA>>();
+    /// ```
+    pub fn convert<Q: Protocol>(self) -> Chan<Q, R, IO> {
+        Chan {
+            io: self.io,
+            role: self.role,
+            _marker: PhantomData,
+        }
+    }
+    
+    /// Create a channel for a different role with the same protocol and IO.
+    ///
+    /// This is useful when you need to create channels for multiple roles in an MPST protocol.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `S` - The new role type.
+    ///
+    /// # Parameters
+    ///
+    /// * `role` - The new role instance.
+    ///
+    /// # Returns
+    ///
+    /// A new `Chan` instance with the specified role.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Protocol, End, RoleA, RoleB};
+    /// use std::sync::mpsc;
+    ///
+    /// // Create a channel for RoleA
+    /// let (tx, _) = mpsc::channel::<i32>();
+    /// let chan_a = Chan::<End, RoleA, _>::new(tx);
+    ///
+    /// // Create a channel for RoleB with the same protocol and IO
+    /// let role_b = RoleB;
+    /// let chan_b = chan_a.for_role::<RoleB>(role_b);
+    /// ```
+    pub fn for_role<S: Role>(self, role: S) -> Chan<P, S, IO> {
+        Chan {
+            io: self.io,
+            role,
+            _marker: PhantomData,
+        }
+    }
 }
 
-impl<T, P: Protocol, IO> Chan<crate::proto::Send<T, P>, IO>
+/// Extension trait for channels with protocols that implement ProtocolCompat.
+///
+/// This trait provides methods for converting between binary and multiparty session types.
+pub trait ChanCompat<P: Protocol + ProtocolCompat<R>, R: Role, IO> {
+    /// Convert this channel to use a binary protocol.
+    ///
+    /// # Returns
+    ///
+    /// A new `Chan` instance with the binary protocol.
+    fn to_binary(self) -> Chan<P::BinaryProtocol, R, IO>;
+        
+    /// Convert this channel to use a multiparty protocol.
+    ///
+    /// # Returns
+    ///
+    /// A new `Chan` instance with the multiparty protocol.
+    fn from_binary<Q: Protocol>(binary_chan: Chan<Q, R, IO>) -> Chan<P, R, IO>
+    where
+        P: ProtocolCompat<R, BinaryProtocol = Q>;
+}
+
+impl<P: Protocol + ProtocolCompat<R>, R: Role, IO> ChanCompat<P, R, IO> for Chan<P, R, IO> {
+    fn to_binary(self) -> Chan<P::BinaryProtocol, R, IO> {
+        Chan {
+            io: self.io,
+            role: self.role,
+            _marker: PhantomData,
+        }
+    }
+    
+    fn from_binary<Q: Protocol>(binary_chan: Chan<Q, R, IO>) -> Chan<P, R, IO>
+    where
+        P: ProtocolCompat<R, BinaryProtocol = Q>,
+    {
+        Chan {
+            io: binary_chan.io,
+            role: binary_chan.role,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<T, P: Protocol, R: Role, IO> Chan<crate::proto::Send<T, P>, R, IO>
 where
     IO: crate::io::AsyncSender<T>,
     <IO as crate::io::AsyncSender<T>>::Error: std::fmt::Debug,
@@ -236,7 +492,7 @@ where
     ///
     /// // Create a channel with a Send<i32, End> protocol
     /// let io = MyIO { value: None };
-    /// let chan = Chan::<Send<i32, End>, _>::new(io);
+    /// let chan = Chan::<Send<i32, End>, RoleA, _>::new(io);
     ///
     /// // Send a value and advance the protocol to End
     /// let chan = chan.send(42).await?;
@@ -245,7 +501,7 @@ where
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn send(mut self, value: T) -> Result<Chan<P, IO>, crate::error::Error> {
+    pub async fn send(mut self, value: T) -> Result<Chan<P, R, IO>, crate::error::Error> {
         // Send the value using the underlying IO implementation
         // and await the future returned by the async send method
         self.io_mut().send(value).await.map_err(|e| {
@@ -260,12 +516,13 @@ where
         // Return a new channel with the advanced protocol
         Ok(Chan {
             io: self.io,
+            role: self.role,
             _marker: std::marker::PhantomData,
         })
     }
 }
 
-impl<T, P: Protocol, IO> Chan<crate::proto::Recv<T, P>, IO>
+impl<T, P: Protocol, R: Role, IO> Chan<crate::proto::Recv<T, P>, R, IO>
 where
     IO: crate::io::AsyncReceiver<T>,
     <IO as crate::io::AsyncReceiver<T>>::Error: std::fmt::Debug,
@@ -337,7 +594,7 @@ where
     ///
     /// // Create a channel with a Recv<i32, End> protocol
     /// let io = MyIO { value: Some(42) };
-    /// let chan = Chan::<Recv<i32, End>, _>::new(io);
+    /// let chan = Chan::<Recv<i32, End>, RoleA, _>::new(io);
     ///
     /// // Receive a value and advance the protocol to End
     /// let (value, chan) = chan.recv().await?;
@@ -347,7 +604,7 @@ where
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn recv(mut self) -> Result<(T, Chan<P, IO>), crate::error::Error> {
+    pub async fn recv(mut self) -> Result<(T, Chan<P, R, IO>), crate::error::Error> {
         // Receive the value using the underlying IO implementation
         // and await the future returned by the async recv method
         let value = self.io_mut().recv().await.map_err(|e| {
@@ -363,13 +620,14 @@ where
             value,
             Chan {
                 io: self.io,
+                role: self.role,
                 _marker: std::marker::PhantomData,
             },
         ))
     }
 }
 
-impl<L: Protocol, R: Protocol, IO> Chan<crate::proto::Offer<L, R>, IO>
+impl<L: Protocol, R1: Protocol, R2: Role, IO> Chan<crate::proto::Offer<L, R1>, R2, IO>
 where
     IO: crate::io::AsyncReceiver<bool>,
     <IO as crate::io::AsyncReceiver<bool>>::Error: std::fmt::Debug,
@@ -382,8 +640,8 @@ where
     ///
     /// # Type Parameters
     ///
-    /// * `F` - A function type that takes `Chan<L, IO>` and returns `Result<T, Error>`
-    /// * `G` - A function type that takes `Chan<R, IO>` and returns `Result<T, Error>`
+    /// * `F` - A function type that takes `Chan<L, R2, IO>` and returns `Result<T, Error>`
+    /// * `G` - A function type that takes `Chan<R1, R2, IO>` and returns `Result<T, Error>`
     /// * `T` - The return type of both functions `f` and `g`
     ///
     /// # Parameters
@@ -463,13 +721,13 @@ where
     ///
     /// // Define handlers for the left and right branches as non-async functions
     /// // that return Result directly
-    /// let handle_left = |_chan: Chan<LeftProto, MyIO>| -> Result<String, sessrums::error::Error> {
+    /// let handle_left = |_chan: Chan<LeftProto, RoleA, MyIO>| -> Result<String, sessrums::error::Error> {
     ///     // In a real implementation, we would send a string and then end
     ///     // But for this example, we just return a result directly
     ///     Ok("Left branch completed".to_string())
     /// };
     ///
-    /// let handle_right = |_chan: Chan<RightProto, MyIO>| -> Result<String, sessrums::error::Error> {
+    /// let handle_right = |_chan: Chan<RightProto, RoleA, MyIO>| -> Result<String, sessrums::error::Error> {
     ///     // In a real implementation, we would send an integer and then end
     ///     // But for this example, we just return a result directly
     ///     Ok("Right branch completed".to_string())
@@ -484,8 +742,8 @@ where
     /// ```
     pub async fn offer<F, G, T>(mut self, f: F, g: G) -> Result<T, crate::error::Error>
     where
-        F: FnOnce(Chan<L, IO>) -> Result<T, crate::error::Error>,
-        G: FnOnce(Chan<R, IO>) -> Result<T, crate::error::Error>,
+        F: FnOnce(Chan<L, R2, IO>) -> Result<T, crate::error::Error>,
+        G: FnOnce(Chan<R1, R2, IO>) -> Result<T, crate::error::Error>,
     {
         // Receive a boolean value indicating which branch to take
         let choice = self.io_mut().recv().await.map_err(|e| {
@@ -500,19 +758,21 @@ where
             // Left branch chosen
             f(Chan {
                 io: self.io,
+                role: self.role,
                 _marker: PhantomData,
             })
         } else {
             // Right branch chosen
             g(Chan {
                 io: self.io,
+                role: self.role,
                 _marker: PhantomData,
             })
         }
     }
 }
 
-impl<IO> Chan<crate::proto::End, IO> {
+impl<R: Role, IO> Chan<crate::proto::End, R, IO> {
     /// Closes the channel, indicating that the communication session has ended.
     ///
     /// This method consumes the channel and returns nothing on success, indicating
@@ -547,7 +807,7 @@ impl<IO> Chan<crate::proto::End, IO> {
     }
 }
 
-impl<L: Protocol, R: Protocol, IO> Chan<crate::proto::Choose<L, R>, IO>
+impl<L: Protocol, R1: Protocol, R2: Role, IO> Chan<crate::proto::Choose<L, R1>, R2, IO>
 where
     IO: crate::io::AsyncSender<bool>,
     <IO as crate::io::AsyncSender<bool>>::Error: std::fmt::Debug,
@@ -656,7 +916,7 @@ where
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn choose_left(mut self) -> Result<Chan<L, IO>, crate::error::Error> {
+    pub async fn choose_left(mut self) -> Result<Chan<L, R2, IO>, crate::error::Error> {
         // Send a boolean value (true) indicating the left branch
         self.io_mut().send(true).await.map_err(|e| {
             crate::error::Error::Io(std::io::Error::new(
@@ -668,6 +928,7 @@ where
         // Return a new channel with the left protocol
         Ok(Chan {
             io: self.io,
+            role: self.role,
             _marker: PhantomData,
         })
     }
@@ -776,7 +1037,7 @@ where
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn choose_right(mut self) -> Result<Chan<R, IO>, crate::error::Error> {
+    pub async fn choose_right(mut self) -> Result<Chan<R1, R2, IO>, crate::error::Error> {
         // Send a boolean value (false) indicating the right branch
         self.io_mut().send(false).await.map_err(|e| {
             crate::error::Error::Io(std::io::Error::new(
@@ -788,13 +1049,14 @@ where
         // Return a new channel with the right protocol
         Ok(Chan {
             io: self.io,
+            role: self.role,
             _marker: PhantomData,
         })
     }
 }
 
 // Implementation for recursive protocols
-impl<P: Protocol, IO> Chan<crate::proto::Rec<P>, IO> {
+impl<P: Protocol, R: Role, IO> Chan<crate::proto::Rec<P>, R, IO> {
     /// Unwraps a recursive protocol, allowing the inner protocol to be used.
     ///
     /// This method transforms a `Chan<Rec<P>, IO>` into a `Chan<P, IO>`, essentially
@@ -816,7 +1078,7 @@ impl<P: Protocol, IO> Chan<crate::proto::Rec<P>, IO> {
     ///
     /// // Create a channel with the recursive protocol
     /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<LoopingSend, _>::new(tx);
+    /// let chan = Chan::<LoopingSend, RoleA, _>::new(tx);
     ///
     /// // Enter the recursive protocol to access the inner Send<i32, Var<0>>
     /// let chan = chan.enter();
@@ -824,17 +1086,18 @@ impl<P: Protocol, IO> Chan<crate::proto::Rec<P>, IO> {
     /// // Now we can send an i32
     /// // (In a real implementation, we would await the send operation)
     /// ```
-    pub fn enter(self) -> Chan<P, IO> {
+    pub fn enter(self) -> Chan<P, R, IO> {
         // Simply transform the channel to use the inner protocol
         Chan {
             io: self.io,
+            role: self.role,
             _marker: PhantomData,
         }
     }
 }
 
 // Implementation for variable references at depth 0
-impl<IO> Chan<crate::proto::Var<0>, IO> {
+impl<R: Role, IO> Chan<crate::proto::Var<0>, R, IO> {
     /// Converts a variable reference at depth 0 back to a recursive protocol.
     ///
     /// This method handles the base case of recursion, transforming a `Chan<Var<0>, IO>`
@@ -860,7 +1123,7 @@ impl<IO> Chan<crate::proto::Var<0>, IO> {
     ///
     /// // Create a channel with the recursive protocol
     /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<LoopingSend, _>::new(tx);
+    /// let chan = Chan::<LoopingSend, RoleA, _>::new(tx);
     ///
     /// // Enter the recursive protocol
     /// let chan = chan.enter();
@@ -870,10 +1133,11 @@ impl<IO> Chan<crate::proto::Var<0>, IO> {
     /// // let chan = chan.send(42).await?;
     /// // let chan = chan.zero::<Send<i32, Var<0>>>();
     /// ```
-    pub fn zero<P: Protocol>(self) -> Chan<crate::proto::Rec<P>, IO> {
+    pub fn zero<P: Protocol>(self) -> Chan<crate::proto::Rec<P>, R, IO> {
         // Transform the channel to use the recursive protocol
         Chan {
             io: self.io,
+            role: self.role,
             _marker: PhantomData,
         }
     }
@@ -906,7 +1170,7 @@ pub trait Dec {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::proto::{Send, Recv, End};
+    use crate::proto::{Send, Recv, End, RoleA};
     use crate::io::{Sender, Receiver};
     use std::sync::mpsc;
 
@@ -915,7 +1179,7 @@ mod tests {
         // Test creating a channel with a simple protocol
         type SimpleProtocol = Send<i32, End>;
         let (tx, _) = mpsc::channel::<i32>();
-        let _chan = Chan::<SimpleProtocol, _>::new(tx);
+        let _chan = Chan::<SimpleProtocol, RoleA, _>::new(tx);
         
         // Just verify that the channel was created successfully
         // We'll test actual communication in later phases
@@ -926,7 +1190,7 @@ mod tests {
         // Test creating a channel with a more complex protocol
         type ComplexProtocol = Send<i32, Recv<String, Send<bool, End>>>;
         let (tx, _) = mpsc::channel::<i32>();
-        let _chan = Chan::<ComplexProtocol, _>::new(tx);
+        let _chan = Chan::<ComplexProtocol, RoleA, _>::new(tx);
         
         // Just verify that the channel was created successfully
     }
@@ -935,8 +1199,8 @@ mod tests {
     fn test_chan_io_access() {
         // Test accessing the underlying IO implementation
         let (tx, rx) = mpsc::channel::<i32>();
-        let mut chan_tx = Chan::<End, _>::new(tx);
-        let mut chan_rx = Chan::<End, _>::new(rx);
+        let mut chan_tx = Chan::<End, RoleA, _>::new(tx);
+        let mut chan_rx = Chan::<End, RoleA, _>::new(rx);
         
         // Send a value using the underlying IO implementation
         chan_tx.io_mut().send(42).unwrap();
@@ -969,7 +1233,7 @@ mod tests {
         
         // Create a channel with our custom IO implementation
         let io = TestIO { value: None };
-        let mut chan = Chan::<Send<i32, End>, _>::new(io);
+        let mut chan = Chan::<Send<i32, End>, RoleA, _>::new(io);
         
         // Send a value using the underlying IO implementation
         chan.io_mut().send(42).unwrap();
@@ -985,6 +1249,7 @@ mod tests {
 mod protocol_methods {
     use super::*;
     use crate::proto::{Send, Recv, End};
+    use crate::proto::roles::RoleA;
     use crate::io::{AsyncSender, AsyncReceiver};
     use futures_core::future::Future;
     use std::pin::Pin;
@@ -1145,7 +1410,7 @@ mod protocol_methods {
                 };
         
                 // Create a channel with a Choose protocol
-                let chan = Chan::<ChooseProto, _>::new(io.clone());
+                let chan = Chan::<ChooseProto, RoleA, _>::new(io.clone());
         
                 // Choose the left branch
                 let chan = chan.choose_left().await.unwrap();
@@ -1174,7 +1439,7 @@ mod protocol_methods {
                 };
         
                 // Create a channel with a Choose protocol
-                let chan = Chan::<ChooseProto, _>::new(io.clone());
+                let chan = Chan::<ChooseProto, RoleA, _>::new(io.clone());
         
                 // Choose the right branch
                 let chan = chan.choose_right().await.unwrap();
@@ -1221,14 +1486,14 @@ mod protocol_methods {
                 }
         
                 // Create a channel with a Choose protocol
-                let chan = Chan::<ChooseProto, _>::new(ErrorIO);
+                let chan = Chan::<ChooseProto, RoleA, _>::new(ErrorIO);
         
                 // Try to choose the left branch, which should fail
                 let result = chan.choose_left().await;
                 assert!(result.is_err());
         
                 // Create another channel for testing choose_right
-                let chan = Chan::<ChooseProto, _>::new(ErrorIO);
+                let chan = Chan::<ChooseProto, RoleA, _>::new(ErrorIO);
         
                 // Try to choose the right branch, which should also fail
                 let result = chan.choose_right().await;
@@ -1240,16 +1505,16 @@ mod protocol_methods {
         {
             // Create a channel with Offer protocol and choice set to true (left)
             let io = TestOfferIO { choice: Some(true) };
-            let chan = Chan::<OfferProto, _>::new(io);
+            let chan = Chan::<OfferProto, RoleA, _>::new(io);
             
             // Define handlers for left and right branches
-            let handle_left = |_chan: Chan<LeftProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+            let handle_left = |_chan: Chan<LeftProto, RoleA, TestOfferIO>| -> Result<String, crate::error::Error> {
                 // We don't actually send here since our TestOfferIO doesn't support String
                 // Just verify we got the correct branch
                 Ok("Left branch taken".to_string())
             };
             
-            let handle_right = |_: Chan<RightProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+            let handle_right = |_: Chan<RightProto, RoleA, TestOfferIO>| -> Result<String, crate::error::Error> {
                 // This should not be called
                 panic!("Right branch handler should not be called when left branch is chosen");
             };
@@ -1264,15 +1529,15 @@ mod protocol_methods {
         {
             // Create a channel with Offer protocol and choice set to false (right)
             let io = TestOfferIO { choice: Some(false) };
-            let chan = Chan::<OfferProto, _>::new(io);
+            let chan = Chan::<OfferProto, RoleA, _>::new(io);
             
             // Define handlers for left and right branches
-            let handle_left = |_: Chan<LeftProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+            let handle_left = |_: Chan<LeftProto, RoleA, TestOfferIO>| -> Result<String, crate::error::Error> {
                 // This should not be called
                 panic!("Left branch handler should not be called when right branch is chosen");
             };
             
-            let handle_right = |_chan: Chan<RightProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+            let handle_right = |_chan: Chan<RightProto, RoleA, TestOfferIO>| -> Result<String, crate::error::Error> {
                 // We don't actually send here since our TestOfferIO doesn't support i32 for this test
                 // Just verify we got the correct branch
                 Ok("Right branch taken".to_string())
@@ -1288,14 +1553,14 @@ mod protocol_methods {
         {
             // Create a channel with Offer protocol but no value to receive
             let io = TestOfferIO { choice: None };
-            let chan = Chan::<OfferProto, _>::new(io);
+            let chan = Chan::<OfferProto, RoleA, _>::new(io);
             
             // Define handlers for left and right branches
-            let handle_left = |_: Chan<LeftProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+            let handle_left = |_: Chan<LeftProto, RoleA, TestOfferIO>| -> Result<String, crate::error::Error> {
                 Ok("Left branch taken".to_string())
             };
             
-            let handle_right = |_: Chan<RightProto, TestOfferIO>| -> Result<String, crate::error::Error> {
+            let handle_right = |_: Chan<RightProto, RoleA, TestOfferIO>| -> Result<String, crate::error::Error> {
                 Ok("Right branch taken".to_string())
             };
             
@@ -1366,7 +1631,7 @@ mod protocol_methods {
     async fn test_send_method() {
         // Create a channel with Send<i32, End> protocol
         let io = TestIO { value: None };
-        let chan = Chan::<Send<i32, End>, _>::new(io);
+        let chan = Chan::<Send<i32, End>, RoleA, _>::new(io);
         
         // Send a value
         let result = chan.send(42).await;
@@ -1374,14 +1639,14 @@ mod protocol_methods {
         
         // Check that the protocol advanced to End
         let chan = result.unwrap();
-        let _: Chan<End, _> = chan; // Type check
+        let _: Chan<End, RoleA, _> = chan; // Type check
     }
 
     #[tokio::test]
     async fn test_recv_method() {
         // Create a channel with Recv<i32, End> protocol
         let io = TestIO { value: Some(42) };
-        let chan = Chan::<Recv<i32, End>, _>::new(io);
+        let chan = Chan::<Recv<i32, End>, RoleA, _>::new(io);
         
         // Receive a value
         let result = chan.recv().await;
@@ -1390,14 +1655,14 @@ mod protocol_methods {
         // Check that we received the correct value and the protocol advanced to End
         let (value, chan) = result.unwrap();
         assert_eq!(value, 42);
-        let _: Chan<End, _> = chan; // Type check
+        let _: Chan<End, RoleA, _> = chan; // Type check
     }
 
     #[tokio::test]
     async fn test_recv_error() {
         // Create a channel with Recv<i32, End> protocol but no value to receive
         let io = TestIO::<i32> { value: None };
-        let chan = Chan::<Recv<i32, End>, _>::new(io);
+        let chan = Chan::<Recv<i32, End>, RoleA, _>::new(io);
         
         // Attempt to receive a value (should fail)
         let result = chan.recv().await;
@@ -1408,7 +1673,7 @@ mod protocol_methods {
     fn test_close_method() {
         // Create a channel with End protocol
         let io = TestIO::<i32> { value: None };
-        let chan = Chan::<End, _>::new(io);
+        let chan = Chan::<End, RoleA, _>::new(io);
         
         // Close the channel
         let result = chan.close();
@@ -1421,24 +1686,24 @@ mod protocol_methods {
         
         // Create a channel with the initial protocol
         let io = TestIO::<i32> { value: None };
-        let chan = Chan::<Send<i32, Recv<String, End>>, _>::new(io);
+        let chan = Chan::<Send<i32, Recv<String, End>>, RoleA, _>::new(io);
         
         // Send an i32
         let chan = chan.send(42).await.unwrap();
         
         // The protocol should now be Recv<String, End>
-        let _: Chan<Recv<String, End>, _> = chan;
+        let _: Chan<Recv<String, End>, RoleA, _> = chan;
         
         // We need to create a new TestIO for the next step since the types change
         let io_string = TestIO::<String> { value: Some("Hello".to_string()) };
-        let chan = Chan::<Recv<String, End>, _>::new(io_string);
+        let chan = Chan::<Recv<String, End>, RoleA, _>::new(io_string);
         
         // Receive a String
         let (value, chan) = chan.recv().await.unwrap();
         assert_eq!(value, "Hello");
         
         // The protocol should now be End
-        let _: Chan<End, _> = chan;
+        let _: Chan<End, RoleA, _> = chan;
         
         // Close the channel
         let result = chan.close();
@@ -1455,35 +1720,35 @@ mod protocol_methods {
 
         // Create a channel with the recursive protocol
         let io = TestIO::<i32> { value: None };
-        let chan = Chan::<LoopingSend, _>::new(io);
+        let chan = Chan::<LoopingSend, RoleA, _>::new(io);
 
         // Enter the recursive protocol
         let chan = chan.enter();
 
         // The protocol should now be Send<i32, Var<0>>
-        let _: Chan<Send<i32, Var<0>>, _> = chan;
+        let _: Chan<Send<i32, Var<0>>, RoleA, _> = chan;
 
         // Create a new channel for the next step
         let io = TestIO::<i32> { value: None };
-        let chan = Chan::<Send<i32, Var<0>>, _>::new(io);
+        let chan = Chan::<Send<i32, Var<0>>, RoleA, _>::new(io);
 
         // Send an i32
         let chan = chan.send(42).await.unwrap();
 
         // The protocol should now be Var<0>
-        let _: Chan<Var<0>, _> = chan;
+        let _: Chan<Var<0>, RoleA, _> = chan;
 
         // Use zero to loop back to the recursive protocol
         let chan = chan.zero::<Send<i32, Var<0>>>();
 
         // The protocol should now be Rec<Send<i32, Var<0>>>
-        let _: Chan<Rec<Send<i32, Var<0>>>, _> = chan;
+        let _: Chan<Rec<Send<i32, Var<0>>>, RoleA, _> = chan;
 
         // We can enter the recursive protocol again
         let chan = chan.enter();
 
         // The protocol should now be Send<i32, Var<0>> again
-        let _: Chan<Send<i32, Var<0>>, _> = chan;
+        let _: Chan<Send<i32, Var<0>>, RoleA, _> = chan;
     }
 
 
@@ -1499,44 +1764,44 @@ mod protocol_methods {
 
         // Create a channel with the outer recursive protocol
         let io = TestIO::<i32> { value: None };
-        let chan = Chan::<OuterRec, _>::new(io);
+        let chan = Chan::<OuterRec, RoleA, _>::new(io);
 
         // Enter the outer recursive protocol
         let chan = chan.enter();
 
         // The protocol should now be Send<i32, InnerRec>
-        let _: Chan<Send<i32, InnerRec>, _> = chan;
+        let _: Chan<Send<i32, InnerRec>, RoleA, _> = chan;
 
         // Create a new channel for the next step
         let io = TestIO::<i32> { value: None };
-        let chan = Chan::<Send<i32, InnerRec>, _>::new(io);
+        let chan = Chan::<Send<i32, InnerRec>, RoleA, _>::new(io);
 
         // Send an i32
         let chan = chan.send(42).await.unwrap();
 
         // The protocol should now be InnerRec
-        let _: Chan<InnerRec, _> = chan;
+        let _: Chan<InnerRec, RoleA, _> = chan;
 
         // Enter the inner recursive protocol
         let chan = chan.enter();
 
         // The protocol should now be Send<String, Var<0>>
-        let _: Chan<Send<String, Var<0>>, _> = chan;
+        let _: Chan<Send<String, Var<0>>, RoleA, _> = chan;
 
         // Create a new channel for the next step
         let io = TestIO::<String> { value: None };
-        let chan = Chan::<Send<String, Var<0>>, _>::new(io);
+        let chan = Chan::<Send<String, Var<0>>, RoleA, _>::new(io);
 
         // Send a String
         let chan = chan.send("Hello".to_string()).await.unwrap();
 
         // The protocol should now be Var<0>
-        let _: Chan<Var<0>, _> = chan;
+        let _: Chan<Var<0>, RoleA, _> = chan;
 
         // Use zero to loop back to the inner recursive protocol
         let chan = chan.zero::<Send<String, Var<0>>>();
 
         // The protocol should now be Rec<Send<String, Var<0>>>
-        let _: Chan<Rec<Send<String, Var<0>>>, _> = chan;
+        let _: Chan<Rec<Send<String, Var<0>>>, RoleA, _> = chan;
     }
 }

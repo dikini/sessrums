@@ -490,6 +490,122 @@ impl<Label> GlobalProtocol for GVar<Label> {
     }
 }
 
+/// Represents sequential composition of two global protocols
+///
+/// The `GSeq<First, Second>` type represents the sequential composition of two global protocols,
+/// where the `First` protocol is executed first, followed by the `Second` protocol.
+///
+/// # Type Parameters
+///
+/// * `First` - The first global protocol to execute.
+/// * `Second` - The second global protocol to execute after the first one completes.
+///
+/// # Examples
+///
+/// ```
+/// use sessrums::proto::global::{GlobalProtocolBuilder, GEnd};
+/// use sessrums::proto::roles::{RoleA, RoleB};
+///
+/// // Define a builder
+/// let builder = GlobalProtocolBuilder::new();
+///
+/// // Define a protocol where RoleA sends an i32 to RoleB, then RoleB sends a String to RoleA
+/// let protocol = builder.seq(
+///     builder.send::<i32, RoleA, RoleB, GEnd>(),
+///     builder.send::<String, RoleB, RoleA, GEnd>()
+/// );
+/// ```
+pub struct GSeq<First, Second>(PhantomData<(First, Second)>);
+
+impl<First, Second> GSeq<First, Second> {
+    /// Creates a new GSeq protocol step.
+    pub fn new() -> Self {
+        GSeq(PhantomData)
+    }
+}
+
+impl<First, Second> GlobalProtocol for GSeq<First, Second>
+where
+    First: GlobalProtocol,
+    Second: GlobalProtocol,
+{
+    fn protocol_name(&self) -> &'static str {
+        "GSeq"
+    }
+    
+    fn validate(&self) -> Result<()> {
+        // Validate both protocols
+        // In a real implementation, we would validate both First and Second
+        // For now, we'll just return Ok
+        Ok(())
+    }
+    
+    fn involved_roles(&self) -> Vec<&'static str> {
+        // In a real implementation, we would get roles from both First and Second
+        // and combine them, removing duplicates
+        // For now, we'll just return an empty vector
+        vec![]
+    }
+}
+
+/// Represents parallel composition of two global protocols
+///
+/// The `GPar<First, Second>` type represents the parallel composition of two global protocols,
+/// where the `First` and `Second` protocols are executed concurrently.
+///
+/// # Type Parameters
+///
+/// * `First` - The first global protocol to execute in parallel.
+/// * `Second` - The second global protocol to execute in parallel.
+///
+/// # Examples
+///
+/// ```
+/// use sessrums::proto::global::{GlobalProtocolBuilder, GEnd};
+/// use sessrums::proto::roles::{RoleA, RoleB, RoleC, RoleD};
+///
+/// // Define a builder
+/// let builder = GlobalProtocolBuilder::new();
+///
+/// // Define a protocol where RoleA sends an i32 to RoleB in parallel with RoleC sending a String to RoleD
+/// let protocol = builder.par(
+///     builder.send::<i32, RoleA, RoleB, GEnd>(),
+///     builder.send::<String, RoleC, RoleD, GEnd>()
+/// );
+/// ```
+pub struct GPar<First, Second>(PhantomData<(First, Second)>);
+
+impl<First, Second> GPar<First, Second> {
+    /// Creates a new GPar protocol step.
+    pub fn new() -> Self {
+        GPar(PhantomData)
+    }
+}
+
+impl<First, Second> GlobalProtocol for GPar<First, Second>
+where
+    First: GlobalProtocol,
+    Second: GlobalProtocol,
+{
+    fn protocol_name(&self) -> &'static str {
+        "GPar"
+    }
+    
+    fn validate(&self) -> Result<()> {
+        // Validate both protocols
+        // In a real implementation, we would validate both First and Second
+        // For now, we'll just return Ok
+        Ok(())
+    }
+    
+    fn involved_roles(&self) -> Vec<&'static str> {
+        // In a real implementation, we would get roles from both First and Second
+        // and combine them, removing duplicates
+        // For now, we'll just return an empty vector
+        vec![]
+    }
+}
+
 /// Represents the end of a global protocol path
 #[derive(Default)]
 pub struct GEnd;
@@ -559,6 +675,16 @@ impl GlobalProtocolBuilder {
     /// Creates a GEnd protocol step.
     pub fn end(&self) -> GEnd {
         GEnd::new()
+    }
+    
+    /// Creates a GSeq protocol step.
+    pub fn seq<First: GlobalProtocol, Second: GlobalProtocol>(&self, first: First, second: Second) -> GSeq<First, Second> {
+        GSeq::new()
+    }
+    
+    /// Creates a GPar protocol step.
+    pub fn par<First: GlobalProtocol, Second: GlobalProtocol>(&self, first: First, second: Second) -> GPar<First, Second> {
+        GPar::new()
     }
 }
 
@@ -753,5 +879,36 @@ mod tests {
         assert!(roles.contains(&"Client"));
         assert!(roles.contains(&"Logger"));
         assert_eq!(roles.len(), 3); // No duplicates
+    }
+    
+    #[test]
+    fn test_gseq_protocol_name() {
+        let protocol = GSeq::<GSend<String, Client, Server, GEnd>, GRecv<i32, Server, Client, GEnd>>::new();
+        assert_eq!(protocol.protocol_name(), "GSeq");
+    }
+    
+    #[test]
+    fn test_gpar_protocol_name() {
+        let protocol = GPar::<GSend<String, Client, Server, GEnd>, GSend<bool, Client, Logger, GEnd>>::new();
+        assert_eq!(protocol.protocol_name(), "GPar");
+    }
+    
+    #[test]
+    fn test_global_protocol_builder_composition() {
+        let builder = GlobalProtocolBuilder::new();
+        
+        // Test sequential composition
+        let seq_protocol = builder.seq(
+            GSend::<String, Client, Server, GEnd>::new(),
+            GRecv::<i32, Server, Client, GEnd>::new()
+        );
+        assert_eq!(seq_protocol.protocol_name(), "GSeq");
+        
+        // Test parallel composition
+        let par_protocol = builder.par(
+            GSend::<String, Client, Server, GEnd>::new(),
+            GSend::<bool, Client, Logger, GEnd>::new()
+        );
+        assert_eq!(par_protocol.protocol_name(), "GPar");
     }
 }

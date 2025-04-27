@@ -3,7 +3,7 @@
 //! This module contains the core protocol type definitions used to express
 //! communication protocols at the type level.
 
-mod roles;
+pub mod roles;
 pub use roles::{Role, RoleA, RoleB};
 
 mod proto;
@@ -33,8 +33,18 @@ pub use rec::Rec;
 mod var;
 pub use var::Var;
 
-mod global;
-pub use global::*;
+pub mod global;
+pub use global::{
+    GlobalProtocol, GSend, GRecv, GChoice, GOffer, GRec, GVar, GEnd, GSeq, GPar,
+    GlobalProtocolBuilder, validate_global_protocol
+};
 
-mod projection;
+pub mod projection;
 pub use projection::{Project, project};
+
+// Phase 5 implementations
+pub mod compat;
+pub use compat::{ProtocolCompat, BinaryWrapper, MPSTWrapper};
+
+// Re-export the global_protocol macro from the sessrums-macro crate
+pub use sessrums_macro::global_protocol;

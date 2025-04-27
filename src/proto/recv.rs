@@ -46,6 +46,7 @@ use super::send::Send;
 /// // A protocol that receives an i32, sends a bool, then receives a String, then ends
 /// type ComplexProtocol = Recv<i32, Send<bool, Recv<String, End>>>;
 /// ```
+#[derive(Debug)]
 pub struct Recv<T, P> {
     _marker: PhantomData<(T, P)>,
 }

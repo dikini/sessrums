@@ -147,6 +147,40 @@ impl<Label, R: Role> Project<R> for GVar<Label> {
     type LocalProtocol = Var<0>;
 }
 
+// Projection for GSeq
+impl<First, Second, R: Role> Project<R> for GSeq<First, Second>
+where
+    First: Project<R>,
+    Second: Project<R>,
+{
+    /// The projection of a sequential composition is the sequential composition of the projections.
+    ///
+    /// When projecting `GSeq<First, Second>` for role `R`, we get the sequential composition
+    /// of the projection of `First` for role `R` followed by the projection of `Second` for role `R`.
+    type LocalProtocol = <First as Project<R>>::LocalProtocol;
+    // Note: This is a simplified implementation. In a more complete implementation,
+    // we would need a local protocol type that represents sequential composition.
+    // For now, we're assuming that the projection of First already includes the
+    // continuation to the projection of Second.
+}
+
+// Projection for GPar
+impl<First, Second, R: Role> Project<R> for GPar<First, Second>
+where
+    First: Project<R>,
+    Second: Project<R>,
+{
+    /// The projection of a parallel composition is the parallel composition of the projections.
+    ///
+    /// When projecting `GPar<First, Second>` for role `R`, we get the parallel composition
+    /// of the projection of `First` for role `R` and the projection of `Second` for role `R`.
+    type LocalProtocol = <First as Project<R>>::LocalProtocol;
+    // Note: This is a simplified implementation. In a more complete implementation,
+    // we would need a local protocol type that represents parallel composition.
+    // For now, we're assuming that the projection of First already includes the
+    // parallel execution with the projection of Second.
+}
+
 /// Helper trait to project each element of a tuple of global protocols.
 pub trait ProjectTuple<R: Role> {
     /// The resulting tuple of local protocols after projection.

@@ -20,6 +20,7 @@ A Rust library for asynchronous session types with minimal dependencies, focusin
 6. [Multiparty Session Types](#multiparty-session-types)
    - [Roles](#roles)
    - [Global Protocol](#global-protocol)
+   - [Global Protocol Macro](#global-protocol-macro)
    - [Projection](#projection)
 7. [Channel Implementation](#channel-implementation)
    - [Chan Type](#chan-type)
@@ -103,6 +104,84 @@ Session types can be composed to build complex communication patterns. The primi
 ```rust
 // A protocol that sends an i32, receives a bool, then sends a String, then ends
 type ComplexProtocol = Send<i32, Recv<bool, Send<String, End>>>;
+```
+
+In multiparty session types, we support several forms of protocol composition:
+
+#### Sequential Composition
+
+Sequential composition (`GSeq<First, Second>`) allows two protocols to be executed one after the other. The `First` protocol is executed to completion before the `Second` protocol begins.
+
+```rust
+// A protocol where RoleA sends an i32 to RoleB, then RoleB sends a String to RoleA
+type SequentialProtocol = GSeq<
+    GSend<i32, RoleA, RoleB, GEnd>,
+    GSend<String, RoleB, RoleA, GEnd>
+>;
+```
+
+Using the builder pattern:
+
+```rust
+let builder = GlobalProtocolBuilder::new();
+let protocol = builder.seq(
+    builder.send::<i32, RoleA, RoleB, GEnd>(),
+    builder.send::<String, RoleB, RoleA, GEnd>()
+);
+```
+
+#### Parallel Composition
+
+Parallel composition (`GPar<First, Second>`) allows two protocols to be executed concurrently. The `First` and `Second` protocols can proceed independently of each other.
+
+```rust
+// A protocol where RoleA sends an i32 to RoleB in parallel with RoleC sending a String to RoleD
+type ParallelProtocol = GPar<
+    GSend<i32, RoleA, RoleB, GEnd>,
+    GSend<String, RoleC, RoleD, GEnd>
+>;
+```
+
+Using the builder pattern:
+
+```rust
+let builder = GlobalProtocolBuilder::new();
+let protocol = builder.par(
+    builder.send::<i32, RoleA, RoleB, GEnd>(),
+    builder.send::<String, RoleC, RoleD, GEnd>()
+);
+```
+
+#### Complex Compositions
+
+These composition operators can be combined to create complex protocols:
+
+```rust
+// A protocol where:
+// 1. RoleA sends an i32 to RoleB
+// 2. Then, in parallel:
+//    a. RoleB sends a String to RoleA
+//    b. RoleC sends a bool to RoleD
+type ComplexProtocol = GSeq<
+    GSend<i32, RoleA, RoleB, GEnd>,
+    GPar<
+        GSend<String, RoleB, RoleA, GEnd>,
+        GSend<bool, RoleC, RoleD, GEnd>
+    >
+>;
+```
+
+Using the builder pattern:
+
+```rust
+let builder = GlobalProtocolBuilder::new();
+let protocol = builder.seq(
+    builder.send::<i32, RoleA, RoleB, GEnd>(),
+    builder.par(
+        builder.send::<String, RoleB, RoleA, GEnd>(),
+        builder.send::<bool, RoleC, RoleD, GEnd>()
+    )
+);
 ```
 
 ## Visual Diagrams
@@ -241,7 +320,74 @@ sessrums provides several types that implement the `GlobalProtocol` trait, repre
 - **GOffer<Offeree, Branches>**: Represents an offer received by role `Offeree` with different protocol branches. The `Branches` parameter is a tuple of global protocols representing the different possible continuations.
 - **GRec<Label, Protocol>**: Represents a recursive protocol definition with label `Label` and protocol `Protocol`.
 - **GVar<Label>**: Represents a reference to a recursive protocol definition with label `Label`.
+- **GSeq<First, Second>**: Represents sequential composition of two protocols, where `First` is executed before `Second`.
+- **GPar<First, Second>**: Represents parallel composition of two protocols, where `First` and `Second` are executed concurrently.
 - **GEnd**: Represents the end of a global protocol path.
+
+#### Global Protocol Macro
+
+The `global_protocol!` macro provides a more intuitive way to define global protocols using a sequence diagram-inspired syntax. This makes it easier to create and understand complex communication protocols.
+
+```rust
+global_protocol! {
+    protocol PingPong {
+        Client -> Server: String;
+        Server -> Client: String;
+    }
+}
+```
+
+This generates the equivalent of:
+
+```rust
+type PingPong = GSend<String, Client, Server, GRecv<String, Server, Client, GEnd>>;
+```
+
+The macro supports all the protocol patterns:
+
+1. **Simple message passing**:
+   ```rust
+   Role1 -> Role2: Type;
+   ```
+
+2. **Branching and choice**:
+   ```rust
+   choice at Role {
+       option Option1 {
+           // interactions for Option1
+       }
+       option Option2 {
+           // interactions for Option2
+       }
+   }
+   ```
+
+3. **Recursion**:
+   ```rust
+   rec Label {
+       // interactions
+       continue Label;
+   }
+   ```
+
+4. **Sequential composition**:
+   ```rust
+   seq {
+       include Protocol1;
+       include Protocol2;
+   }
+   ```
+
+5. **Parallel composition**:
+   ```rust
+   par {
+       // first protocol
+   } and {
+       // second protocol
+   }
+   ```
+
+The macro handles the translation of this intuitive syntax into the corresponding global protocol types, making it easier to define and understand complex protocols.
 
 #### Example: Defining a Global Protocol
 
@@ -280,6 +426,18 @@ let protocol = builder.send::<String, Client, Server, _>(
     builder.recv::<i32, Server, Client, _>(
         builder.end()
     )
+);
+
+// Build a protocol with sequential composition
+let seq_protocol = builder.seq(
+    builder.send::<String, Client, Server, GEnd>(),
+    builder.recv::<i32, Server, Client, GEnd>()
+);
+
+// Build a protocol with parallel composition
+let par_protocol = builder.par(
+    builder.send::<String, Client, Server, GEnd>(),
+    builder.send::<bool, Client, Logger, GEnd>()
 );
 ```
 
@@ -340,7 +498,15 @@ The projection of a global protocol to a local protocol follows these rules:
 6. **GVar<Label>**:
    - For any role R: `Var<N>` where N is the recursion depth
 
-7. **GEnd**:
+7. **GSeq<First, Second>**:
+   - For any role R: The sequential composition of the projection of `First` for role `R` followed by the projection of `Second` for role `R`.
+   - In our current implementation, this is simplified to `<First as Project<R>>::LocalProtocol`.
+
+8. **GPar<First, Second>**:
+   - For any role R: The parallel composition of the projection of `First` for role `R` and the projection of `Second` for role `R`.
+   - In our current implementation, this is simplified to `<First as Project<R>>::LocalProtocol`.
+
+9. **GEnd**:
    - For any role R: `End`
 
 #### Helper Traits
@@ -535,18 +701,95 @@ In this nested recursion example:
 
 ### Chan Type
 
-The `Chan<P, IO>` type represents a communication channel that follows protocol `P` using the underlying IO implementation `IO`.
+The `Chan<P, R, IO>` type represents a communication channel that follows protocol `P` from the perspective of role `R` using the underlying IO implementation `IO`.
 
 ```rust
-pub struct Chan<P: Protocol, IO> {
+pub struct Chan<P: Protocol, R: Role, IO> {
     io: IO,
+    role: R,
     _marker: PhantomData<P>,
 }
 ```
 
 The `Chan` type is parameterized by:
 - `P`: The protocol type that this channel follows. Must implement the `Protocol` trait.
+- `R`: The role that this channel represents in the protocol. Must implement the `Role` trait.
 - `IO`: The underlying IO implementation that handles the actual communication.
+
+#### MPST Channel Support
+
+The `Chan` type has been extended to support multiparty session types (MPST). It can now be used with local protocols that are projected from global protocols:
+
+```rust
+// Define a global protocol: RoleA sends a String to RoleB, then ends
+type GlobalProtocol = GSend<String, RoleA, RoleB, GEnd>;
+
+// Project it for RoleA
+type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
+
+// Create a channel for RoleA
+let chan = Chan::<RoleALocal, RoleA, _>::new(io);
+```
+
+The `Chan` type provides several methods specifically for working with MPST:
+
+```rust
+// Create a channel with a specific role instance
+let chan = Chan::<MyProtocol, RoleA, _>::with_role(io, role);
+
+// Convert a channel to use a different protocol type
+let mpst_chan = chan.convert::<MPSTWrapper<MyProtocol, RoleA>>();
+
+// Create a channel for a different role with the same protocol and IO
+let chan_b = chan_a.for_role::<RoleB>(role_b);
+```
+
+#### Backward Compatibility
+
+To ensure backward compatibility between binary and multiparty session types, sessrums provides a compatibility layer in the `compat` module:
+
+```rust
+use sessrums::proto::compat::{ProtocolCompat, BinaryWrapper, MPSTWrapper};
+```
+
+The `ProtocolCompat` trait allows for seamless conversion between binary and multiparty session types:
+
+```rust
+pub trait ProtocolCompat<R: Role> {
+    /// The binary protocol type that is compatible with this multiparty protocol.
+    type BinaryProtocol: Protocol;
+    
+    /// Converts a multiparty protocol to a binary protocol.
+    fn to_binary(self) -> Self::BinaryProtocol;
+    
+    /// Converts a binary protocol to a multiparty protocol.
+    fn from_binary(binary: Self::BinaryProtocol) -> Self;
+}
+```
+
+The `BinaryWrapper` and `MPSTWrapper` types provide wrappers for binary and multiparty session types, respectively:
+
+```rust
+// Wrap a binary protocol for use with MPST
+let binary_protocol = Send::<i32, End>::new();
+let mpst_wrapper = MPSTWrapper::<Send<i32, End>, RoleA>::new(binary_protocol);
+
+// Wrap an MPST local protocol for use with binary session types
+let mpst_protocol = project::<GlobalProtocol, RoleA>();
+let binary_wrapper = BinaryWrapper::<_, RoleA>::new(mpst_protocol);
+```
+
+The `ChanCompat` trait provides methods for converting channels between binary and multiparty session types:
+
+```rust
+// Convert a channel to use a binary protocol
+let binary_chan = chan.to_binary();
+
+// Convert a binary channel to use a multiparty protocol
+let mpst_chan = Chan::<MPSTProtocol, RoleA, _>::from_binary(binary_chan);
+```
+
+This compatibility layer ensures that existing code using binary session types continues to work alongside new code using multiparty session types.
 
 ### IO Abstraction
 

@@ -7,7 +7,7 @@
 
 use crate::error::Error;
 use crate::io::{AsyncReceiver, AsyncSender};
-use crate::proto::Protocol;
+use crate::proto::{Protocol, Role};
 use crate::chan::Chan;
 
 use futures_core::future::Future;
@@ -374,9 +374,10 @@ mod unix {
 /// // Establish a connection
 /// let chan = connect::<MyProtocol, _, String>(stream);
 /// ```
-pub fn connect<P, S, T>(stream: S) -> Chan<P, StreamWrapper<S, T>>
+pub fn connect<P, R, S, T>(stream: S) -> Chan<P, R, StreamWrapper<S, T>>
 where
     P: Protocol,
+    R: Role,
 {
     let wrapper = StreamWrapper::new(stream);
     Chan::new(wrapper)
@@ -403,16 +404,17 @@ where
 /// A result containing a channel with the specified protocol and the accepted stream.
 ///
 #[cfg(feature = "tcp")]
-pub fn accept<P, L, S, T>(listener: &L) -> io::Result<Chan<P, StreamWrapper<S, T>>>
+pub fn accept<P, R, L, S, T>(listener: &L) -> io::Result<Chan<P, R, StreamWrapper<S, T>>>
 where
     P: Protocol,
+    R: Role,
     L: std::net::ToSocketAddrs,
     S: From<std::net::TcpStream>,
 {
     let tcp_listener = std::net::TcpListener::bind(listener)?;
     let (stream, _) = tcp_listener.accept()?;
     let stream = S::from(stream);
-    Ok(connect::<P, S, T>(stream))
+    Ok(connect::<P, R, S, T>(stream))
 }
 
 /// Establishes a connection with a specific protocol using the provided connection information.
@@ -475,9 +477,10 @@ where
 /// # Ok(())
 /// # }
 /// ```
-pub async fn connect_with_protocol<P, IO, C>(conn_info: C) -> Result<Chan<P, IO>, Error>
+pub async fn connect_with_protocol<P, R, IO, C>(conn_info: C) -> Result<Chan<P, R, IO>, Error>
 where
     P: Protocol,
+    R: Role,
     C: ConnectInfo<IO = IO>,
 {
     match conn_info.connect() {
@@ -490,6 +493,7 @@ where
 mod tests {
     use super::*;
     use crate::proto::{Send, Recv, End};
+    use crate::proto::roles::{RoleA, RoleB};
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
     use std::thread;
@@ -543,7 +547,7 @@ mod tests {
     #[test]
     fn test_connect() {
         let stream = MockStream::new(Vec::new());
-        let chan = connect::<End, _, i32>(stream);
+        let chan = connect::<End, RoleA, _, i32>(stream);
         
         // Check that the channel was created successfully
         assert!(chan.io().stream().read_data.is_empty());
@@ -573,7 +577,7 @@ mod tests {
             // Accept a connection
             let (stream, _) = listener.accept().unwrap();
             let wrapper = StreamWrapper::<TcpStream, String>::new(stream);
-            let chan = Chan::<ServerProto, _>::new(wrapper);
+            let chan = Chan::<ServerProto, RoleB, _>::new(wrapper);
             
             // Receive a string
             let (msg, chan) = chan.recv().await.unwrap();
@@ -592,7 +596,7 @@ mod tests {
         // Connect to the server
         let stream = TcpStream::connect("127.0.0.1:8080").unwrap();
         let wrapper = StreamWrapper::<TcpStream, String>::new(stream);
-        let chan = Chan::<ClientProto, _>::new(wrapper);
+        let chan = Chan::<ClientProto, RoleA, _>::new(wrapper);
         
         // Send a string
         let chan = chan.send("Hello, server!".to_string()).await.unwrap();

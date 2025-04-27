@@ -19,7 +19,7 @@
 //! Macros are provided for defining complex protocol types in a more concise and
 //! readable way.
 
-use crate::proto::{Protocol, Send, Recv, End, Choose, Offer};
+use crate::proto::{Protocol, Send, Recv, End, Choose, Offer, Role};
 use crate::chan::Chan;
 use crate::error::{Error, Result};
 use crate::connect;
@@ -90,16 +90,18 @@ pub type RequestServer<Req, Resp> = Recv<Req, Send<Resp, End>>;
 /// // Create a pair of channels for a request-response protocol
 /// let (client, server) = channel_pair::<RequestClient<String, i32>, ()>();
 /// ```
-pub fn channel_pair<P, IO>() -> (Chan<P, IO>, Chan<P::Dual, IO>)
+pub fn channel_pair<P, R1, R2, IO>() -> (Chan<P, R1, IO>, Chan<P::Dual, R2, IO>)
 where
     P: Protocol,
+    R1: Role,
+    R2: Role,
     IO: Default + Clone,
 {
     let client_io = IO::default();
     let server_io = client_io.clone();
     
-    let client = Chan::<P, IO>::new(client_io);
-    let server = Chan::<P::Dual, IO>::new(server_io);
+    let client = Chan::<P, R1, IO>::new(client_io);
+    let server = Chan::<P::Dual, R2, IO>::new(server_io);
     
     (client, server)
 }
@@ -124,9 +126,10 @@ where
 ///
 /// A result containing the channel if successful, or an error if the connection
 /// could not be established.
-pub fn connect_with_protocol<P, IO, C>(conn_info: C) -> Result<Chan<P, IO>>
+pub fn connect_with_protocol<P, R, IO, C>(conn_info: C) -> Result<Chan<P, R, IO>>
 where
     P: Protocol,
+    R: Role,
     C: connect::ConnectInfo<IO = IO>,
 {
     match conn_info.connect() {
@@ -142,6 +145,7 @@ mod tests {
     use super::*;
     use crate::protocol;
     use crate::proto::{Protocol, Send, Recv, End, Choose, Offer};
+    use crate::proto::roles::{RoleA, RoleB};
 
     /// Type alias for a simple ping-pong protocol (client side).
     ///
@@ -252,11 +256,11 @@ mod tests {
     #[test]
     fn test_channel_pair() {
         // Create a pair of channels
-        let (client, server) = channel_pair::<RequestClient<String, i32>, ()>();
+        let (client, server) = channel_pair::<RequestClient<String, i32>, RoleA, RoleB, ()>();
         
         // Verify that the channels have the correct types
-        let _: Chan<RequestClient<String, i32>, ()> = client;
-        let _: Chan<RequestServer<String, i32>, ()> = server;
+        let _: Chan<RequestClient<String, i32>, RoleA, ()> = client;
+        let _: Chan<RequestServer<String, i32>, RoleB, ()> = server;
     }
     
     

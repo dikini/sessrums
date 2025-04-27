@@ -704,8 +704,18 @@ dependencies = [
  "futures",
  "futures-core",
  "serde",
+ "sessrums-macro",
  "tokio",
  "trybuild",
+]
+
+[[package]]
+name = "sessrums-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]

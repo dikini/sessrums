@@ -356,6 +356,13 @@ I've created a comprehensive project plan that breaks down each phase into micro
 - **Tests**: Ensure the integration test passes
 - **Completion Criteria**: Integration test is created, documented, and passes
 
+### Task 8.7: Documentation review and update
+- **Goal**: Review and update all code, tests and standalone documentation files in docs/, examples/, tests/, src/. Ensure correctness, completeness, approachability.
+- **Code**: Ensure all public items have rustdoc comments
+- **Documentation**: Complete README.md with comprehensive usage examples
+- **Tests**: Ensure documentation builds correctly with `cargo doc`
+- **Completion Criteria**: Documentation is complete, builds correctly, and examples work
+
 ## Task Dependencies and Sequencing
 
 The tasks within each phase should be completed in order, as later tasks often depend on earlier ones. However, some tasks can be worked on in parallel if they don't have direct dependencies.
