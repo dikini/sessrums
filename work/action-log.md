@@ -1,5 +1,12 @@
 # Action Log
 
+## 2025-04-27: Completed Task 4.1 - Add futures-core Dependency
+
+- Added futures-core v0.3 as a main dependency in Cargo.toml
+- Updated README.md to document the dependency addition in a new "Dependencies" section
+- Verified that the project builds successfully with the new dependency
+- This task is foundational for Phase 4, which will implement asynchronous traits for IO
+
 ## 2025-04-26: Completed Phase 3 - Implement send and recv
 
 - Completed all Phase 3 tasks:

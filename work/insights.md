@@ -1,5 +1,26 @@
 # Insights and Learnings
 
+## 2025-04-27: Task 4.1 Completion - Add futures-core Dependency
+
+### Technical Insights
+- The futures-core crate provides essential traits for asynchronous programming without pulling in the entire futures ecosystem
+- Adding dependencies incrementally helps maintain the library's minimal dependency philosophy
+- The futures-core crate will enable the implementation of asynchronous versions of the Sender and Receiver traits
+- Asynchronous traits are essential for non-blocking IO operations in modern applications
+
+### Design Patterns
+- The facade pattern is used by futures-core to expose only the essential traits needed for async programming
+- The trait-based design allows for flexible implementation of async functionality
+- Separating synchronous and asynchronous traits provides backward compatibility
+- The dependency management pattern of adding only what's needed keeps the library lightweight
+
+### Best Practices
+- Documenting dependencies in the README helps users understand the library's requirements
+- Verifying that the project builds after adding dependencies ensures compatibility
+- Adding dependencies incrementally as needed rather than all at once maintains the minimal dependency philosophy
+- Planning for asynchronous functionality from the beginning ensures a cohesive design
+- Creating a dedicated "Dependencies" section in documentation improves discoverability
+
 ## 2025-04-26: Phase 3 Completion - Implement send and recv
 
 ### Technical Insights
