@@ -3,6 +3,9 @@
 //! This module contains the core protocol type definitions used to express
 //! communication protocols at the type level.
 
+mod roles;
+pub use roles::{Role, RoleA, RoleB};
+
 mod proto;
 pub use proto::Protocol;
 
@@ -29,3 +32,9 @@ pub use rec::Rec;
 
 mod var;
 pub use var::Var;
+
+mod global;
+pub use global::*;
+
+mod projection;
+pub use projection::{Project, project};
