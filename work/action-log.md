@@ -1,5 +1,33 @@
 # Action Log
 
+## 2025-04-27: Completed Task 4.6 - Implement choose Methods
+
+- Implemented `async fn choose_left(self) -> Result<Chan<L, IO>, Error>` for `Chan<Choose<L, R>, IO>`
+  - Added implementation that sends a boolean indicator (true) to the other party
+  - Used the AsyncSender trait for sending the boolean indicator
+  - Added proper error handling for the send operation
+  - Returns a channel with the left continuation protocol
+
+- Implemented `async fn choose_right(self) -> Result<Chan<R, IO>, Error>` for `Chan<Choose<L, R>, IO>`
+  - Added implementation that sends a boolean indicator (false) to the other party
+  - Used the AsyncSender trait for sending the boolean indicator
+  - Added proper error handling for the send operation
+  - Returns a channel with the right continuation protocol
+
+- Added comprehensive documentation with examples for both methods
+  - Included detailed examples showing how to use the methods
+  - Documented the error handling behavior
+  - Explained the relationship with the offer method
+
+- Added unit tests for both methods
+  - Created a test module for the choose methods
+  - Implemented tests for choose_left and choose_right
+  - Added tests for error handling
+  - Verified that the boolean indicator is sent correctly
+  - Tested the full protocol flow by sending values after choosing a branch
+
+- All tests are now passing, confirming that the choose_left and choose_right methods are correctly implemented.
+
 ## 2025-04-27: Completed Task 4.5 - Implement offer Method
 
 - Implemented `async fn offer<F, G, T>(self, f: F, g: G) -> Result<T, Error>` for `Chan<Offer<L, R>, IO>`

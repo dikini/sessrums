@@ -547,6 +547,252 @@ impl<IO> Chan<crate::proto::End, IO> {
     }
 }
 
+impl<L: Protocol, R: Protocol, IO> Chan<crate::proto::Choose<L, R>, IO>
+where
+    IO: crate::io::AsyncSender<bool>,
+    <IO as crate::io::AsyncSender<bool>>::Error: std::fmt::Debug,
+{
+    /// Chooses the left branch of a `Choose<L, R>` protocol and advances the protocol.
+    ///
+    /// This method sends a boolean indicator (true) to the other party to indicate
+    /// the left choice and returns a channel with the left continuation protocol.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Chan<L, IO>)` - A new channel with the left continuation protocol if the send operation succeeds.
+    /// * `Err(Error)` - An error if the send operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # async fn example() -> Result<(), sez::error::Error> {
+    /// use sez::chan::Chan;
+    /// use sez::proto::{Choose, Send, End};
+    /// use sez::io::AsyncSender;
+    /// use futures_core::future::Future;
+    /// use std::pin::Pin;
+    /// use futures_core::task::{Context, Poll};
+    /// use std::marker::Unpin;
+    ///
+    /// // Define protocols for the left and right branches
+    /// type LeftProto = Send<String, End>;
+    /// type RightProto = Send<i32, End>;
+    /// type ChooseProto = Choose<LeftProto, RightProto>;
+    ///
+    /// // Define a custom IO implementation
+    /// #[derive(Clone)]
+    /// struct MyIO {
+    ///     choice: Option<bool>,
+    ///     string_value: Option<String>,
+    ///     int_value: Option<i32>,
+    /// }
+    ///
+    /// // Define a custom error type
+    /// #[derive(Debug)]
+    /// struct MyError;
+    ///
+    /// // Define a future for the async send operation
+    /// struct SendFuture<T> {
+    ///     value: Option<T>,
+    ///     io: MyIO,
+    /// }
+    ///
+    /// impl<T: Clone + Unpin + 'static> Future for SendFuture<T> {
+    ///     type Output = Result<(), MyError>;
+    ///
+    ///     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+    ///         let this = self.get_mut();
+    ///         if let Some(value) = this.value.take() {
+    ///             // Store the value based on its type
+    ///             if std::any::TypeId::of::<T>() == std::any::TypeId::of::<bool>() {
+    ///                 // This is a bit of a hack, but it works for testing
+    ///                 let bool_value = unsafe { std::mem::transmute_copy::<T, bool>(&value) };
+    ///                 this.io.choice = Some(bool_value);
+    ///             } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<String>() {
+    ///                 // This is a bit of a hack, but it works for testing
+    ///                 let string_value = unsafe { std::mem::transmute_copy::<T, String>(&value) };
+    ///                 this.io.string_value = Some(string_value);
+    ///             } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<i32>() {
+    ///                 // This is a bit of a hack, but it works for testing
+    ///                 let int_value = unsafe { std::mem::transmute_copy::<T, i32>(&value) };
+    ///                 this.io.int_value = Some(int_value);
+    ///             }
+    ///             Poll::Ready(Ok(()))
+    ///         } else {
+    ///             Poll::Ready(Err(MyError))
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// // Implement AsyncSender for our custom IO
+    /// impl<T: Clone + Unpin + 'static> AsyncSender<T> for MyIO {
+    ///     type Error = MyError;
+    ///     type SendFuture<'a> = SendFuture<T> where T: 'a, Self: 'a;
+    ///
+    ///     fn send(&mut self, value: T) -> Self::SendFuture<'_> {
+    ///         SendFuture {
+    ///             value: Some(value),
+    ///             io: self.clone(),
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// // Create a channel with a Choose protocol
+    /// let io = MyIO {
+    ///     choice: None,
+    ///     string_value: None,
+    ///     int_value: None,
+    /// };
+    /// let chan = Chan::<ChooseProto, _>::new(io);
+    ///
+    /// // Choose the left branch
+    /// let chan = chan.choose_left().await?;
+    ///
+    /// // Now the channel has the left protocol (LeftProto)
+    /// // We can send a string and then end
+    /// let chan = chan.send("Hello, left branch!".to_string()).await?;
+    /// chan.close()?;
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn choose_left(mut self) -> Result<Chan<L, IO>, crate::error::Error> {
+        // Send a boolean value (true) indicating the left branch
+        self.io_mut().send(true).await.map_err(|e| {
+            crate::error::Error::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Choose error: {:?}", e),
+            ))
+        })?;
+
+        // Return a new channel with the left protocol
+        Ok(Chan {
+            io: self.io,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Chooses the right branch of a `Choose<L, R>` protocol and advances the protocol.
+    ///
+    /// This method sends a boolean indicator (false) to the other party to indicate
+    /// the right choice and returns a channel with the right continuation protocol.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Chan<R, IO>)` - A new channel with the right continuation protocol if the send operation succeeds.
+    /// * `Err(Error)` - An error if the send operation fails.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # async fn example() -> Result<(), sez::error::Error> {
+    /// use sez::chan::Chan;
+    /// use sez::proto::{Choose, Send, End};
+    /// use sez::io::AsyncSender;
+    /// use futures_core::future::Future;
+    /// use std::pin::Pin;
+    /// use futures_core::task::{Context, Poll};
+    /// use std::marker::Unpin;
+    ///
+    /// // Define protocols for the left and right branches
+    /// type LeftProto = Send<String, End>;
+    /// type RightProto = Send<i32, End>;
+    /// type ChooseProto = Choose<LeftProto, RightProto>;
+    ///
+    /// // Define a custom IO implementation
+    /// #[derive(Clone)]
+    /// struct MyIO {
+    ///     choice: Option<bool>,
+    ///     string_value: Option<String>,
+    ///     int_value: Option<i32>,
+    /// }
+    ///
+    /// // Define a custom error type
+    /// #[derive(Debug)]
+    /// struct MyError;
+    ///
+    /// // Define a future for the async send operation
+    /// struct SendFuture<T> {
+    ///     value: Option<T>,
+    ///     io: MyIO,
+    /// }
+    ///
+    /// impl<T: Clone + Unpin + 'static> Future for SendFuture<T> {
+    ///     type Output = Result<(), MyError>;
+    ///
+    ///     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+    ///         let this = self.get_mut();
+    ///         if let Some(value) = this.value.take() {
+    ///             // Store the value based on its type
+    ///             if std::any::TypeId::of::<T>() == std::any::TypeId::of::<bool>() {
+    ///                 // This is a bit of a hack, but it works for testing
+    ///                 let bool_value = unsafe { std::mem::transmute_copy::<T, bool>(&value) };
+    ///                 this.io.choice = Some(bool_value);
+    ///             } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<String>() {
+    ///                 // This is a bit of a hack, but it works for testing
+    ///                 let string_value = unsafe { std::mem::transmute_copy::<T, String>(&value) };
+    ///                 this.io.string_value = Some(string_value);
+    ///             } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<i32>() {
+    ///                 // This is a bit of a hack, but it works for testing
+    ///                 let int_value = unsafe { std::mem::transmute_copy::<T, i32>(&value) };
+    ///                 this.io.int_value = Some(int_value);
+    ///             }
+    ///             Poll::Ready(Ok(()))
+    ///         } else {
+    ///             Poll::Ready(Err(MyError))
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// // Implement AsyncSender for our custom IO
+    /// impl<T: Clone + Unpin + 'static> AsyncSender<T> for MyIO {
+    ///     type Error = MyError;
+    ///     type SendFuture<'a> = SendFuture<T> where T: 'a, Self: 'a;
+    ///
+    ///     fn send(&mut self, value: T) -> Self::SendFuture<'_> {
+    ///         SendFuture {
+    ///             value: Some(value),
+    ///             io: self.clone(),
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// // Create a channel with a Choose protocol
+    /// let io = MyIO {
+    ///     choice: None,
+    ///     string_value: None,
+    ///     int_value: None,
+    /// };
+    /// let chan = Chan::<ChooseProto, _>::new(io);
+    ///
+    /// // Choose the right branch
+    /// let chan = chan.choose_right().await?;
+    ///
+    /// // Now the channel has the right protocol (RightProto)
+    /// // We can send an integer and then end
+    /// let chan = chan.send(42).await?;
+    /// chan.close()?;
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn choose_right(mut self) -> Result<Chan<R, IO>, crate::error::Error> {
+        // Send a boolean value (false) indicating the right branch
+        self.io_mut().send(false).await.map_err(|e| {
+            crate::error::Error::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Choose error: {:?}", e),
+            ))
+        })?;
+
+        // Return a new channel with the right protocol
+        Ok(Chan {
+            io: self.io,
+            _marker: PhantomData,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -633,6 +879,7 @@ mod protocol_methods {
     use futures_core::future::Future;
     use std::pin::Pin;
     use futures_core::task::{Context, Poll};
+    // PhantomData is used in the Chan struct creation
     use std::marker::PhantomData;
 
     // Custom IO implementation for testing
@@ -695,6 +942,187 @@ mod protocol_methods {
                 TestOfferRecvFuture {
                     value: self.choice.take(),
                 }
+            }
+        }
+        
+        #[cfg(test)]
+        mod choose_methods_tests {
+            use super::*;
+            use crate::proto::{Choose, Send, End};
+            use crate::io::AsyncSender;
+            use futures_core::future::Future;
+            use std::pin::Pin;
+            use futures_core::task::{Context, Poll};
+            use std::marker::Unpin;
+            use std::sync::{Arc, Mutex};
+        
+            // Define test protocols
+            type LeftProto = Send<String, End>;
+            type RightProto = Send<i32, End>;
+            type ChooseProto = Choose<LeftProto, RightProto>;
+        
+            // Define a test IO implementation that can be used for testing choose methods
+            #[derive(Clone)]
+            struct TestChooseIO {
+                choice: Arc<Mutex<Option<bool>>>,
+                sent_string: Arc<Mutex<Option<String>>>,
+                sent_int: Arc<Mutex<Option<i32>>>,
+            }
+        
+            // Define a custom error type
+            #[derive(Debug)]
+            struct TestError;
+        
+            // Define futures for async operations
+            struct TestSendFuture<T> {
+                value: Option<T>,
+                io: TestChooseIO,
+            }
+        
+            impl<T: Clone + Unpin + 'static> Future for TestSendFuture<T> {
+                type Output = Result<(), TestError>;
+        
+                fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+                    let this = self.get_mut();
+                    if let Some(value) = this.value.take() {
+                        // Store the value based on its type
+                        if std::any::TypeId::of::<T>() == std::any::TypeId::of::<bool>() {
+                            if let Ok(mut choice) = this.io.choice.lock() {
+                                // This is a bit of a hack, but it works for testing
+                                let bool_value = unsafe { std::mem::transmute_copy::<T, bool>(&value) };
+                                *choice = Some(bool_value);
+                            }
+                        } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<String>() {
+                            if let Ok(mut sent_string) = this.io.sent_string.lock() {
+                                // This is a bit of a hack, but it works for testing
+                                let string_value = unsafe { std::mem::transmute_copy::<T, String>(&value) };
+                                *sent_string = Some(string_value);
+                            }
+                        } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<i32>() {
+                            if let Ok(mut sent_int) = this.io.sent_int.lock() {
+                                // This is a bit of a hack, but it works for testing
+                                let int_value = unsafe { std::mem::transmute_copy::<T, i32>(&value) };
+                                *sent_int = Some(int_value);
+                            }
+                        }
+                        Poll::Ready(Ok(()))
+                    } else {
+                        Poll::Ready(Err(TestError))
+                    }
+                }
+            }
+        
+            // Implement AsyncSender for TestChooseIO
+            impl<T: Clone + Unpin + 'static> AsyncSender<T> for TestChooseIO {
+                type Error = TestError;
+                type SendFuture<'a> = TestSendFuture<T> where T: 'a, Self: 'a;
+        
+                fn send(&mut self, value: T) -> Self::SendFuture<'_> {
+                    TestSendFuture {
+                        value: Some(value),
+                        io: self.clone(),
+                    }
+                }
+            }
+        
+            #[tokio::test]
+            async fn test_choose_left() {
+                // Create a test IO implementation
+                let io = TestChooseIO {
+                    choice: Arc::new(Mutex::new(None)),
+                    sent_string: Arc::new(Mutex::new(None)),
+                    sent_int: Arc::new(Mutex::new(None)),
+                };
+        
+                // Create a channel with a Choose protocol
+                let chan = Chan::<ChooseProto, _>::new(io.clone());
+        
+                // Choose the left branch
+                let chan = chan.choose_left().await.unwrap();
+        
+                // Verify that the choice was sent correctly
+                assert_eq!(*io.choice.lock().unwrap(), Some(true));
+        
+                // Send a string on the left branch
+                let test_string = "Hello, left branch!".to_string();
+                let chan = chan.send(test_string.clone()).await.unwrap();
+        
+                // Verify that the string was sent correctly
+                assert_eq!(*io.sent_string.lock().unwrap(), Some(test_string));
+        
+                // Close the channel
+                chan.close().unwrap();
+            }
+        
+            #[tokio::test]
+            async fn test_choose_right() {
+                // Create a test IO implementation
+                let io = TestChooseIO {
+                    choice: Arc::new(Mutex::new(None)),
+                    sent_string: Arc::new(Mutex::new(None)),
+                    sent_int: Arc::new(Mutex::new(None)),
+                };
+        
+                // Create a channel with a Choose protocol
+                let chan = Chan::<ChooseProto, _>::new(io.clone());
+        
+                // Choose the right branch
+                let chan = chan.choose_right().await.unwrap();
+        
+                // Verify that the choice was sent correctly
+                assert_eq!(*io.choice.lock().unwrap(), Some(false));
+        
+                // Send an integer on the right branch
+                let test_int = 42;
+                let chan = chan.send(test_int).await.unwrap();
+        
+                // Verify that the integer was sent correctly
+                assert_eq!(*io.sent_int.lock().unwrap(), Some(test_int));
+        
+                // Close the channel
+                chan.close().unwrap();
+            }
+        
+            #[tokio::test]
+            async fn test_choose_error_handling() {
+                // Create a test IO implementation that will cause an error
+                struct ErrorIO;
+        
+                #[derive(Debug)]
+                struct ErrorIOError;
+        
+                struct ErrorSendFuture;
+        
+                impl Future for ErrorSendFuture {
+                    type Output = Result<(), ErrorIOError>;
+        
+                    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+                        Poll::Ready(Err(ErrorIOError))
+                    }
+                }
+        
+                impl AsyncSender<bool> for ErrorIO {
+                    type Error = ErrorIOError;
+                    type SendFuture<'a> = ErrorSendFuture where Self: 'a;
+        
+                    fn send(&mut self, _value: bool) -> Self::SendFuture<'_> {
+                        ErrorSendFuture
+                    }
+                }
+        
+                // Create a channel with a Choose protocol
+                let chan = Chan::<ChooseProto, _>::new(ErrorIO);
+        
+                // Try to choose the left branch, which should fail
+                let result = chan.choose_left().await;
+                assert!(result.is_err());
+        
+                // Create another channel for testing choose_right
+                let chan = Chan::<ChooseProto, _>::new(ErrorIO);
+        
+                // Try to choose the right branch, which should also fail
+                let result = chan.choose_right().await;
+                assert!(result.is_err());
             }
         }
         
