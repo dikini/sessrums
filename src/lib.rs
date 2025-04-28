@@ -58,6 +58,7 @@ macro_rules! protocol {
 /// This macro creates a pair of protocol types for a client and server, ensuring
 /// that they are duals of each other.
 ///
+/// #[doc = " \[Warning: Lacks active test coverage, status uncertain.]"]
 #[macro_export]
 macro_rules! protocol_pair {
     (
