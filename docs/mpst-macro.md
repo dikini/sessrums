@@ -1,3 +1,6 @@
+> **Note:** This document discusses a proposed macro syntax (`mpst!`) for planned or experimental Multiparty Session Type (MPST) features. This syntax may change, and the features described might not be fully implemented. Please refer to the main [Introduction](./introduction.md) for the current state.
+
+---
 # MPST Macro Syntax Design
 
 This document defines the syntax for a macro to create global protocols in the sessrums library. The macro syntax is inspired by sequence diagrams, making it intuitive and easy to read.
@@ -184,10 +187,10 @@ mpst! {
 Equivalent to:
 
 ```rust
-type Authentication = GSend<Credentials, Client, Server, 
+type Authentication = GSend<Credentials, Client, Server,
     GChoice<Server, (
-        GSend<Token, Server, Client, 
-            GRecv<Request, Client, Server, 
+        GSend<Token, Server, Client,
+            GRecv<Request, Client, Server,
                 GSend<Response, Server, Client, GEnd>
             >
         >,
@@ -220,10 +223,10 @@ mpst! {
 Equivalent to:
 
 ```rust
-type ChatSession = GRec<ChatLoopLabel, 
+type ChatSession = GRec<ChatLoopLabel,
     GChoice<Client, (
-        GSend<Message, Client, Server, 
-            GRecv<Confirmation, Server, Client, 
+        GSend<Message, Client, Server,
+            GRecv<Confirmation, Server, Client,
                 GVar<ChatLoopLabel>
             >
         >,
@@ -292,37 +295,31 @@ type ParallelOperations = GPar<
 
 The macro will parse the syntax and generate the corresponding global protocol types. The translation follows these rules:
 
-1. **Message Passing**: `Role1 -> Role2: Type;` → `GSend<Type, Role1, Role2, ...>`
-2. **Branching**: `choice at Role { ... }` → `GChoice<Role, (...)>` or `GOffer<Role, (...)>`
-3. **Recursion**: `rec Label { ... }` → `GRec<LabelType, ...>` and `continue Label;` → `GVar<LabelType>`
-4. **Sequential Composition**: `seq { ... }` → `GSeq<...>`
-5. **Parallel Composition**: `par { ... } and { ... }` → `GPar<...>`
-6. **End**: Implicit at the end of each branch → `GEnd`
+- **Message Passing**: `Role1 -> Role2: Type;` → `GSend<Type, Role1, Role2, ...>`
+- **Branching**: `choice at Role { ... }` → `GChoice<Role, (...)>` or `GOffer<Role, (...)>`
+- **Recursion**: `rec Label { ... }` → `GRec<LabelType, ...>` and `continue Label;` → `GVar<LabelType>`
+- **Sequential Composition**: `seq { ... }` → `GSeq<...>`
+- **Parallel Composition**: `par { ... } and { ... }` → `GPar<...>`
+- **End**: Implicit at the end of each branch → `GEnd`
 
 ## Edge Cases and Limitations
 
-1. **Type Inference**: The macro may have limitations with type inference, requiring explicit type annotations in some cases.
-
-2. **Nested Recursion**: Complex nested recursion patterns might require careful labeling to ensure correct references.
-
-3. **Role Consistency**: The macro should validate that roles are used consistently throughout the protocol.
-
-4. **Protocol Reuse**: When including other protocols, the macro needs to handle potential name conflicts and ensure proper composition.
-
-5. **Validation**: The macro should perform validation similar to the `validate` method of `GlobalProtocol` to catch errors at compile time.
-
-6. **Syntax Errors**: Clear error messages should be provided for syntax errors in the macro usage.
-
-7. **Rust Limitations**: The macro implementation will be constrained by Rust's macro system limitations.
+- **Type Inference**: The macro may have limitations with type inference, requiring explicit type annotations in some cases.
+- **Nested Recursion**: Complex nested recursion patterns might require careful labeling to ensure correct references.
+- **Role Consistency**: The macro should validate that roles are used consistently throughout the protocol.
+- **Protocol Reuse**: When including other protocols, the macro needs to handle potential name conflicts and ensure proper composition.
+- **Validation**: The macro should perform validation similar to the `validate` method of `GlobalProtocol` to catch errors at compile time.
+- **Syntax Errors**: Clear error messages should be provided for syntax errors in the macro usage.
+- **Rust Limitations**: The macro implementation will be constrained by Rust's macro system limitations.
 
 ## Implementation Strategy
 
 The implementation of the `mpst!` macro will involve:
 
-1. Parsing the sequence diagram-like syntax
-2. Building an abstract syntax tree (AST) representing the protocol
-3. Validating the protocol structure
-4. Generating Rust code that constructs the equivalent global protocol types
+- Parsing the sequence diagram-like syntax
+- Building an abstract syntax tree (AST) representing the protocol
+- Validating the protocol structure
+- Generating Rust code that constructs the equivalent global protocol types
 
 The macro will be implemented using Rust's procedural macro system, which provides the flexibility needed for this complex syntax transformation.
 

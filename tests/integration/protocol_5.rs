@@ -84,6 +84,7 @@
 //! the query string, then chooses to send either binary data or an error code.
 
 use sessrums::proto::{Send, Recv, Choose, Offer, End};
+use sessrums::proto::{RoleA, RoleB};
 use sessrums::chan::Chan;
 
 // Import helper functions from the integration test module
@@ -125,8 +126,8 @@ async fn test_data_query_with_options_protocol() {
     // Create mock channels for type checking
     // These channels don't perform actual IO operations but allow us to verify
     // that the protocol types can be used with the Chan type
-    let _client_chan: Chan<QueryClient, ()> = mock_channel();
-    let _server_chan: Chan<QueryServer, ()> = mock_channel();
+    let _client_chan: Chan<QueryClient, RoleA, ()> = mock_channel::<QueryClient, RoleA, ()>();
+    let _server_chan: Chan<QueryServer, RoleB, ()> = mock_channel::<QueryServer, RoleB, ()>();
     
     // In Phase 3, we'll add actual communication code here to demonstrate
     // the runtime behavior of the protocol
@@ -147,6 +148,6 @@ fn test_data_query_with_options_type_safety() {
     // would fail to compile in the actual implementation.
     
     // Instead, we verify that the correct types work
-    let _client_chan: Chan<QueryClient, ()> = mock_channel::<QueryClient, ()>();
-    let _server_chan: Chan<QueryServer, ()> = mock_channel::<QueryServer, ()>();
+    let _client_chan: Chan<QueryClient, RoleA, ()> = mock_channel::<QueryClient, RoleA, ()>();
+    let _server_chan: Chan<QueryServer, RoleB, ()> = mock_channel::<QueryServer, RoleB, ()>();
 }

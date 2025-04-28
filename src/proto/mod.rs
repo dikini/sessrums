@@ -18,15 +18,12 @@ pub use recv::Recv;
 mod end;
 pub use end::End;
 
-// Phase 2 implementations
 mod offer;
 pub use offer::Offer;
 
 mod choose;
-// Choose is now fully implemented in Task 2.4
 pub use choose::Choose;
 
-// These will be uncommented in Phase 5
 mod rec;
 pub use rec::Rec;
 
@@ -42,7 +39,6 @@ pub use global::{
 pub mod projection;
 pub use projection::{Project, project};
 
-// Phase 5 implementations
 pub mod compat;
 pub use compat::{ProtocolCompat, BinaryWrapper, MPSTWrapper};
 

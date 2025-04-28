@@ -29,7 +29,7 @@ use futures_core::task::{Context, Poll};
 use sessrums::chan::Chan;
 use sessrums::error::Error;
 use sessrums::io::{AsyncReceiver, AsyncSender};
-use sessrums::proto::{End, Protocol, Recv, Send};
+use sessrums::proto::{End, Protocol, Recv, Send, Role}; // Added Role
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use async_std::channel;
@@ -38,6 +38,19 @@ use async_std::task;
 // Define the protocol types for client and server
 type ClientProtocol = Send<String, Recv<bool, Send<Vec<i32>, Recv<Vec<i32>, End>>>>;
 type ServerProtocol = <ClientProtocol as Protocol>::Dual;
+
+// Define Roles for this example
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct ClientRole;
+impl Role for ClientRole {
+    fn name(&self) -> &'static str { "Client" }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct ServerRole;
+impl Role for ServerRole {
+    fn name(&self) -> &'static str { "Server" }
+}
 
 /// A custom IO implementation using async-std's channels
 struct AsyncStdChannel {
@@ -360,7 +373,7 @@ fn create_async_std_channel_pair() -> (AsyncStdChannel, AsyncStdChannel) {
 }
 
 /// Implements the client side of the protocol
-async fn run_client(chan: Chan<ClientProtocol, AsyncStdChannel>) -> Result<(), Error> {
+async fn run_client(chan: Chan<ClientProtocol, ClientRole, AsyncStdChannel>) -> Result<(), Error> {
     println!("Client: Starting protocol");
     
     // Step 1: Send a command to the server
@@ -400,7 +413,7 @@ async fn run_client(chan: Chan<ClientProtocol, AsyncStdChannel>) -> Result<(), E
 }
 
 /// Implements the server side of the protocol
-async fn run_server(chan: Chan<ServerProtocol, AsyncStdChannel>) -> Result<(), Error> {
+async fn run_server(chan: Chan<ServerProtocol, ServerRole, AsyncStdChannel>) -> Result<(), Error> {
     println!("Server: Starting protocol");
     
     // Step 1: Receive a command from the client
@@ -448,8 +461,8 @@ async fn demonstrate_send_trait() -> Result<(), Error> {
     let (client_channel, server_channel) = create_async_std_channel_pair();
     
     // Create client and server channels with their respective protocols
-    let client_chan = Chan::<ClientProtocol, _>::new(client_channel);
-    let server_chan = Chan::<ServerProtocol, _>::new(server_channel);
+    let client_chan = Chan::<ClientProtocol, ClientRole, _>::new(client_channel);
+    let server_chan = Chan::<ServerProtocol, ServerRole, _>::new(server_channel);
     
     // Spawn the server in a separate task
     // This requires the futures to implement Send

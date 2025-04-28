@@ -111,8 +111,8 @@ async fn test_simple_choice_protocol() {
     // Create mock channels for type checking
     // These channels don't perform actual IO operations but allow us to verify
     // that the protocol types can be used with the Chan type
-    let _client_chan: Chan<ChoiceClient, ()> = mock_channel();
-    let _server_chan: Chan<ChoiceServer, ()> = mock_channel();
+    let _client_chan: Chan<ChoiceClient, sessrums::proto::RoleA, ()> = mock_channel(); // Added RoleA
+    let _server_chan: Chan<ChoiceServer, sessrums::proto::RoleB, ()> = mock_channel(); // Added RoleB
     
     // In Phase 4, we'll add actual communication code here to demonstrate
     // the runtime behavior of the protocol
@@ -133,6 +133,6 @@ fn test_simple_choice_type_safety() {
     // would fail to compile in the actual implementation.
     
     // Instead, we verify that the correct types work
-    let _client_chan: Chan<ChoiceClient, ()> = mock_channel::<ChoiceClient, ()>();
-    let _server_chan: Chan<ChoiceServer, ()> = mock_channel::<ChoiceServer, ()>();
+    let _client_chan: Chan<ChoiceClient, sessrums::proto::RoleA, ()> = mock_channel::<ChoiceClient, sessrums::proto::RoleA, ()>(); // Added RoleA
+    let _server_chan: Chan<ChoiceServer, sessrums::proto::RoleB, ()> = mock_channel::<ChoiceServer, sessrums::proto::RoleB, ()>(); // Added RoleB
 }

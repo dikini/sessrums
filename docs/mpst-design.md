@@ -1,3 +1,6 @@
+> **Note:** This document outlines design decisions and considerations for planned or experimental Multiparty Session Type (MPST) features. It may not accurately reflect the current implementation status in the library. Please refer to the main [Introduction](./introduction.md) for the current state.
+
+---
 # MPST Integration Design
 
 ## 1. Scope of MPST Support
@@ -64,7 +67,7 @@ Consider a simple protocol where Participant A sends a message to B, then B send
 
 **Global Protocol:**
 
-```
+```text
 A -> B: Data1
 B -> C: Data2
 C -> A: Data3
@@ -73,7 +76,7 @@ End
 
 **Projection for Participant A (Local Protocol A):**
 
-```
+```text
 Send<B, Data1>
 Recv<C, Data3>
 End
@@ -81,7 +84,7 @@ End
 
 **Projection for Participant B (Local Protocol B):**
 
-```
+```text
 Recv<A, Data1>
 Send<C, Data2>
 End
@@ -89,7 +92,7 @@ End
 
 **Projection for Participant C (Local Protocol C):**
 
-```
+```text
 Recv<B, Data2>
 Send<A, Data3>
 End

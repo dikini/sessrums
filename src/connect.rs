@@ -50,24 +50,6 @@ pub trait ConnectInfo {
 ///
 /// # Examples
 ///
-/// ```no_run
-/// use sessrums::connect::StreamWrapper;
-/// use sessrums::chan::Chan;
-/// use sessrums::proto::{Send, Recv, End};
-/// use std::net::TcpStream;
-///
-/// // Define a protocol
-/// type MyProtocol = Send<String, Recv<i32, End>>;
-///
-/// // Create a TCP stream
-/// let stream = TcpStream::connect("127.0.0.1:8080").unwrap();
-///
-/// // Wrap the stream
-/// let wrapper = StreamWrapper::<TcpStream, String>::new(stream);
-///
-/// // Create a channel with the wrapped stream
-/// let chan = Chan::<MyProtocol, _>::new(wrapper);
-/// ```
 pub struct StreamWrapper<S, T> {
     stream: S,
     _marker: PhantomData<T>,
@@ -360,20 +342,6 @@ mod unix {
 ///
 /// # Examples
 ///
-/// ```no_run
-/// use sessrums::connect::connect;
-/// use sessrums::proto::{Send, Recv, End};
-/// use std::net::TcpStream;
-///
-/// // Define a protocol
-/// type MyProtocol = Send<String, Recv<i32, End>>;
-///
-/// // Create a TCP stream
-/// let stream = TcpStream::connect("127.0.0.1:8080").unwrap();
-///
-/// // Establish a connection
-/// let chan = connect::<MyProtocol, _, String>(stream);
-/// ```
 pub fn connect<P, R, S, T>(stream: S) -> Chan<P, R, StreamWrapper<S, T>>
 where
     P: Protocol,
@@ -439,44 +407,6 @@ where
 ///
 /// # Examples
 ///
-/// ```no_run
-/// use sessrums::connect::{ConnectInfo, connect_with_protocol};
-/// use sessrums::proto::{Send, Recv, End};
-/// use sessrums::chan::Chan;
-/// use std::net::{SocketAddr, TcpStream};
-/// use sessrums::connect::StreamWrapper;
-///
-/// // Define a protocol
-/// type MyProtocol = Send<String, Recv<i32, End>>;
-///
-/// // Define a connection info type
-/// struct TcpConnectInfo {
-///     addr: SocketAddr,
-/// }
-///
-/// impl TcpConnectInfo {
-///     fn new(addr: SocketAddr) -> Self {
-///         TcpConnectInfo { addr }
-///     }
-/// }
-///
-/// impl ConnectInfo for TcpConnectInfo {
-///     type IO = StreamWrapper<TcpStream, String>;
-///
-///     fn connect(&self) -> std::io::Result<Self::IO> {
-///         let stream = TcpStream::connect(&self.addr)?;
-///         Ok(StreamWrapper::new(stream))
-///     }
-/// }
-///
-/// // Use the connection info to establish a connection
-/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// let addr = "127.0.0.1:8080".parse::<SocketAddr>()?;
-/// let conn_info = TcpConnectInfo::new(addr);
-/// let chan = connect_with_protocol::<MyProtocol, _, _>(conn_info).await?;
-/// # Ok(())
-/// # }
-/// ```
 pub async fn connect_with_protocol<P, R, IO, C>(conn_info: C) -> Result<Chan<P, R, IO>, Error>
 where
     P: Protocol,

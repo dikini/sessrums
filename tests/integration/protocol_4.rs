@@ -74,6 +74,7 @@
 //! then sends a token.
 
 use sessrums::proto::{Send, Recv, End};
+use sessrums::proto::{RoleA, RoleB};
 use sessrums::chan::Chan;
 
 // Import helper functions from the integration test module
@@ -117,8 +118,8 @@ async fn test_simple_authentication_protocol() {
     // Create mock channels for type checking
     // These channels don't perform actual IO operations but allow us to verify
     // that the protocol types can be used with the Chan type
-    let _client_chan: Chan<AuthClient, ()> = mock_channel();
-    let _server_chan: Chan<AuthServer, ()> = mock_channel();
+    let _client_chan: Chan<AuthClient, RoleA, ()> = mock_channel::<AuthClient, RoleA, ()>();
+    let _server_chan: Chan<AuthServer, RoleB, ()> = mock_channel::<AuthServer, RoleB, ()>();
     
     // In Phase 3, we'll add actual communication code here to demonstrate
     // the runtime behavior of the protocol
@@ -139,6 +140,6 @@ fn test_simple_authentication_type_safety() {
     // would fail to compile in the actual implementation.
     
     // Instead, we verify that the correct types work
-    let _client_chan: Chan<AuthClient, ()> = mock_channel::<AuthClient, ()>();
-    let _server_chan: Chan<AuthServer, ()> = mock_channel::<AuthServer, ()>();
+    let _client_chan: Chan<AuthClient, RoleA, ()> = mock_channel::<AuthClient, RoleA, ()>();
+    let _server_chan: Chan<AuthServer, RoleB, ()> = mock_channel::<AuthServer, RoleB, ()>();
 }

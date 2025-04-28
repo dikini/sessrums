@@ -65,7 +65,7 @@
 //! - `End` terminates the protocol
 
 use sessrums::chan::Chan;
-use sessrums::proto::{End, Protocol, Recv, Send};
+use sessrums::proto::{End, Protocol, Recv, Send, Role}; // Added Role
 use sessrums::error::Error;
 use std::sync::mpsc;
 use std::thread;
@@ -77,6 +77,19 @@ use std::marker::PhantomData;
 // Define a simple protocol for a single request-response interaction
 type SimpleProtocol = Send<String, Recv<String, End>>;
 type ServerProtocol = <SimpleProtocol as Protocol>::Dual;
+
+// Define Roles for this example
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct ClientRole;
+impl Role for ClientRole {
+    fn name(&self) -> &'static str { "Client" }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct ServerRole;
+impl Role for ServerRole {
+    fn name(&self) -> &'static str { "Server" }
+}
 
 // A bidirectional channel that can both send and receive values
 struct BiChannel<T> {
@@ -186,11 +199,11 @@ async fn run_client(max_iterations: usize) -> Result<(), Error> {
         let (client_channel, server_channel) = create_channel_pair();
         
         // Create client and server channels with their respective protocols
-        let client_chan = Chan::<SimpleProtocol, _>::new(client_channel);
+        let client_chan = Chan::<SimpleProtocol, ClientRole, _>::new(client_channel);
         
         // Start the server for this iteration
         let server_handle = thread::spawn(move || {
-            let server_future = run_server_iteration(Chan::<ServerProtocol, _>::new(server_channel));
+            let server_future = run_server_iteration(Chan::<ServerProtocol, ServerRole, _>::new(server_channel));
             
             // Create a runtime for the server thread
             let rt = tokio::runtime::Runtime::new().unwrap();
@@ -222,7 +235,7 @@ async fn run_client(max_iterations: usize) -> Result<(), Error> {
 }
 
 /// Implements the server side of the protocol for a single iteration
-async fn run_server_iteration(chan: Chan<ServerProtocol, BiChannel<String>>) -> Result<(), Error> {
+async fn run_server_iteration(chan: Chan<ServerProtocol, ServerRole, BiChannel<String>>) -> Result<(), Error> {
     println!("Server: Starting iteration");
     
     // Receive the query from the client

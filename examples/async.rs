@@ -40,7 +40,7 @@ use futures_core::task::{Context, Poll};
 use sessrums::chan::Chan;
 use sessrums::error::Error;
 use sessrums::io::{AsyncReceiver, AsyncSender};
-use sessrums::proto::{End, Offer, Protocol, Recv, Send as ProtoSend};
+use sessrums::proto::{End, Offer, Protocol, Recv, Send as ProtoSend, Role}; // Added Role
 use std::marker::{PhantomData, Send};
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
@@ -57,6 +57,20 @@ type ServerProtocol = <ClientProtocol as Protocol>::Dual;
 
 // Alternatively, we could explicitly define the server protocol as:
 // type ServerProtocol = Recv<String, Choose<Send<i32, End>, Send<String, End>>>;
+
+// Define Roles for this example
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct ClientRole;
+impl Role for ClientRole {
+    fn name(&self) -> &'static str { "Client" }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct ServerRole;
+impl Role for ServerRole {
+    fn name(&self) -> &'static str { "Server" }
+}
+
 
 /// A bidirectional channel implementation using tokio's mpsc channels
 /// This allows for asynchronous communication between the client and server
@@ -501,7 +515,7 @@ fn create_protocol_channel_pair() -> (ProtocolChannel, ProtocolChannel) {
 }
 
 /// Implements the client side of the protocol
-async fn run_client(chan: Chan<ClientProtocol, ProtocolChannel>) -> Result<(), Error> {
+async fn run_client(chan: Chan<ClientProtocol, ClientRole, ProtocolChannel>) -> Result<(), Error> {
     println!("Client: Starting protocol");
     
     // Step 1: Send a request to the server
@@ -514,9 +528,10 @@ async fn run_client(chan: Chan<ClientProtocol, ProtocolChannel>) -> Result<(), E
     println!("Client: Waiting for server's choice");
     // Use the offer method with a different approach
     let _result = chan.offer(
-        |chan| {
+        |chan: Chan<Recv<i32, End>, ClientRole, ProtocolChannel>| { // Added Role
             // Create a function that returns a boxed future
-            fn handle_success(chan: Chan<Recv<i32, End>, ProtocolChannel>) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> {
+            // Note: The inner function signature doesn't need the role if it's captured, but adding for clarity
+            fn handle_success(chan: Chan<Recv<i32, End>, ClientRole, ProtocolChannel>) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> {
                 Box::pin(async move {
                     println!("Client: Server chose success branch");
                     let (result, chan) = chan.recv().await?;
@@ -531,9 +546,10 @@ async fn run_client(chan: Chan<ClientProtocol, ProtocolChannel>) -> Result<(), E
             
             Ok(handle_success(chan))
         },
-        |chan| {
+        |chan: Chan<Recv<String, End>, ClientRole, ProtocolChannel>| { // Added Role
             // Create a function that returns a boxed future
-            fn handle_error(chan: Chan<Recv<String, End>, ProtocolChannel>) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> {
+            // Note: The inner function signature doesn't need the role if it's captured, but adding for clarity
+            fn handle_error(chan: Chan<Recv<String, End>, ClientRole, ProtocolChannel>) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> {
                 Box::pin(async move {
                     println!("Client: Server chose error branch");
                     let (error_msg, chan) = chan.recv().await?;
@@ -554,7 +570,7 @@ async fn run_client(chan: Chan<ClientProtocol, ProtocolChannel>) -> Result<(), E
 }
 
 /// Implements the server side of the protocol
-async fn run_server(chan: Chan<ServerProtocol, ProtocolChannel>) -> Result<(), Error> {
+async fn run_server(chan: Chan<ServerProtocol, ServerRole, ProtocolChannel>) -> Result<(), Error> {
     println!("Server: Starting protocol");
     
     // Step 1: Receive a request from the client
@@ -571,7 +587,7 @@ async fn run_server(chan: Chan<ServerProtocol, ProtocolChannel>) -> Result<(), E
     if parts.len() != 3 {
         // Invalid request format, choose the error branch
         println!("Server: Invalid request format, sending error");
-        let chan = chan.choose_right().await?;
+        let chan: Chan<ProtoSend<String, End>, ServerRole, ProtocolChannel> = chan.choose_right().await?; // Added type annotation
         
         // Send an error message
         let error_msg = "Invalid request format. Expected 'command:type:value'".to_string();
@@ -593,7 +609,7 @@ async fn run_server(chan: Chan<ServerProtocol, ProtocolChannel>) -> Result<(), E
         Err(_) => {
             // Invalid value, choose the error branch
             println!("Server: Invalid value, sending error");
-            let chan = chan.choose_right().await?;
+            let chan: Chan<ProtoSend<String, End>, ServerRole, ProtocolChannel> = chan.choose_right().await?; // Added type annotation
             
             // Send an error message
             let error_msg = format!("Invalid value: '{}'. Expected an integer.", value_str);
@@ -610,7 +626,7 @@ async fn run_server(chan: Chan<ServerProtocol, ProtocolChannel>) -> Result<(), E
     if command != "calculate" {
         // Unknown command, choose the error branch
         println!("Server: Unknown command, sending error");
-        let chan = chan.choose_right().await?;
+        let chan: Chan<ProtoSend<String, End>, ServerRole, ProtocolChannel> = chan.choose_right().await?; // Added type annotation
         
         // Send an error message
         let error_msg = format!("Unknown command: '{}'. Expected 'calculate'.", command);
@@ -631,7 +647,7 @@ async fn run_server(chan: Chan<ServerProtocol, ProtocolChannel>) -> Result<(), E
             
             // Choose the success branch
             println!("Server: Calculation successful, sending result");
-            let chan = chan.choose_left().await?;
+            let chan: Chan<ProtoSend<i32, End>, ServerRole, ProtocolChannel> = chan.choose_left().await?; // Added type annotation
             
             // Send the result
             let chan = chan.send(result).await?;
@@ -648,7 +664,7 @@ async fn run_server(chan: Chan<ServerProtocol, ProtocolChannel>) -> Result<(), E
             
             // Choose the success branch
             println!("Server: Calculation successful, sending result");
-            let chan = chan.choose_left().await?;
+            let chan: Chan<ProtoSend<i32, End>, ServerRole, ProtocolChannel> = chan.choose_left().await?; // Added type annotation
             
             // Send the result
             let chan = chan.send(result).await?;
@@ -661,7 +677,7 @@ async fn run_server(chan: Chan<ServerProtocol, ProtocolChannel>) -> Result<(), E
         _ => {
             // Unknown calculation type, choose the error branch
             println!("Server: Unknown calculation type, sending error");
-            let chan = chan.choose_right().await?;
+            let chan: Chan<ProtoSend<String, End>, ServerRole, ProtocolChannel> = chan.choose_right().await?; // Added type annotation
             
             // Send an error message
             let error_msg = format!("Unknown calculation type: '{}'. Expected 'fibonacci' or 'factorial'.", calc_type);
@@ -838,7 +854,7 @@ async fn demonstrate_error_handling() -> Result<(), Error> {
     
     
     // Create a client channel with our failing IO
-    let chan = Chan::<ClientProtocol, _>::new(FailingIO);
+    let chan = Chan::<ClientProtocol, ClientRole, _>::new(FailingIO); // Added Role
     
     // Send should work
     println!("Attempting to send a message...");
@@ -849,7 +865,7 @@ async fn demonstrate_error_handling() -> Result<(), Error> {
     // Offer should fail because it tries to receive
     println!("Attempting to offer (should fail)...");
     match chan.offer(
-        |_| {
+        |_chan: Chan<Recv<i32, End>, ClientRole, FailingIO>| { // Added Role and IO type
             // Create a function that returns a boxed future
             fn dummy_handler() -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> {
                 Box::pin(async { Ok(()) })
@@ -857,7 +873,7 @@ async fn demonstrate_error_handling() -> Result<(), Error> {
             
             Ok(dummy_handler())
         },
-        |_| {
+        |_chan: Chan<Recv<String, End>, ClientRole, FailingIO>| { // Added Role and IO type
             // Create a function that returns a boxed future
             fn dummy_handler() -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> {
                 Box::pin(async { Ok(()) })
@@ -886,15 +902,15 @@ mod type_safety_examples {
     
     // The following function compiles because it follows the protocol correctly
     #[allow(dead_code)]
-    async fn correct_protocol_usage(chan: Chan<MyProtocol, ProtocolChannel>) -> Result<(), Error> {
+    async fn correct_protocol_usage(chan: Chan<MyProtocol, ClientRole, ProtocolChannel>) -> Result<(), Error> { // Added Role
         // First send a String as required by the protocol
         let chan = chan.send("Hello".to_string()).await?;
         
         // Then offer a choice as required by the protocol
         let _result = chan.offer(
-            |chan| {
+            |chan: Chan<Recv<i32, End>, ClientRole, ProtocolChannel>| { // Added Role
                 // Create a function that returns a boxed future
-                fn handle_int(chan: Chan<Recv<i32, End>, ProtocolChannel>) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> {
+                fn handle_int(chan: Chan<Recv<i32, End>, ClientRole, ProtocolChannel>) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> { // Added Role
                     Box::pin(async move {
                         let (value, chan) = chan.recv().await?;
                         println!("Received i32: {}", value);
@@ -905,9 +921,9 @@ mod type_safety_examples {
                 
                 Ok(handle_int(chan))
             },
-            |chan| {
+            |chan: Chan<Recv<String, End>, ClientRole, ProtocolChannel>| { // Added Role
                 // Create a function that returns a boxed future
-                fn handle_string(chan: Chan<Recv<String, End>, ProtocolChannel>) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> {
+                fn handle_string(chan: Chan<Recv<String, End>, ClientRole, ProtocolChannel>) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'static>> { // Added Role
                     Box::pin(async move {
                         let (value, chan) = chan.recv().await?;
                         println!("Received String: {}", value);
@@ -971,8 +987,8 @@ async fn main() -> Result<(), Error> {
     let (client_channel, server_channel) = create_protocol_channel_pair();
     
     // Create client and server channels with their respective protocols
-    let client_chan = Chan::<ClientProtocol, _>::new(client_channel);
-    let server_chan = Chan::<ServerProtocol, _>::new(server_channel);
+    let client_chan = Chan::<ClientProtocol, ClientRole, _>::new(client_channel);
+    let server_chan = Chan::<ServerProtocol, ServerRole, _>::new(server_channel);
     
     // Run the server in a separate task
     let server_handle = tokio::spawn(async move {

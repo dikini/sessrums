@@ -96,8 +96,8 @@ async fn test_request_response_protocol() {
     // Create mock channels for type checking
     // These channels don't perform actual IO operations but allow us to verify
     // that the protocol types can be used with the Chan type
-    let _client_chan: Chan<ReqResClient, ()> = mock_channel();
-    let _server_chan: Chan<ReqResServer, ()> = mock_channel();
+    let _client_chan: Chan<ReqResClient, sessrums::proto::RoleA, ()> = mock_channel(); // Added RoleA
+    let _server_chan: Chan<ReqResServer, sessrums::proto::RoleB, ()> = mock_channel(); // Added RoleB
     
     // In Phase 3, we'll add actual communication code here to demonstrate
     // the runtime behavior of the protocol
@@ -118,6 +118,6 @@ fn test_request_response_type_safety() {
     // would fail to compile in the actual implementation.
     
     // Instead, we verify that the correct types work
-    let _client_chan: Chan<ReqResClient, ()> = mock_channel::<ReqResClient, ()>();
-    let _server_chan: Chan<ReqResServer, ()> = mock_channel::<ReqResServer, ()>();
+    let _client_chan: Chan<ReqResClient, sessrums::proto::RoleA, ()> = mock_channel::<ReqResClient, sessrums::proto::RoleA, ()>(); // Added RoleA
+    let _server_chan: Chan<ReqResServer, sessrums::proto::RoleB, ()> = mock_channel::<ReqResServer, sessrums::proto::RoleB, ()>(); // Added RoleB
 }

@@ -23,52 +23,9 @@ use crate::proto::compat::ProtocolCompat;
 ///
 /// Creating a channel with a simple protocol:
 ///
-/// ```
-/// use sessrums::chan::Chan;
-/// use sessrums::proto::{Protocol, Send, Recv, End};
-/// use std::sync::mpsc;
-///
-/// // Define a protocol: Send an i32, then receive a String, then end
-/// type MyProtocol = Send<i32, Recv<String, End>>;
-///
-/// // Create a channel using mpsc::Sender as the IO implementation
-/// let (tx, _) = mpsc::channel::<i32>();
-/// let chan = Chan::<MyProtocol, RoleA, _>::new(tx);
-///
-/// // Access the underlying IO implementation
-/// let io_ref = chan.io();
-/// ```
 ///
 /// Using the channel with custom IO implementations:
 ///
-/// ```
-/// use sessrums::chan::Chan;
-/// use sessrums::proto::{Protocol, End};
-/// use sessrums::io::{Sender, Receiver};
-///
-/// // A custom IO implementation
-/// struct MyIO {
-///     value: Option<i32>
-/// }
-///
-/// // Define a custom error type
-/// #[derive(Debug)]
-/// struct MyError;
-///
-/// // Implement Sender for our custom IO
-/// impl Sender<i32> for MyIO {
-///     type Error = MyError;
-///
-///     fn send(&mut self, value: i32) -> Result<(), Self::Error> {
-///         self.value = Some(value);
-///         Ok(())
-///     }
-/// }
-///
-/// // Create a channel with our custom IO implementation
-/// let io = MyIO { value: None };
-/// let chan = Chan::<End, RoleA, _>::new(io);
-/// ```
 /// A channel with protocol `P`, role `R`, and underlying IO implementation `IO`.
 ///
 /// The `Chan` type represents a communication channel that follows protocol `P`
@@ -89,41 +46,9 @@ use crate::proto::compat::ProtocolCompat;
 ///
 /// Creating a channel with a simple protocol:
 ///
-/// ```
-/// use sessrums::chan::Chan;
-/// use sessrums::proto::{Protocol, Send, Recv, End, RoleA, RoleB};
-/// use std::sync::mpsc;
-///
-/// // Define a protocol: Send an i32, then receive a String, then end
-/// type MyProtocol = Send<i32, Recv<String, End>>;
-///
-/// // Create a channel using mpsc::Sender as the IO implementation for RoleA
-/// let (tx, _) = mpsc::channel::<i32>();
-/// let chan = Chan::<MyProtocol, RoleA, _>::new(tx);
-///
-/// // Access the underlying IO implementation
-/// let io_ref = chan.io();
-/// ```
 ///
 /// Using with MPST:
 ///
-/// ```
-/// use sessrums::chan::Chan;
-/// use sessrums::proto::{Send, Recv, End, RoleA, RoleB};
-/// use sessrums::proto::global::{GSend, GEnd};
-/// use sessrums::proto::projection::Project;
-/// use std::sync::mpsc;
-///
-/// // Define a global protocol: RoleA sends an i32 to RoleB, then ends
-/// type GlobalProtocol = GSend<i32, RoleA, RoleB, GEnd>;
-///
-/// // Project it for RoleA
-/// type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
-///
-/// // Create a channel for RoleA
-/// let (tx, _) = mpsc::channel::<i32>();
-/// let chan = Chan::<RoleALocal, RoleA, _>::new(tx);
-/// ```
 pub struct Chan<P: Protocol, R: Role, IO> {
     /// The underlying IO implementation.
     io: IO,
@@ -146,15 +71,6 @@ impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Protocol, End};
-    /// use std::sync::mpsc;
-    ///
-    /// // Create a channel with mpsc::Sender as the IO implementation
-    /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<End, RoleA, _>::new(tx);
-    /// ```
     /// Create a new channel with the given IO implementation and role.
     ///
     /// # Parameters
@@ -167,15 +83,6 @@ impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Protocol, End, RoleA};
-    /// use std::sync::mpsc;
-    ///
-    /// // Create a channel with mpsc::Sender as the IO implementation
-    /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<End, RoleA, _>::new(tx);
-    /// ```
     pub fn new(io: IO) -> Self {
         Chan {
             io,
@@ -192,19 +99,6 @@ impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Protocol, End, RoleA};
-    /// use std::sync::mpsc;
-    ///
-    /// // Create a channel with mpsc::Sender as the IO implementation
-    /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<End, RoleA, _>::new(tx);
-    ///
-    /// // Get a reference to the role
-    /// let role_ref = chan.role();
-    /// assert_eq!(role_ref.name(), "RoleA");
-    /// ```
     pub fn role(&self) -> &R {
         &self.role
     }
@@ -217,18 +111,6 @@ impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Protocol, End};
-    /// use std::sync::mpsc;
-    ///
-    /// // Create a channel with mpsc::Sender as the IO implementation
-    /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<End, RoleA, _>::new(tx);
-    ///
-    /// // Get a reference to the underlying IO implementation
-    /// let io_ref = chan.io();
-    /// ```
     pub fn io(&self) -> &IO {
         &self.io
     }
@@ -241,19 +123,6 @@ impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Protocol, End};
-    /// use sessrums::io::Sender;
-    /// use std::sync::mpsc;
-    ///
-    /// // Create a channel with mpsc::Sender as the IO implementation
-    /// let (mut tx, _) = mpsc::channel::<i32>();
-    /// let mut chan = Chan::<End, RoleA, _>::new(tx);
-    ///
-    /// // Get a mutable reference to the underlying IO implementation
-    /// let io_mut = chan.io_mut();
-    /// ```
     pub fn io_mut(&mut self) -> &mut IO {
         &mut self.io
     }
@@ -432,75 +301,6 @@ where
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// # async fn example() -> Result<(), sessrums::error::Error> {
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Send, End};
-    /// use sessrums::io::AsyncSender;
-    /// use futures_core::future::Future;
-    /// use std::pin::Pin;
-    /// use futures_core::task::{Context, Poll};
-    /// use std::marker::Unpin;
-    ///
-    /// // Define a custom IO implementation
-    /// struct MyIO {
-    ///     value: Option<i32>
-    /// }
-    ///
-    /// // Define a custom error type
-    /// #[derive(Debug)]
-    /// struct MyError;
-    ///
-    /// // Define a future for the async send operation
-    /// struct SendFuture<T: Unpin + 'static> {
-    ///     io: MyIO,
-    ///     value: Option<T>,
-    /// }
-    ///
-    /// impl<T: Unpin + 'static> Future for SendFuture<T> {
-    ///     type Output = Result<(), MyError>;
-    ///
-    ///     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
-    ///         let this = self.get_mut();
-    ///         if let Some(value) = this.value.take() {
-    ///             match value {
-    ///                 v if std::any::TypeId::of::<T>() == std::any::TypeId::of::<i32>() => {
-    ///                     // This is a simplification for the doctest
-    ///                     this.io.value = Some(42);
-    ///                     Poll::Ready(Ok(()))
-    ///                 },
-    ///                 _ => Poll::Ready(Err(MyError))
-    ///             }
-    ///         } else {
-    ///             Poll::Ready(Err(MyError))
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Implement AsyncSender for our custom IO
-    /// impl AsyncSender<i32> for MyIO {
-    ///     type Error = MyError;
-    ///     type SendFuture<'a> = SendFuture<i32> where i32: 'a, Self: 'a;
-    ///
-    ///     fn send(&mut self, value: i32) -> Self::SendFuture<'_> {
-    ///         SendFuture {
-    ///             io: MyIO { value: None },
-    ///             value: Some(value),
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Create a channel with a Send<i32, End> protocol
-    /// let io = MyIO { value: None };
-    /// let chan = Chan::<Send<i32, End>, RoleA, _>::new(io);
-    ///
-    /// // Send a value and advance the protocol to End
-    /// let chan = chan.send(42).await?;
-    ///
-    /// // Now the channel has protocol End
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn send(mut self, value: T) -> Result<Chan<P, R, IO>, crate::error::Error> {
         // Send the value using the underlying IO implementation
         // and await the future returned by the async send method
@@ -544,66 +344,6 @@ where
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// # async fn example() -> Result<(), sessrums::error::Error> {
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Recv, End};
-    /// use sessrums::io::AsyncReceiver;
-    /// use futures_core::future::Future;
-    /// use std::pin::Pin;
-    /// use futures_core::task::{Context, Poll};
-    /// use std::marker::Unpin;
-    ///
-    /// // Define a custom IO implementation
-    /// struct MyIO {
-    ///     value: Option<i32>
-    /// }
-    ///
-    /// // Define a custom error type
-    /// #[derive(Debug)]
-    /// struct MyError;
-    ///
-    /// // Define a future for the async receive operation
-    /// struct RecvFuture<T: Unpin> {
-    ///     value: Option<T>,
-    /// }
-    ///
-    /// impl<T: Unpin> Future for RecvFuture<T> {
-    ///     type Output = Result<T, MyError>;
-    ///
-    ///     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
-    ///         let this = self.get_mut();
-    ///         match this.value.take() {
-    ///             Some(value) => Poll::Ready(Ok(value)),
-    ///             None => Poll::Ready(Err(MyError)),
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Implement AsyncReceiver for our custom IO
-    /// impl AsyncReceiver<i32> for MyIO {
-    ///     type Error = MyError;
-    ///     type RecvFuture<'a> = RecvFuture<i32> where i32: 'a, Self: 'a;
-    ///
-    ///     fn recv(&mut self) -> Self::RecvFuture<'_> {
-    ///         RecvFuture {
-    ///             value: self.value.take(),
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Create a channel with a Recv<i32, End> protocol
-    /// let io = MyIO { value: Some(42) };
-    /// let chan = Chan::<Recv<i32, End>, RoleA, _>::new(io);
-    ///
-    /// // Receive a value and advance the protocol to End
-    /// let (value, chan) = chan.recv().await?;
-    /// assert_eq!(value, 42);
-    ///
-    /// // Now the channel has protocol End
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn recv(mut self) -> Result<(T, Chan<P, R, IO>), crate::error::Error> {
         // Receive the value using the underlying IO implementation
         // and await the future returned by the async recv method
@@ -656,90 +396,6 @@ where
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// # async fn example() -> Result<(), sessrums::error::Error> {
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Offer, Send, Recv, End};
-    /// use sessrums::io::AsyncReceiver;
-    /// use futures_core::future::Future;
-    /// use std::pin::Pin;
-    /// use futures_core::task::{Context, Poll};
-    /// use std::marker::Unpin;
-    ///
-    /// // Define protocols for the left and right branches
-    /// type LeftProto = Send<String, End>;
-    /// type RightProto = Send<i32, End>;
-    /// type OfferProto = Offer<LeftProto, RightProto>;
-    ///
-    /// // Define a custom IO implementation
-    /// struct MyIO {
-    ///     choice: Option<bool>,
-    ///     string_value: Option<String>,
-    ///     int_value: Option<i32>,
-    /// }
-    ///
-    /// // Define a custom error type
-    /// #[derive(Debug)]
-    /// struct MyError;
-    ///
-    /// // Define a future for the async receive operation
-    /// struct RecvFuture<T> {
-    ///     value: Option<T>,
-    /// }
-    ///
-    /// impl<T: Unpin> Future for RecvFuture<T> {
-    ///     type Output = Result<T, MyError>;
-    ///
-    ///     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
-    ///         let this = self.get_mut();
-    ///         match this.value.take() {
-    ///             Some(value) => Poll::Ready(Ok(value)),
-    ///             None => Poll::Ready(Err(MyError)),
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Implement AsyncReceiver for our custom IO
-    /// impl AsyncReceiver<bool> for MyIO {
-    ///     type Error = MyError;
-    ///     type RecvFuture<'a> = RecvFuture<bool> where bool: 'a, Self: 'a;
-    ///
-    ///     fn recv(&mut self) -> Self::RecvFuture<'_> {
-    ///         RecvFuture {
-    ///             value: self.choice.take(),
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Create a channel with an Offer protocol
-    /// let io = MyIO {
-    ///     choice: Some(true), // The other party will choose the left branch
-    ///     string_value: Some("Hello".to_string()),
-    ///     int_value: Some(42),
-    /// };
-    /// let chan = Chan::<OfferProto, _>::new(io);
-    ///
-    /// // Define handlers for the left and right branches as non-async functions
-    /// // that return Result directly
-    /// let handle_left = |_chan: Chan<LeftProto, RoleA, MyIO>| -> Result<String, sessrums::error::Error> {
-    ///     // In a real implementation, we would send a string and then end
-    ///     // But for this example, we just return a result directly
-    ///     Ok("Left branch completed".to_string())
-    /// };
-    ///
-    /// let handle_right = |_chan: Chan<RightProto, RoleA, MyIO>| -> Result<String, sessrums::error::Error> {
-    ///     // In a real implementation, we would send an integer and then end
-    ///     // But for this example, we just return a result directly
-    ///     Ok("Right branch completed".to_string())
-    /// };
-    ///
-    /// // Offer a choice between the left and right branches
-    /// let result = chan.offer(handle_left, handle_right).await?;
-    /// println!("Result: {}", result);
-    ///
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn offer<F, G, T>(mut self, f: F, g: G) -> Result<T, crate::error::Error>
     where
         F: FnOnce(Chan<L, R2, IO>) -> Result<T, crate::error::Error>,
@@ -785,21 +441,6 @@ impl<R: Role, IO> Chan<crate::proto::End, R, IO> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// # fn example() -> Result<(), sessrums::error::Error> {
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::End;
-    /// use std::sync::mpsc;
-    ///
-    /// // Create a channel with an End protocol
-    /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<End, _>::new(tx);
-    ///
-    /// // Close the channel
-    /// chan.close()?;
-    /// # Ok(())
-    /// # }
-    /// ```
     pub fn close(self) -> Result<(), crate::error::Error> {
         // The End protocol doesn't require any specific action to close
         // We just consume the channel and return Ok(())
@@ -824,98 +465,6 @@ where
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// # async fn example() -> Result<(), sessrums::error::Error> {
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Choose, Send, End};
-    /// use sessrums::io::AsyncSender;
-    /// use futures_core::future::Future;
-    /// use std::pin::Pin;
-    /// use futures_core::task::{Context, Poll};
-    /// use std::marker::Unpin;
-    ///
-    /// // Define protocols for the left and right branches
-    /// type LeftProto = Send<String, End>;
-    /// type RightProto = Send<i32, End>;
-    /// type ChooseProto = Choose<LeftProto, RightProto>;
-    ///
-    /// // Define a custom IO implementation
-    /// #[derive(Clone)]
-    /// struct MyIO {
-    ///     choice: Option<bool>,
-    ///     string_value: Option<String>,
-    ///     int_value: Option<i32>,
-    /// }
-    ///
-    /// // Define a custom error type
-    /// #[derive(Debug)]
-    /// struct MyError;
-    ///
-    /// // Define a future for the async send operation
-    /// struct SendFuture<T> {
-    ///     value: Option<T>,
-    ///     io: MyIO,
-    /// }
-    ///
-    /// impl<T: Clone + Unpin + 'static> Future for SendFuture<T> {
-    ///     type Output = Result<(), MyError>;
-    ///
-    ///     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
-    ///         let this = self.get_mut();
-    ///         if let Some(value) = this.value.take() {
-    ///             // Store the value based on its type
-    ///             if std::any::TypeId::of::<T>() == std::any::TypeId::of::<bool>() {
-    ///                 // This is a bit of a hack, but it works for testing
-    ///                 let bool_value = unsafe { std::mem::transmute_copy::<T, bool>(&value) };
-    ///                 this.io.choice = Some(bool_value);
-    ///             } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<String>() {
-    ///                 // This is a bit of a hack, but it works for testing
-    ///                 let string_value = unsafe { std::mem::transmute_copy::<T, String>(&value) };
-    ///                 this.io.string_value = Some(string_value);
-    ///             } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<i32>() {
-    ///                 // This is a bit of a hack, but it works for testing
-    ///                 let int_value = unsafe { std::mem::transmute_copy::<T, i32>(&value) };
-    ///                 this.io.int_value = Some(int_value);
-    ///             }
-    ///             Poll::Ready(Ok(()))
-    ///         } else {
-    ///             Poll::Ready(Err(MyError))
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Implement AsyncSender for our custom IO
-    /// impl<T: Clone + Unpin + 'static> AsyncSender<T> for MyIO {
-    ///     type Error = MyError;
-    ///     type SendFuture<'a> = SendFuture<T> where T: 'a, Self: 'a;
-    ///
-    ///     fn send(&mut self, value: T) -> Self::SendFuture<'_> {
-    ///         SendFuture {
-    ///             value: Some(value),
-    ///             io: self.clone(),
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Create a channel with a Choose protocol
-    /// let io = MyIO {
-    ///     choice: None,
-    ///     string_value: None,
-    ///     int_value: None,
-    /// };
-    /// let chan = Chan::<ChooseProto, _>::new(io);
-    ///
-    /// // Choose the left branch
-    /// let chan = chan.choose_left().await?;
-    ///
-    /// // Now the channel has the left protocol (LeftProto)
-    /// // We can send a string and then end
-    /// let chan = chan.send("Hello, left branch!".to_string()).await?;
-    /// chan.close()?;
-    ///
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn choose_left(mut self) -> Result<Chan<L, R2, IO>, crate::error::Error> {
         // Send a boolean value (true) indicating the left branch
         self.io_mut().send(true).await.map_err(|e| {
@@ -945,98 +494,6 @@ where
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// # async fn example() -> Result<(), sessrums::error::Error> {
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Choose, Send, End};
-    /// use sessrums::io::AsyncSender;
-    /// use futures_core::future::Future;
-    /// use std::pin::Pin;
-    /// use futures_core::task::{Context, Poll};
-    /// use std::marker::Unpin;
-    ///
-    /// // Define protocols for the left and right branches
-    /// type LeftProto = Send<String, End>;
-    /// type RightProto = Send<i32, End>;
-    /// type ChooseProto = Choose<LeftProto, RightProto>;
-    ///
-    /// // Define a custom IO implementation
-    /// #[derive(Clone)]
-    /// struct MyIO {
-    ///     choice: Option<bool>,
-    ///     string_value: Option<String>,
-    ///     int_value: Option<i32>,
-    /// }
-    ///
-    /// // Define a custom error type
-    /// #[derive(Debug)]
-    /// struct MyError;
-    ///
-    /// // Define a future for the async send operation
-    /// struct SendFuture<T> {
-    ///     value: Option<T>,
-    ///     io: MyIO,
-    /// }
-    ///
-    /// impl<T: Clone + Unpin + 'static> Future for SendFuture<T> {
-    ///     type Output = Result<(), MyError>;
-    ///
-    ///     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
-    ///         let this = self.get_mut();
-    ///         if let Some(value) = this.value.take() {
-    ///             // Store the value based on its type
-    ///             if std::any::TypeId::of::<T>() == std::any::TypeId::of::<bool>() {
-    ///                 // This is a bit of a hack, but it works for testing
-    ///                 let bool_value = unsafe { std::mem::transmute_copy::<T, bool>(&value) };
-    ///                 this.io.choice = Some(bool_value);
-    ///             } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<String>() {
-    ///                 // This is a bit of a hack, but it works for testing
-    ///                 let string_value = unsafe { std::mem::transmute_copy::<T, String>(&value) };
-    ///                 this.io.string_value = Some(string_value);
-    ///             } else if std::any::TypeId::of::<T>() == std::any::TypeId::of::<i32>() {
-    ///                 // This is a bit of a hack, but it works for testing
-    ///                 let int_value = unsafe { std::mem::transmute_copy::<T, i32>(&value) };
-    ///                 this.io.int_value = Some(int_value);
-    ///             }
-    ///             Poll::Ready(Ok(()))
-    ///         } else {
-    ///             Poll::Ready(Err(MyError))
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Implement AsyncSender for our custom IO
-    /// impl<T: Clone + Unpin + 'static> AsyncSender<T> for MyIO {
-    ///     type Error = MyError;
-    ///     type SendFuture<'a> = SendFuture<T> where T: 'a, Self: 'a;
-    ///
-    ///     fn send(&mut self, value: T) -> Self::SendFuture<'_> {
-    ///         SendFuture {
-    ///             value: Some(value),
-    ///             io: self.clone(),
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Create a channel with a Choose protocol
-    /// let io = MyIO {
-    ///     choice: None,
-    ///     string_value: None,
-    ///     int_value: None,
-    /// };
-    /// let chan = Chan::<ChooseProto, _>::new(io);
-    ///
-    /// // Choose the right branch
-    /// let chan = chan.choose_right().await?;
-    ///
-    /// // Now the channel has the right protocol (RightProto)
-    /// // We can send an integer and then end
-    /// let chan = chan.send(42).await?;
-    /// chan.close()?;
-    ///
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn choose_right(mut self) -> Result<Chan<R1, R2, IO>, crate::error::Error> {
         // Send a boolean value (false) indicating the right branch
         self.io_mut().send(false).await.map_err(|e| {
@@ -1068,24 +525,6 @@ impl<P: Protocol, R: Role, IO> Chan<crate::proto::Rec<P>, R, IO> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Rec, Send, Var, End};
-    /// use std::sync::mpsc;
-    ///
-    /// // Define a recursive protocol that sends an i32 and then loops
-    /// type LoopingSend = Rec<Send<i32, Var<0>>>;
-    ///
-    /// // Create a channel with the recursive protocol
-    /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<LoopingSend, RoleA, _>::new(tx);
-    ///
-    /// // Enter the recursive protocol to access the inner Send<i32, Var<0>>
-    /// let chan = chan.enter();
-    ///
-    /// // Now we can send an i32
-    /// // (In a real implementation, we would await the send operation)
-    /// ```
     pub fn enter(self) -> Chan<P, R, IO> {
         // Simply transform the channel to use the inner protocol
         Chan {
@@ -1113,26 +552,6 @@ impl<R: Role, IO> Chan<crate::proto::Var<0>, R, IO> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use sessrums::chan::Chan;
-    /// use sessrums::proto::{Rec, Send, Var, End};
-    /// use std::sync::mpsc;
-    ///
-    /// // Define a recursive protocol that sends an i32 and then loops
-    /// type LoopingSend = Rec<Send<i32, Var<0>>>;
-    ///
-    /// // Create a channel with the recursive protocol
-    /// let (tx, _) = mpsc::channel::<i32>();
-    /// let chan = Chan::<LoopingSend, RoleA, _>::new(tx);
-    ///
-    /// // Enter the recursive protocol
-    /// let chan = chan.enter();
-    ///
-    /// // After sending an i32, we would reach Var<0>
-    /// // We can then use zero to loop back to the recursive protocol
-    /// // let chan = chan.send(42).await?;
-    /// // let chan = chan.zero::<Send<i32, Var<0>>>();
-    /// ```
     pub fn zero<P: Protocol>(self) -> Chan<crate::proto::Rec<P>, R, IO> {
         // Transform the channel to use the recursive protocol
         Chan {

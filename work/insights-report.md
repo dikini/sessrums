@@ -100,3 +100,24 @@ As we move into Phase 3 and beyond, we'll focus on:
 The session types library demonstrates how Rust's powerful type system can be leveraged to provide strong safety guarantees for communication protocols. By encoding protocol states and transitions in the type system, we can catch many common concurrency errors at compile time rather than runtime.
 
 The combination of zero-sized types, phantom data, and associated types allows us to express complex protocol relationships without runtime overhead. The library's design emphasizes type safety, composability, and minimal dependencies, making it a valuable tool for building reliable distributed systems.
+
+## Build and Test Status
+
+**`cargo build` Outcome:**
+
+*   **Status:** Success with warnings.
+*   **Warnings:**
+    *   `sessrums-macro` (lib): 15 warnings (unused imports, dead code).
+    *   `sessrums` (lib): 8 warnings (unused imports, unused mutable variables, unused variables).
+
+**`cargo test` Outcome:**
+
+*   **Status:** Failed to compile.
+*   **Summary:** 0 tests passed, 0 tests failed at runtime, numerous tests failed to compile.
+*   **Compile Errors:** The test suite failed to compile due to numerous errors across multiple files (`tests/mpst_channel_tests.rs`, `tests/protocol_*.rs`, `tests/integration_tests.rs`, `tests/runtime_tests.rs`, `examples/tokio_integration.rs`, `examples/simple.rs`).
+*   **Common Error Patterns:**
+    *   **E0107 (Incorrect Generic Arguments):** Primarily related to the `Chan` struct/functions expecting 3 generic arguments (`P`, `R`, `IO`) but only receiving 2.
+    *   **E0277 (Trait Bound Not Satisfied):** Issues with `Project<Role>` implementations for global protocols, missing `Role` implementations for types like `()`, and missing `AsyncSender`/`AsyncReceiver` implementations for `MockIO` with specific types.
+    *   **E0599 (Method Call on Unsatisfied Bounds):** Attempts to call methods like `send`, `recv`, or `choose_*` on `Chan` instances where the underlying `IO` type did not satisfy the required `AsyncSender` or `AsyncReceiver` trait bounds for the specific message type.
+    *   **E0119 (Conflicting Implementations):** Duplicate implementations of `AsyncReceiver<bool>` for `MockIO<bool>` in `tests/runtime_tests.rs`.
+    *   **E0412/E0405:** Type parameter/trait not found errors in examples.

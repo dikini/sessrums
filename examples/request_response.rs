@@ -24,7 +24,7 @@
 //! 3. The communication ends
 
 use sessrums::chan::Chan;
-use sessrums::proto::{End, Protocol, Recv, Send};
+use sessrums::proto::{End, Protocol, Recv, Send, Role}; // Added Role
 use sessrums::api::{RequestClient, RequestServer};
 use sessrums::error::Error;
 use std::thread;
@@ -50,6 +50,19 @@ struct RequestChannel {
 struct ResponseChannel {
     sender: mpsc::Sender<Response>,
     receiver: Arc<Mutex<mpsc::Receiver<Request>>>,
+}
+
+// Define Roles for this example
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct RequesterRole;
+impl Role for RequesterRole {
+    fn name(&self) -> &'static str { "Requester" }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct ResponderRole;
+impl Role for ResponderRole {
+    fn name(&self) -> &'static str { "Responder" }
 }
 
 // Future returned by BiChannel::send
@@ -264,7 +277,7 @@ impl std::fmt::Display for Response {
 }
 
 /// Implements the client side of the request-response protocol
-async fn run_client(chan: Chan<RequestClient<Request, Response>, RequestChannel>, request: Request) -> Result<(), Error>
+async fn run_client(chan: Chan<RequestClient<Request, Response>, RequesterRole, RequestChannel>, request: Request) -> Result<(), Error>
 where
     Request: std::marker::Unpin,
     Response: std::marker::Unpin,
@@ -289,7 +302,7 @@ where
 }
 
 /// Implements the server side of the request-response protocol
-async fn run_server(chan: Chan<RequestServer<Request, Response>, ResponseChannel>) -> Result<(), Error>
+async fn run_server(chan: Chan<RequestServer<Request, Response>, ResponderRole, ResponseChannel>) -> Result<(), Error>
 where
     Request: std::marker::Unpin,
     Response: std::marker::Unpin,
@@ -336,8 +349,8 @@ where
     let (client_channel, server_channel) = create_request_response_pair();
     
     // Create client and server channels with their respective protocols
-    let client_chan = Chan::<RequestClient<Request, Response>, RequestChannel>::new(client_channel);
-    let server_chan = Chan::<RequestServer<Request, Response>, ResponseChannel>::new(server_channel);
+    let client_chan = Chan::<RequestClient<Request, Response>, RequesterRole, RequestChannel>::new(client_channel);
+    let server_chan = Chan::<RequestServer<Request, Response>, ResponderRole, ResponseChannel>::new(server_channel);
     
     // Create a request
     let request = Request {
@@ -364,11 +377,12 @@ fn demonstrate_request_response_pair() {
     println!("\nDemonstrating channel_pair function for request-response:");
     
     // Create a pair of channels for a request-response protocol using the helper function
-    let (client, server) = sessrums::api::channel_pair::<RequestClient<String, i32>, ()>();
+    // Using String/i32 and () for IO as a type-checking example
+    let (client, server) = sessrums::api::channel_pair::<RequestClient<String, i32>, RequesterRole, ResponderRole, ()>();
     
     // Verify that the channels have the correct types
-    let _: Chan<RequestClient<String, i32>, ()> = client;
-    let _: Chan<RequestServer<String, i32>, ()> = server;
+    let _: Chan<RequestClient<String, i32>, RequesterRole, ()> = client;
+    let _: Chan<RequestServer<String, i32>, ResponderRole, ()> = server;
     
     println!("Successfully created request-response channel pair with correct types");
 }

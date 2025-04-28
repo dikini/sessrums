@@ -35,12 +35,17 @@ use sessrums::chan::Chan;
 /// // This should compile
 /// verify_dual_protocols(chan1, chan2);
 /// ```
-pub fn verify_dual_protocols<P, Q, IO1, IO2>(_chan1: Chan<P, IO1>, _chan2: Chan<Q, IO2>) 
-where 
-    P: Protocol,
-    Q: Protocol,
-    P::Dual: Protocol<Dual = P>,
-    Q: Protocol<Dual = P>  // This constraint ensures Q is the dual of P
+use sessrums::proto::Role; // Add Role import
+
+pub fn verify_dual_protocols<P, Q, R1, R2, IO1, IO2>(_chan1: Chan<P, R1, IO1>, _chan2: Chan<Q, R2, IO2>)
+where
+    P: Protocol<Dual = Q>,
+    Q: Protocol<Dual = P>,
+    R1: Role + Default,
+    R2: Role + Default,
+    // IO1 and IO2 don't need to implement Role
+    IO1: Default,
+    IO2: Default,
 {
     // The function body is empty because the type constraints do all the work
 }
@@ -117,10 +122,7 @@ where
 /// // Create a mock channel
 /// let chan = mock_channel::<Send<i32, End>, ()>();
 /// ```
-pub fn mock_channel<P, IO>() -> Chan<P, IO>
-where 
-    P: Protocol,
-    IO: Default
-{
+pub fn mock_channel<P: Protocol, R: Role + Default, IO: Default>() -> Chan<P, R, IO> {
+    // Chan::new requires IO, not IO: Default + Role
     Chan::new(IO::default())
 }

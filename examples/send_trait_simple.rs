@@ -10,7 +10,7 @@ use futures_core::task::{Context, Poll};
 use sessrums::chan::Chan;
 use sessrums::error::Error;
 use sessrums::io::{AsyncReceiver, AsyncSender};
-use sessrums::proto::{End, Protocol, Recv, Send as ProtoSend};
+use sessrums::proto::{End, Protocol, Recv, Send as ProtoSend, Role}; // Added Role
 use std::marker::Send as MarkerSend;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
@@ -19,6 +19,19 @@ use tokio::sync::mpsc;
 // Define a simple protocol for demonstration
 type PingProtocol = ProtoSend<String, Recv<String, End>>;
 type PongProtocol = <PingProtocol as Protocol>::Dual;
+
+// Define Roles for this example
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct PingRole;
+impl Role for PingRole {
+    fn name(&self) -> &'static str { "Ping" }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+struct PongRole;
+impl Role for PongRole {
+    fn name(&self) -> &'static str { "Pong" }
+}
 
 // Bidirectional channel that implements both AsyncSender and AsyncReceiver
 struct BiChannel {
@@ -135,7 +148,7 @@ fn create_channel_pair() -> (BiChannel, BiChannel) {
 }
 
 /// Implements the ping side of the protocol
-async fn run_ping(chan: Chan<PingProtocol, BiChannel>) -> Result<(), Error> {
+async fn run_ping(chan: Chan<PingProtocol, PingRole, BiChannel>) -> Result<(), Error> {
     println!("Ping: Starting protocol");
     
     // Send a ping message
@@ -157,7 +170,7 @@ async fn run_ping(chan: Chan<PingProtocol, BiChannel>) -> Result<(), Error> {
 }
 
 /// Implements the pong side of the protocol
-async fn run_pong(chan: Chan<PongProtocol, BiChannel>) -> Result<(), Error> {
+async fn run_pong(chan: Chan<PongProtocol, PongRole, BiChannel>) -> Result<(), Error> {
     println!("Pong: Starting protocol");
     
     // Receive a ping message
@@ -186,8 +199,8 @@ async fn demonstrate_tokio_send() -> Result<(), Error> {
     let (client_channel, server_channel) = create_channel_pair();
     
     // Create ping and pong channels with their respective protocols
-    let ping_chan = Chan::<PingProtocol, _>::new(client_channel);
-    let pong_chan = Chan::<PongProtocol, _>::new(server_channel);
+    let ping_chan = Chan::<PingProtocol, PingRole, _>::new(client_channel);
+    let pong_chan = Chan::<PongProtocol, PongRole, _>::new(server_channel);
     
     // Spawn the pong task in a separate thread
     // This requires the futures to implement Send
@@ -213,8 +226,8 @@ async fn demonstrate_async_std_send() -> Result<(), Error> {
     let (client_channel, server_channel) = create_channel_pair();
     
     // Create ping and pong channels with their respective protocols
-    let ping_chan = Chan::<PingProtocol, _>::new(client_channel);
-    let pong_chan = Chan::<PongProtocol, _>::new(server_channel);
+    let ping_chan = Chan::<PingProtocol, PingRole, _>::new(client_channel);
+    let pong_chan = Chan::<PongProtocol, PongRole, _>::new(server_channel);
     
     // Spawn the pong task in a separate thread
     // This requires the futures to implement Send

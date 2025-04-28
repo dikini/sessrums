@@ -114,8 +114,8 @@ fn test_channel_creation() {
     type ServerProto = Recv<i32, End>;
     
     // Create channels
-    let _client_chan = Chan::<ClientProto, ()>::new(());
-    let _server_chan = Chan::<ServerProto, ()>::new(());
+    let _client_chan = Chan::<ClientProto, sessrums::proto::RoleA, ()>::new(()); // Added RoleA
+    let _server_chan = Chan::<ServerProto, sessrums::proto::RoleB, ()>::new(()); // Added RoleB
     
     // The fact that this compiles verifies that the channel creation works correctly
 }
