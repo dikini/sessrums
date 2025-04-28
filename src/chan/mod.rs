@@ -9,23 +9,6 @@ use crate::proto::Protocol;
 use crate::proto::roles::Role;
 use crate::proto::compat::ProtocolCompat;
 
-/// A channel with protocol `P` and underlying IO implementation `IO`.
-///
-/// The `Chan` type represents a communication channel that follows protocol `P`.
-/// The `IO` type parameter represents the underlying communication primitive.
-///
-/// # Type Parameters
-///
-/// * `P` - The protocol type that this channel follows. Must implement the `Protocol` trait.
-/// * `IO` - The underlying IO implementation that handles the actual communication.
-///
-/// # Examples
-///
-/// Creating a channel with a simple protocol:
-///
-///
-/// Using the channel with custom IO implementations:
-///
 /// A channel with protocol `P`, role `R`, and underlying IO implementation `IO`.
 ///
 /// The `Chan` type represents a communication channel that follows protocol `P`
@@ -46,9 +29,42 @@ use crate::proto::compat::ProtocolCompat;
 ///
 /// Creating a channel with a simple protocol:
 ///
+/// ```
+/// use sessrums::chan::Chan;
+/// use sessrums::proto::{Send, End, RoleA};
+/// use std::sync::mpsc;
+///
+/// // Define a protocol: Send an i32, then end.
+/// type MyProtocol = Send<i32, End>;
+///
+/// // Create a channel using std::sync::mpsc::Sender as the IO backend for RoleA.
+/// // The role is inferred from the type parameter and defaults.
+/// let (tx, _) = mpsc::channel();
+/// let chan_a: Chan<MyProtocol, RoleA, _> = Chan::new(tx);
+/// ```
 ///
 /// Using with MPST:
 ///
+/// ```
+/// use sessrums::chan::Chan;
+/// use sessrums::proto::{Send, End, RoleA, RoleB, global_role};
+/// use sessrums::proto::projection::Project;
+/// use sessrums::proto::global::{GlobalProtocol, Message};
+/// use std::sync::mpsc; // Example IO, real MPST needs more complex IO
+///
+/// // Define roles
+/// global_role!(RoleA, RoleB);
+///
+/// // Define a global protocol (A sends i32 to B)
+/// type GlobalPing = Message<RoleA, RoleB, Send<i32, End>>;
+///
+/// // Project the protocol for Role A
+/// type ProtocolA = <GlobalPing as Project<RoleA>>::Projection; // Should be Send<i32, End>
+///
+/// // Create a channel for Role A (IO setup omitted for simplicity)
+/// let (tx, _) = mpsc::channel();
+/// let chan_a: Chan<ProtocolA, RoleA, _> = Chan::new(tx);
+/// ```
 pub struct Chan<P: Protocol, R: Role, IO> {
     /// The underlying IO implementation.
     io: IO,
@@ -59,30 +75,36 @@ pub struct Chan<P: Protocol, R: Role, IO> {
 }
 
 impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
-    /// Create a new channel with the given IO implementation.
+    /// Creates a new channel with the given IO implementation and the default role instance.
+    ///
+    /// The role `R` must implement `Default`. The channel will represent the perspective
+    /// of this default role within the protocol `P`.
     ///
     /// # Parameters
     ///
-    /// * `io` - The IO implementation to use for communication.
+    /// * `io` - The IO implementation to use for communication (e.g., a socket, channel endpoint).
     ///
     /// # Returns
     ///
-    /// A new `Chan` instance with the specified protocol type and IO implementation.
+    /// A new `Chan` instance configured for the specified protocol `P`, default role `R`,
+    /// and using the provided `io` backend.
     ///
     /// # Examples
     ///
-    /// Create a new channel with the given IO implementation and role.
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Send, End, RoleA};
+    /// use std::sync::mpsc;
     ///
-    /// # Parameters
+    /// // Define a protocol
+    /// type MyProtocol = Send<i32, End>;
     ///
-    /// * `io` - The IO implementation to use for communication.
+    /// // Create the IO backend (e.g., an mpsc channel sender)
+    /// let (tx, _) = mpsc::channel();
     ///
-    /// # Returns
-    ///
-    /// A new `Chan` instance with the specified protocol type, role, and IO implementation.
-    ///
-    /// # Examples
-    ///
+    /// // Create a new channel for RoleA (which implements Default) with the sender
+    /// let chan: Chan<MyProtocol, RoleA, _> = Chan::new(tx);
+    /// ```
     pub fn new(io: IO) -> Self {
         Chan {
             io,
@@ -99,6 +121,16 @@ impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     ///
     /// # Examples
     ///
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{End, RoleA};
+    /// use std::sync::mpsc;
+    ///
+    /// let (tx, _) = mpsc::channel::<()>();
+    /// let chan = Chan::<End, RoleA, _>::new(tx);
+    /// let role_ref = chan.role();
+    /// // role_ref is a reference to RoleA
+    /// ```
     pub fn role(&self) -> &R {
         &self.role
     }
@@ -111,6 +143,16 @@ impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     ///
     /// # Examples
     ///
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{End, RoleA};
+    /// use std::sync::mpsc;
+    ///
+    /// let (tx, _) = mpsc::channel::<()>();
+    /// let chan = Chan::<End, RoleA, _>::new(tx);
+    /// let io_ref = chan.io();
+    /// // io_ref is a reference to the mpsc::Sender
+    /// ```
     pub fn io(&self) -> &IO {
         &self.io
     }
@@ -123,6 +165,16 @@ impl<P: Protocol, R: Role, IO> Chan<P, R, IO> {
     ///
     /// # Examples
     ///
+    /// ```
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{End, RoleA};
+    /// use std::sync::mpsc;
+    ///
+    /// let (tx, _) = mpsc::channel::<()>();
+    /// let mut chan = Chan::<End, RoleA, _>::new(tx);
+    /// let io_mut_ref = chan.io_mut();
+    /// // io_mut_ref is a mutable reference to the mpsc::Sender
+    /// ```
     pub fn io_mut(&mut self) -> &mut IO {
         &mut self.io
     }
@@ -301,6 +353,30 @@ where
     ///
     /// # Examples
     ///
+    /// ```rust
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Send, End, RoleA};
+    /// use sessrums::io::duplex::DuplexChannel; // Using a duplex channel for a complete example
+    ///
+    /// // Define a protocol: Send an i32, then end.
+    /// type MyProtocol = Send<i32, End>;
+    ///
+    /// // Create a pair of connected channels
+    /// let (chan1, chan2) = DuplexChannel::<i32>::new();
+    ///
+    /// // Create a Chan instance for RoleA using one end of the duplex channel
+    /// let chan_a: Chan<MyProtocol, RoleA, _> = Chan::new(chan1);
+    ///
+    /// // Send the value 42
+    /// let chan_a_next: Chan<End, RoleA, _> = chan_a.send(42).await?;
+    ///
+    /// // The protocol has advanced to End
+    /// chan_a_next.close()?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn send(mut self, value: T) -> Result<Chan<P, R, IO>, crate::error::Error> {
         // Send the value using the underlying IO implementation
         // and await the future returned by the async send method
@@ -344,6 +420,37 @@ where
     ///
     /// # Examples
     ///
+    /// ```rust
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Recv, End, RoleB}; // RoleB receives
+    /// use sessrums::io::duplex::DuplexChannel;
+    ///
+    /// // Define a protocol: Receive an i32, then end.
+    /// type MyProtocol = Recv<i32, End>;
+    ///
+    /// // Create a pair of connected channels
+    /// let (chan1, chan2) = DuplexChannel::<i32>::new();
+    ///
+    /// // Spawn a task to send a value (simulating the other party)
+    /// tokio::spawn(async move {
+    ///     let _ = chan1.send(42).await;
+    /// });
+    ///
+    /// // Create a Chan instance for RoleB using the other end
+    /// let chan_b: Chan<MyProtocol, RoleB, _> = Chan::new(chan2);
+    ///
+    /// // Receive the value
+    /// let (value, chan_b_next): (i32, Chan<End, RoleB, _>) = chan_b.recv().await?;
+    ///
+    /// assert_eq!(value, 42);
+    ///
+    /// // The protocol has advanced to End
+    /// chan_b_next.close()?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn recv(mut self) -> Result<(T, Chan<P, R, IO>), crate::error::Error> {
         // Receive the value using the underlying IO implementation
         // and await the future returned by the async recv method
@@ -396,6 +503,56 @@ where
     ///
     /// # Examples
     ///
+    /// ```rust
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Offer, Send, Recv, End, RoleA, RoleB};
+    /// use sessrums::io::duplex::DuplexChannel;
+    ///
+    /// // Protocol: Offer a choice between sending String or receiving i32
+    /// type MyOffer = Offer<Send<String, End>, Recv<i32, End>>;
+    ///
+    /// // Create duplex channels for bool (choice) and the branches
+    /// let (choice_tx, choice_rx) = DuplexChannel::<bool>::new();
+    /// let (string_tx, string_rx) = DuplexChannel::<String>::new();
+    /// let (int_tx, int_rx) = DuplexChannel::<i32>::new();
+    ///
+    /// // Combine IO for Role B (who offers)
+    /// // In a real scenario, a more sophisticated IO mux would be needed.
+    /// // This example simplifies by pre-deciding the choice.
+    /// let role_b_io = choice_rx; // Role B only needs to receive the choice
+    ///
+    /// // Spawn Role A (who chooses) - chooses left (true)
+    /// tokio::spawn(async move {
+    ///     let _ = choice_tx.send(true).await; // Send choice
+    ///     // Role A would then expect to receive a String, but we omit that for brevity
+    /// });
+    ///
+    /// // Role B offers the choice
+    /// let chan_b: Chan<MyOffer, RoleB, _> = Chan::new(role_b_io);
+    ///
+    /// let result = chan_b.offer(
+    ///     |chan_left| async move { // Handle left branch (Send<String, End>)
+    ///         // In a real scenario, chan_left would use string_tx
+    ///         println!("Left branch chosen by Role A.");
+    ///         // let chan_left_end = chan_left.send("Hello from B".to_string()).await?;
+    ///         // chan_left_end.close()?;
+    ///         Ok("Left processed")
+    ///     },
+    ///     |chan_right| async move { // Handle right branch (Recv<i32, End>)
+    ///         // In a real scenario, chan_right would use int_rx
+    ///         println!("Right branch chosen by Role A.");
+    ///         // let (val, chan_right_end) = chan_right.recv().await?;
+    ///         // chan_right_end.close()?;
+    ///         Ok("Right processed")
+    ///     }
+    /// ).await;
+    ///
+    /// assert_eq!(result?, "Left processed");
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn offer<F, G, T>(mut self, f: F, g: G) -> Result<T, crate::error::Error>
     where
         F: FnOnce(Chan<L, R2, IO>) -> Result<T, crate::error::Error>,
@@ -441,6 +598,42 @@ impl<R: Role, IO> Chan<crate::proto::End, R, IO> {
     ///
     /// # Examples
     ///
+    /// ```rust
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Send, Recv, End, RoleA, RoleB};
+    /// use sessrums::io::duplex::DuplexChannel;
+    ///
+    /// // Protocol: Send i32, Recv String, End
+    /// type MyProtocolA = Send<i32, Recv<String, End>>;
+    /// type MyProtocolB = Recv<i32, Send<String, End>>;
+    ///
+    /// let (chan_a_int, chan_b_int) = DuplexChannel::<i32>::new();
+    /// let (chan_b_str, chan_a_str) = DuplexChannel::<String>::new();
+    ///
+    /// // Simplified IO - assumes steps happen sequentially
+    /// let chan_a = Chan::<MyProtocolA, RoleA, _>::new(chan_a_int); // Start with int sender
+    /// let chan_b = Chan::<MyProtocolB, RoleB, _>::new(chan_b_int); // Start with int receiver
+    ///
+    /// // Simulate interaction (details omitted for brevity)
+    /// // chan_a sends 42, chan_b receives 42
+    /// // chan_b sends "Hi", chan_a receives "Hi"
+    ///
+    /// // Assume protocol reaches End for chan_a
+    /// let chan_a_end: Chan<End, RoleA, _> = // ... result of last recv ...
+    /// # Chan::new(()); // Placeholder for compilation
+    ///
+    /// // Close the channel for Role A
+    /// chan_a_end.close()?;
+    ///
+    /// // Similarly for Role B
+    /// let chan_b_end: Chan<End, RoleB, _> = // ... result of last send ...
+    /// # Chan::new(()); // Placeholder for compilation
+    /// chan_b_end.close()?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn close(self) -> Result<(), crate::error::Error> {
         // The End protocol doesn't require any specific action to close
         // We just consume the channel and return Ok(())
@@ -465,6 +658,34 @@ where
     ///
     /// # Examples
     ///
+    /// ```rust
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Choose, Send, Recv, End, RoleA};
+    /// use sessrums::io::duplex::DuplexChannel;
+    ///
+    /// // Protocol: Choose between sending String or receiving i32
+    /// type MyChoose = Choose<Send<String, End>, Recv<i32, End>>;
+    ///
+    /// // IO setup (simplified)
+    /// let (choice_tx, choice_rx) = DuplexChannel::<bool>::new();
+    /// // ... channels for String and i32 would also be needed ...
+    ///
+    /// // Role A chooses
+    /// let chan_a: Chan<MyChoose, RoleA, _> = Chan::new(choice_tx);
+    ///
+    /// // Choose the left branch (Send<String, End>)
+    /// let chan_a_left: Chan<Send<String, End>, RoleA, _> = chan_a.choose_left().await?;
+    ///
+    /// println!("Role A chose left branch.");
+    /// // chan_a_left can now send a String
+    /// // let chan_a_end = chan_a_left.send("Data from A".to_string()).await?;
+    /// // chan_a_end.close()?;
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn choose_left(mut self) -> Result<Chan<L, R2, IO>, crate::error::Error> {
         // Send a boolean value (true) indicating the left branch
         self.io_mut().send(true).await.map_err(|e| {
@@ -494,6 +715,34 @@ where
     ///
     /// # Examples
     ///
+    /// ```rust
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Choose, Send, Recv, End, RoleA};
+    /// use sessrums::io::duplex::DuplexChannel;
+    ///
+    /// // Protocol: Choose between sending String or receiving i32
+    /// type MyChoose = Choose<Send<String, End>, Recv<i32, End>>;
+    ///
+    /// // IO setup (simplified)
+    /// let (choice_tx, choice_rx) = DuplexChannel::<bool>::new();
+    /// // ... channels for String and i32 would also be needed ...
+    ///
+    /// // Role A chooses
+    /// let chan_a: Chan<MyChoose, RoleA, _> = Chan::new(choice_tx);
+    ///
+    /// // Choose the right branch (Recv<i32, End>)
+    /// let chan_a_right: Chan<Recv<i32, End>, RoleA, _> = chan_a.choose_right().await?;
+    ///
+    /// println!("Role A chose right branch.");
+    /// // chan_a_right can now receive an i32
+    /// // let (val, chan_a_end) = chan_a_right.recv().await?;
+    /// // chan_a_end.close()?;
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn choose_right(mut self) -> Result<Chan<R1, R2, IO>, crate::error::Error> {
         // Send a boolean value (false) indicating the right branch
         self.io_mut().send(false).await.map_err(|e| {
@@ -525,6 +774,24 @@ impl<P: Protocol, R: Role, IO> Chan<crate::proto::Rec<P>, R, IO> {
     ///
     /// # Examples
     ///
+    /// ```rust
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Rec, Send, Var, End, RoleA};
+    /// use sessrums::io::duplex::DuplexChannel;
+    ///
+    /// // Recursive protocol: Rec<Send<i32, Var<0>>> (send i32 repeatedly)
+    /// type LoopingSend = Rec<Send<i32, Var<0>>>;
+    /// type InnerProto = Send<i32, Var<0>>;
+    ///
+    /// let (tx, _) = DuplexChannel::<i32>::new();
+    /// let chan_rec: Chan<LoopingSend, RoleA, _> = Chan::new(tx);
+    ///
+    /// // Enter the recursion
+    /// let chan_inner: Chan<InnerProto, RoleA, _> = chan_rec.enter();
+    ///
+    /// println!("Entered recursive protocol.");
+    /// // chan_inner can now be used according to Send<i32, Var<0>>
+    /// ```
     pub fn enter(self) -> Chan<P, R, IO> {
         // Simply transform the channel to use the inner protocol
         Chan {
@@ -552,6 +819,34 @@ impl<R: Role, IO> Chan<crate::proto::Var<0>, R, IO> {
     ///
     /// # Examples
     ///
+    /// ```rust
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), sessrums::error::Error> {
+    /// use sessrums::chan::Chan;
+    /// use sessrums::proto::{Rec, Send, Var, End, RoleA};
+    /// use sessrums::io::duplex::DuplexChannel;
+    ///
+    /// // Recursive protocol: Rec<Send<i32, Var<0>>>
+    /// type LoopingSend = Rec<Send<i32, Var<0>>>;
+    /// type InnerProto = Send<i32, Var<0>>;
+    ///
+    /// let (tx, _) = DuplexChannel::<i32>::new();
+    /// let chan_rec: Chan<LoopingSend, RoleA, _> = Chan::new(tx);
+    ///
+    /// // Enter, send, reach Var<0>
+    /// let chan_inner = chan_rec.enter();
+    /// let chan_var0 = chan_inner.send(1).await?; // Assume send works
+    /// let _: Chan<Var<0>, RoleA, _> = chan_var0; // Type assertion
+    ///
+    /// // Use zero() to loop back
+    /// // We need to specify the inner protocol type P for Rec<P>
+    /// let chan_rec_again: Chan<LoopingSend, RoleA, _> = chan_var0.zero::<InnerProto>();
+    ///
+    /// println!("Looped back using zero().");
+    /// // chan_rec_again is ready to enter the loop again
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn zero<P: Protocol>(self) -> Chan<crate::proto::Rec<P>, R, IO> {
         // Transform the channel to use the recursive protocol
         Chan {
@@ -568,17 +863,21 @@ impl<R: Role, IO> Chan<crate::proto::Var<0>, R, IO> {
 ///
 /// This trait is used to increment the depth of variable references in recursive protocols.
 /// It's particularly useful when working with nested recursive protocols.
-// Note: The Inc and Dec traits are temporarily disabled due to limitations
-// with const generics in the current Rust version.
-// These will be re-enabled in a future version.
-
 /// A trait for incrementing recursion indices.
+///
+/// [Currently disabled] This trait is intended for advanced manipulation of nested
+/// recursive protocols using type-level numbers (const generics), but is currently
+/// disabled due to limitations or ongoing development.
 pub trait Inc {
     /// The type with incremented recursion index.
     type Result;
 }
 
 /// A trait for decrementing recursion indices.
+///
+/// /// [Currently disabled] This trait is intended for advanced manipulation of nested
+/// /// recursive protocols using type-level numbers (const generics), but is currently
+/// /// disabled due to limitations or ongoing development.
 pub trait Dec {
     /// The type with decremented recursion index.
     type Result;
