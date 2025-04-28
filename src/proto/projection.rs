@@ -251,7 +251,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::proto::roles::{RoleA, RoleB};
+    
 
     // Test projection of GSend
     #[test]
@@ -296,7 +296,6 @@ mod tests {
     // Test projection of recursive protocol
     #[test]
     fn test_project_recursive() {
-        struct RecursionLabel;
         // type RoleBLocal = <GRec<RecursionLabel, GSend<i32, RoleA, RoleB, GVar<RecursionLabel>>> as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Rec<Send<i32, Var<0>>>>(); // RoleA
@@ -305,7 +304,6 @@ mod tests {
     // Test projection of complex recursive protocol with choice
     #[test]
     fn test_project_recursive_with_choice() {
-        struct RecursionLabel2;
         // type RoleBLocal = <GRec<RecursionLabel2, GSend<i32, RoleA, RoleB, GChoice<RoleA, (GVar<RecursionLabel2>, GEnd)>>> as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Rec<Send<i32, Choose<Var<0>, End>>>>(); // RoleA

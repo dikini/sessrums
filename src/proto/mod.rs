@@ -6,8 +6,8 @@
 pub mod roles;
 pub use roles::{Role, RoleA, RoleB};
 
-mod proto;
-pub use proto::Protocol;
+mod base;
+pub use base::Protocol;
 
 mod send;
 pub use send::Send;

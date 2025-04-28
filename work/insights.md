@@ -65,3 +65,8 @@ This document summarizes key technical insights, design decisions, and future co
 - Conflicting `Default` implementations in `src/proto/projection.rs` (related to `GSend` in tests) prevent `cargo clippy --fix` and `cargo test` from running successfully. These need manual resolution, potentially by adjusting the test setup or the generic `Default` implementation in `src/proto/global.rs`.
 - A new compilation error (`E0404`) appeared in `examples/send_trait.rs` after the initial clippy fixes, indicating a potential issue with trait imports or usage (`std::marker::Send` vs `crate::proto::Send`). This also needs manual investigation.
 - The `module_inception` and `type_complexity` warnings remain, requiring structural changes or type aliasing for resolution.
+## Clippy Fixes (Module Inception, Dead Code)
+
+- **Module Inception:** The `clippy::module_inception` lint occurs when a module file (e.g., `proto.rs`) has the same name as its parent directory's `mod.rs` declaration (`mod proto;`). The standard fix is to rename the inner file (e.g., to `base.rs` or similar) and update the `mod` declaration in `mod.rs` accordingly. This avoids ambiguity and improves clarity.
+- **Iterative Fixing:** Running `cargo clippy --fix` first handles many simple, safe fixes automatically. Manually addressing remaining warnings afterwards, focusing on safe ones like `dead_code` and structural issues like `module_inception`, is an effective workflow. Complex warnings like `type_complexity` can be deferred or addressed separately if they require significant refactoring.
+- **Test Verification:** Always run tests (`cargo test --all-targets`) after applying clippy fixes, especially manual ones, to catch any regressions introduced by the changes.

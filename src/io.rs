@@ -437,7 +437,7 @@ mod tests {
         
         // Check that we received the expected messages
         // (order may vary since they come from different threads)
-        let messages = vec![result1.unwrap(), result2.unwrap()];
+        let messages = [result1.unwrap(), result2.unwrap()];
         assert!(messages.contains(&String::from("Hello from main thread!")));
         assert!(messages.contains(&String::from("Hello from another thread!")));
     }

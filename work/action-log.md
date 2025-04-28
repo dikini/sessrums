@@ -155,3 +155,10 @@
   - Consolidated trait bounds in `assert_dual` in `src/api.rs`.
 - Tests failed due to pre-existing compilation errors (conflicting `Default` impls) and a new error (`E0404` in `examples/send_trait.rs`).
 - Remaining clippy warnings/errors (`E0119`, `module_inception`, `type_complexity`) left for manual review as they require complex changes.
+- Applied remaining safe `cargo clippy` suggestions:
+  - Ran `cargo clippy --fix` for automatic fixes (`unused_imports`, `clone_on_copy`, `useless_vec`).
+  - Fixed `module_inception` in `src/proto/mod.rs` by renaming `src/proto/proto.rs` to `src/proto/base.rs` and updating the `mod` declaration.
+  - Fixed `dead_code` in `src/proto/projection.rs` by removing unused test helper structs (`RecursionLabel`, `RecursionLabel2`).
+  - Left `type_complexity` warning in `src/api.rs` as requested.
+  - Verified fixes with `cargo test --all-targets`.
+  - Committed changes (d761855).

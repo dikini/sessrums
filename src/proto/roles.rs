@@ -75,14 +75,14 @@ mod tests {
     #[test]
     fn test_role_a_clone() {
         let role_a = RoleA;
-        let cloned_role_a = role_a.clone();
+        let cloned_role_a = role_a;
         assert_eq!(role_a, cloned_role_a);
     }
 
     #[test]
     fn test_role_b_clone() {
         let role_b = RoleB;
-        let cloned_role_b = role_b.clone();
+        let cloned_role_b = role_b;
         assert_eq!(role_b, cloned_role_b);
     }
 

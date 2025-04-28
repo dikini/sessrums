@@ -243,17 +243,17 @@ fn test_role_definitions() {
     // Roles and protocols are now defined at the module level above
 
     // Verify TestRoleA exists and implements Role correctly
-    let role_a = TestRoleA::default();
+    let role_a = TestRoleA;
     assert_eq!(role_a.name(), "TestRoleA");
     assert_eq!(format!("{:?}", role_a), "TestRoleA"); // Check Debug impl
 
     // Verify TestRoleB exists and implements Role correctly
-    let role_b = TestRoleB::default();
+    let role_b = TestRoleB;
     assert_eq!(role_b.name(), "TestRoleB");
     assert_eq!(format!("{:?}", role_b), "TestRoleB");
 
     // Verify TestRoleC exists and implements Role correctly
-    let role_c = TestRoleC::default();
+    let role_c = TestRoleC;
     assert_eq!(role_c.name(), "TestRoleC");
     assert_eq!(format!("{:?}", role_c), "TestRoleC");
 
@@ -268,9 +268,9 @@ fn test_role_definitions() {
     assert!(validate_global_protocol(&protocol).is_ok());
 
     // Test case with only roles (defined at module level)
-    let only_role1 = OnlyRole1::default();
+    let only_role1 = OnlyRole1;
     assert_eq!(only_role1.name(), "OnlyRole1");
-    let only_role2 = OnlyRole2::default();
+    let only_role2 = OnlyRole2;
     assert_eq!(only_role2.name(), "OnlyRole2");
 
     // Test case with no roles (protocol defined at module level)
