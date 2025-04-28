@@ -149,3 +149,4 @@
 - Improved docstrings in `src/connect.rs`: Added usage examples for `ConnectInfo`, `StreamWrapper`, `connect`, `accept`, `connect_with_protocol`. Documented the `bincode` serialization format used with length prefixing for TCP/Unix streams.
 - Investigated `protocol_pair!` macro status. Found definition in `src/lib.rs`, but no corresponding test in `tests/macro_tests.rs`. Updated docstring in `src/lib.rs` to add a warning about missing test coverage.
 - Fixed compiler warnings (unused imports, dead code, unused variables) across the project using `cargo fix` and manual code removal. Verified with `cargo test`.
+- 2025-04-28: Committed fixes for tests, resolved compiler warnings, updated documentation (`docs/introduction.md`), and included coverage setup. Commit hash: e05749f.
