@@ -146,3 +146,4 @@
 - Updated docstrings in `src/proto/global.rs` to improve clarity, add examples, and accurately reflect the placeholder status of `validate`, `involved_roles`, and `project_for_role` methods based on documentation review findings.
 - Updated docstrings in `src/proto/projection.rs` to clarify projection logic and document limitations based on documentation review findings.
 - Enhanced docstrings in `src/chan/mod.rs`: Resolved conflicting documentation for `Chan` struct and `Chan::new` method, added usage examples for core channel operations (`send`, `recv`, `offer`, `choose_left`, `choose_right`, `close`, `enter`, `zero`) and helper methods, and clarified the status of `Inc`/`Dec` traits as currently disabled.
+- Improved docstrings in `src/connect.rs`: Added usage examples for `ConnectInfo`, `StreamWrapper`, `connect`, `accept`, `connect_with_protocol`. Documented the `bincode` serialization format used with length prefixing for TCP/Unix streams.

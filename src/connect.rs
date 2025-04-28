@@ -4,6 +4,16 @@
 //! two endpoints using session types. It includes wrappers for common stream types
 //! that implement the `AsyncSender` and `AsyncReceiver` traits, allowing them to be
 //! used with the session type system.
+//!
+//! ## Serialization Format
+//!
+//! When using the provided `StreamWrapper` implementations for `TcpStream` (with the `tcp` feature)
+//! or `UnixStream` (with the `unix` feature), data is serialized using the `bincode` crate.
+//! Each message sent over the stream is prefixed with its length encoded as a 4-byte
+//! unsigned integer in big-endian format (`u32::to_be_bytes`). The receiver reads this length
+//! first to determine how many bytes to read for the actual message body.
+//!
+//! Custom `AsyncSender`/`AsyncReceiver` implementations might use different serialization formats.
 
 use crate::error::Error;
 use crate::io::{AsyncReceiver, AsyncSender};
@@ -28,7 +38,7 @@ use std::task::{Context, Poll};
 pub trait ConnectInfo {
     /// The IO implementation type that will be used for communication.
     type IO;
-    
+
     /// Establishes a connection using the provided connection information.
     ///
     /// # Returns
@@ -36,6 +46,38 @@ pub trait ConnectInfo {
     /// A result containing the IO implementation if successful, or an error if the connection
     /// could not be established.
     fn connect(&self) -> std::io::Result<Self::IO>;
+
+    // Example (conceptual, requires async context and features):
+    // ```no_run
+    // # #[cfg(feature = "tcp")]
+    // # {
+    // # use sessrums::prelude::*;
+    // # use sessrums::connect::{ConnectInfo, StreamWrapper, connect_with_protocol};
+    // # use std::net::{TcpStream, SocketAddr};
+    // # use std::io;
+    // #
+    // # type MyProtocol = Send<String, End>;
+    // #
+    // struct TcpConnector {
+    //     addr: SocketAddr,
+    // }
+    //
+    // impl ConnectInfo for TcpConnector {
+    //     type IO = StreamWrapper<TcpStream, String>; // Assuming String messages
+    //
+    //     fn connect(&self) -> io::Result<Self::IO> {
+    //         TcpStream::connect(self.addr).map(StreamWrapper::new)
+    //     }
+    // }
+    //
+    // # async fn run() -> Result<(), sessrums::Error> {
+    // let connector = TcpConnector { addr: "127.0.0.1:8080".parse().unwrap() };
+    // let chan: Chan<MyProtocol, RoleA, _> = connect_with_protocol(connector).await?;
+    // // Use the channel...
+    // # Ok(())
+    // # }
+    // # }
+    // ```
 }
 
 /// A wrapper for a bidirectional stream that implements both `AsyncSender` and `AsyncReceiver`.
@@ -50,6 +92,23 @@ pub trait ConnectInfo {
 ///
 /// # Examples
 ///
+/// Wrapping a `TcpStream` (requires the `tcp` feature):
+///
+/// ```no_run
+/// # #[cfg(feature = "tcp")]
+/// # {
+/// # use sessrums::connect::StreamWrapper;
+/// # use std::net::TcpStream;
+/// # use std::io;
+/// #
+/// # fn main() -> io::Result<()> {
+/// let stream = TcpStream::connect("127.0.0.1:8080")?;
+/// let wrapper: StreamWrapper<TcpStream, String> = StreamWrapper::new(stream);
+/// // Now 'wrapper' can be used with sessrums channels for sending/receiving Strings
+/// # Ok(())
+/// # }
+/// # }
+/// ```
 pub struct StreamWrapper<S, T> {
     stream: S,
     _marker: PhantomData<T>,
@@ -342,6 +401,30 @@ mod unix {
 ///
 /// # Examples
 ///
+/// ```no_run
+/// # #[cfg(feature = "tcp")]
+/// # {
+/// # use sessrums::prelude::*;
+/// # use sessrums::connect::{connect, StreamWrapper};
+/// # use std::net::TcpStream;
+/// # use std::io;
+/// #
+/// // Define a simple protocol: Send an i32, then end.
+/// type ClientProto = Send<i32, End>;
+///
+/// # async fn run() -> Result<(), sessrums::Error> {
+/// let tcp_stream = TcpStream::connect("127.0.0.1:8080").unwrap();
+///
+/// // Create a channel directly from the stream
+/// let chan: Chan<ClientProto, RoleA, StreamWrapper<TcpStream, i32>> = connect(tcp_stream);
+///
+/// // Use the channel
+/// let chan = chan.send(42).await?;
+/// chan.close()?;
+/// # Ok(())
+/// # }
+/// # }
+/// ```
 pub fn connect<P, R, S, T>(stream: S) -> Chan<P, R, StreamWrapper<S, T>>
 where
     P: Protocol,
@@ -371,6 +454,36 @@ where
 ///
 /// A result containing a channel with the specified protocol and the accepted stream.
 ///
+/// # Examples
+///
+/// ```no_run
+/// # #[cfg(feature = "tcp")]
+/// # {
+/// # use sessrums::prelude::*;
+/// # use sessrums::connect::{accept, StreamWrapper};
+/// # use std::net::{TcpListener, TcpStream};
+/// # use std::io;
+/// #
+/// // Define a simple protocol: Receive a String, then end.
+/// type ServerProto = Recv<String, End>;
+///
+/// # async fn run() -> Result<(), sessrums::Error> {
+/// let listener = TcpListener::bind("127.0.0.1:0").unwrap(); // Bind to an available port
+/// let addr = listener.local_addr().unwrap();
+/// println!("Listening on {}", addr);
+///
+/// // In a real server, you'd likely loop here accepting multiple connections.
+/// // This example accepts just one.
+/// let chan: Chan<ServerProto, RoleB, StreamWrapper<TcpStream, String>> = accept(&listener)?;
+///
+/// // Use the channel
+/// let (message, chan) = chan.recv().await?;
+/// println!("Received: {}", message);
+/// chan.close()?;
+/// # Ok(())
+/// # }
+/// # }
+/// ```
 #[cfg(feature = "tcp")]
 pub fn accept<P, R, L, S, T>(listener: &L) -> io::Result<Chan<P, R, StreamWrapper<S, T>>>
 where
@@ -407,6 +520,50 @@ where
 ///
 /// # Examples
 ///
+/// See the example in the [`ConnectInfo`] trait documentation.
+///
+/// ```no_run
+/// # #[cfg(feature = "tcp")]
+/// # {
+/// # use sessrums::prelude::*;
+/// # use sessrums::connect::{ConnectInfo, StreamWrapper, connect_with_protocol};
+/// # use std::net::{TcpStream, SocketAddr};
+/// # use std::io;
+/// #
+/// # type MyProtocol = Send<String, End>;
+/// #
+/// // Define a struct that holds connection details
+/// struct MyTcpConnector {
+///     server_address: SocketAddr,
+/// }
+///
+/// // Implement ConnectInfo for the struct
+/// impl ConnectInfo for MyTcpConnector {
+///     // Specify the IO type (StreamWrapper over TcpStream, handling String messages)
+///     type IO = StreamWrapper<TcpStream, String>;
+///
+///     fn connect(&self) -> io::Result<Self::IO> {
+///         // Attempt to connect and wrap the stream
+///         TcpStream::connect(self.server_address).map(StreamWrapper::new)
+///     }
+/// }
+///
+/// # async fn run() -> Result<(), sessrums::Error> {
+/// // Create an instance of the connector
+/// let connector = MyTcpConnector {
+///     server_address: "127.0.0.1:8080".parse().unwrap(),
+/// };
+///
+/// // Use connect_with_protocol to establish the connection and get a channel
+/// let chan: Chan<MyProtocol, RoleA, _> = connect_with_protocol(connector).await?;
+///
+/// // Now you can use the channel 'chan' according to MyProtocol
+/// let chan = chan.send("Hello from client!".to_string()).await?;
+/// chan.close()?;
+/// # Ok(())
+/// # }
+/// # }
+/// ```
 pub async fn connect_with_protocol<P, R, IO, C>(conn_info: C) -> Result<Chan<P, R, IO>, Error>
 where
     P: Protocol,
