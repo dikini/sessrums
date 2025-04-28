@@ -447,7 +447,7 @@ impl<G1: GlobalProtocol, G2: GlobalProtocol> GlobalProtocolBranches for (G1, G2)
 ///
 /// ```rust
 /// use sessrums::proto::global::*;
-/// use sessrums::proto::roles::{RoleA, RoleB};
+/// use sessrums::proto::Role; // Import the Role trait
 /// use std::marker::PhantomData;
 ///
 /// // Define roles
@@ -623,7 +623,7 @@ impl<Label> GlobalProtocol for GVar<Label> {
 ///
 /// ```rust
 /// use sessrums::proto::global::*;
-/// use sessrums::proto::roles::{RoleA, RoleB};
+/// use sessrums::proto::Role; // Import the Role trait
 /// use std::marker::PhantomData;
 ///
 /// // Define roles
@@ -714,7 +714,7 @@ where
 ///
 /// ```rust
 /// use sessrums::proto::global::*;
-/// use sessrums::proto::roles::{RoleA, RoleB, RoleC};
+/// use sessrums::proto::Role; // Import the Role trait (RoleC removed, RoleA/B defined locally)
 /// use std::marker::PhantomData;
 ///
 /// // Define roles
@@ -921,7 +921,7 @@ pub fn validate_global_protocol<G: GlobalProtocol>(protocol: &G) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::proto::roles::{RoleA, RoleB};
+    
     
     // Define some test roles
     #[derive(Default)]
@@ -1003,7 +1003,6 @@ mod tests {
         
         // Build a more complex protocol: Client sends a String to Server,
         // Server sends an i32 back to Client, then ends
-        type ComplexProtocol = GSend<String, Client, Server, GRecv<i32, Server, Client, GEnd>>;
         
         // This would be built using the builder like:
         // let protocol: ComplexProtocol = builder.send::<String, Client, Server, _>(

@@ -256,9 +256,7 @@ mod tests {
     // Test projection of GSend
     #[test]
     fn test_project_gsend() {
-        type GlobalProtocol = GSend<String, RoleA, RoleB, GEnd>;
-        type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
-        // type RoleBLocal = <GlobalProtocol as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
+        // type RoleBLocal = <GSend<String, RoleA, RoleB, GEnd> as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Send<String, End>>(); // RoleA
     }
@@ -266,9 +264,7 @@ mod tests {
     // Test projection of GRecv
     #[test]
     fn test_project_grecv() {
-        type GlobalProtocol = GRecv<String, RoleB, RoleA, GEnd>;
-        type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
-        // type RoleBLocal = <GlobalProtocol as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
+        // type RoleBLocal = <GRecv<String, RoleB, RoleA, GEnd> as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Recv<String, End>>(); // RoleA
     }
@@ -276,11 +272,7 @@ mod tests {
     // Test projection of GChoice
     #[test]
     fn test_project_gchoice() {
-        type Branch1 = GSend<String, RoleA, RoleB, GEnd>;
-        type Branch2 = GSend<i32, RoleA, RoleB, GEnd>;
-        type GlobalProtocol = GChoice<RoleA, (Branch1, Branch2)>;
-        type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
-        // type RoleBLocal = <GlobalProtocol as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
+        // type RoleBLocal = <GChoice<RoleA, (GSend<String, RoleA, RoleB, GEnd>, GSend<i32, RoleA, RoleB, GEnd>)> as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Choose<Send<String, End>, Send<i32, End>>>(); // RoleA
     }
@@ -288,11 +280,7 @@ mod tests {
     // Test projection of GOffer
     #[test]
     fn test_project_goffer() {
-        type Branch1 = GRecv<String, RoleA, RoleB, GEnd>;
-        type Branch2 = GRecv<i32, RoleA, RoleB, GEnd>;
-        type GlobalProtocol = GOffer<RoleB, (Branch1, Branch2)>;
-        // type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol; // Cannot project for RoleA directly now
-        type RoleBLocal = <GlobalProtocol as Project<RoleB>>::LocalProtocol;
+        // type RoleALocal = <GOffer<RoleB, (GRecv<String, RoleA, RoleB, GEnd>, GRecv<i32, RoleA, RoleB, GEnd>)> as Project<RoleA>>::LocalProtocol; // Cannot project for RoleA directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Offer<Recv<String, End>, Recv<i32, End>>>(); // RoleB
     }
@@ -300,11 +288,7 @@ mod tests {
     // Test projection of complex protocol with branching
     #[test]
     fn test_project_complex_with_branching() {
-        type Branch1 = GSend<String, RoleA, RoleB, GEnd>;
-        type Branch2 = GRecv<i32, RoleB, RoleA, GEnd>;
-        type GlobalProtocol = GSend<bool, RoleA, RoleB, GChoice<RoleA, (Branch1, Branch2)>>;
-        type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
-        // type RoleBLocal = <GlobalProtocol as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
+        // type RoleBLocal = <GSend<bool, RoleA, RoleB, GChoice<RoleA, (GSend<String, RoleA, RoleB, GEnd>, GRecv<i32, RoleB, RoleA, GEnd>)>> as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Send<bool, Choose<Send<String, End>, Recv<i32, End>>>>(); // RoleA
     }
@@ -316,9 +300,7 @@ mod tests {
         impl Default for GSend<i32, RoleA, RoleB, GVar<RecursionLabel>> {
             fn default() -> Self { Default::default() }
         }
-        type GlobalProtocol = GRec<RecursionLabel, GSend<i32, RoleA, RoleB, GVar<RecursionLabel>>>;
-        type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
-        // type RoleBLocal = <GlobalProtocol as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
+        // type RoleBLocal = <GRec<RecursionLabel, GSend<i32, RoleA, RoleB, GVar<RecursionLabel>>> as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Rec<Send<i32, Var<0>>>>(); // RoleA
     }
@@ -330,16 +312,7 @@ mod tests {
         impl Default for GSend<i32, RoleA, RoleB, GChoice<RoleA, (GVar<RecursionLabel2>, GEnd)>> {
              fn default() -> Self { Default::default() }
         }
-        type GlobalProtocol = GRec<RecursionLabel2,
-            GSend<i32, RoleA, RoleB,
-                GChoice<RoleA, (
-                    GVar<RecursionLabel2>,
-                    GEnd
-                )>
-            >
-        >;
-        type RoleALocal = <GlobalProtocol as Project<RoleA>>::LocalProtocol;
-        // type RoleBLocal = <GlobalProtocol as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
+        // type RoleBLocal = <GRec<RecursionLabel2, GSend<i32, RoleA, RoleB, GChoice<RoleA, (GVar<RecursionLabel2>, GEnd)>>> as Project<RoleB>>::LocalProtocol; // Cannot project for RoleB directly now
         fn assert_type<T: Protocol>() {}
         assert_type::<Rec<Send<i32, Choose<Var<0>, End>>>>(); // RoleA
     }

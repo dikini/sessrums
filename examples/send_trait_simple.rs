@@ -11,7 +11,6 @@ use sessrums::chan::Chan;
 use sessrums::error::Error;
 use sessrums::io::{AsyncReceiver, AsyncSender};
 use sessrums::proto::{End, Protocol, Recv, Send as ProtoSend, Role}; // Added Role
-use std::marker::Send as MarkerSend;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;

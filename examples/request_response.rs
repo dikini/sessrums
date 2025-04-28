@@ -24,10 +24,9 @@
 //! 3. The communication ends
 
 use sessrums::chan::Chan;
-use sessrums::proto::{End, Protocol, Recv, Send, Role}; // Added Role
+use sessrums::proto::Role; // Added Role
 use sessrums::api::{RequestClient, RequestServer};
 use sessrums::error::Error;
-use std::thread;
 use tokio::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use futures_core::future::Future;
@@ -209,24 +208,6 @@ impl sessrums::io::AsyncReceiver<Request> for ResponseChannel {
 }
 
 /// Creates a pair of BiChannel instances for bidirectional communication
-fn create_channel_pair<T>() -> (BiChannel<T>, BiChannel<T>) {
-    // Create channels for client -> server and server -> client communication
-    let (client_tx, server_rx) = mpsc::channel(10);
-    let (server_tx, client_rx) = mpsc::channel(10);
-    
-    let client_channel = BiChannel {
-        sender: client_tx,
-        receiver: Arc::new(Mutex::new(client_rx)),
-    };
-    
-    let server_channel = BiChannel {
-        sender: server_tx,
-        receiver: Arc::new(Mutex::new(server_rx)),
-    };
-    
-    (client_channel, server_channel)
-}
-
 /// Creates a pair of specialized channels for request-response communication
 fn create_request_response_pair() -> (RequestChannel, ResponseChannel) {
     // Create channels for client -> server and server -> client communication

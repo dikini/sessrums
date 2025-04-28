@@ -1,10 +1,9 @@
 use sessrums::chan::Chan;
-use sessrums::proto::{Protocol, Send, Recv, End, Role};
+use sessrums::proto::{Send, Recv, End, Role};
 use sessrums::proto::roles::{RoleA, RoleB};
-use sessrums::proto::global::{GSend, GRecv, GEnd};
+use sessrums::proto::global::{GSend, GEnd};
 use sessrums::proto::projection::Project;
-use sessrums::proto::compat::{ProtocolCompat, BinaryWrapper, MPSTWrapper};
-use std::marker::PhantomData;
+use sessrums::proto::compat::MPSTWrapper;
 
 // Define a third role for testing multi-party protocols
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -57,7 +56,6 @@ impl<T: Clone + std::marker::Unpin> sessrums::io::AsyncReceiver<T> for MockIO<T>
 #[tokio::test]
 async fn test_mpst_simple_protocol() {
     // Define a simple protocol: RoleA sends a String to RoleB, then ends
-    type GlobalProtocol = GSend<String, RoleA, RoleB, GEnd>;
     
     // Project the global protocol for each role
     type RoleALocal = Send<String, End>;
@@ -88,7 +86,6 @@ async fn test_mpst_simple_protocol() {
 async fn test_mpst_channel_with_three_roles() {
     // Define local protocols for a three-role scenario
     type RoleALocal = Send<String, End>;
-    type RoleBLocal = Recv<String, Send<i32, End>>;
     type RoleCLocal = Recv<i32, End>;
     
     // Create channels with roles

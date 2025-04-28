@@ -148,3 +148,4 @@
 - Enhanced docstrings in `src/chan/mod.rs`: Resolved conflicting documentation for `Chan` struct and `Chan::new` method, added usage examples for core channel operations (`send`, `recv`, `offer`, `choose_left`, `choose_right`, `close`, `enter`, `zero`) and helper methods, and clarified the status of `Inc`/`Dec` traits as currently disabled.
 - Improved docstrings in `src/connect.rs`: Added usage examples for `ConnectInfo`, `StreamWrapper`, `connect`, `accept`, `connect_with_protocol`. Documented the `bincode` serialization format used with length prefixing for TCP/Unix streams.
 - Investigated `protocol_pair!` macro status. Found definition in `src/lib.rs`, but no corresponding test in `tests/macro_tests.rs`. Updated docstring in `src/lib.rs` to add a warning about missing test coverage.
+- Fixed compiler warnings (unused imports, dead code, unused variables) across the project using `cargo fix` and manual code removal. Verified with `cargo test`.

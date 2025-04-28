@@ -124,10 +124,6 @@ fn test_channel_creation() {
 #[test]
 fn test_protocol_combinators() {
     // Define protocol types using type aliases for clarity
-    type SendInt = Send<i32, End>;
-    type RecvInt = Recv<i32, End>;
-    type SendString = Send<String, End>;
-    type RecvString = Recv<String, End>;
     
     // Combine protocol types
     type CombinedClient = Send<i32, Recv<String, End>>;

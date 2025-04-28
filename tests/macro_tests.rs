@@ -4,9 +4,9 @@
 //! with various protocol patterns.
 
 use sessrums::proto::{
-    global_protocol, Send, Recv, End, Choose, Offer, Rec, Var,
-    Role, RoleA, RoleB, Project, project, GlobalProtocolBuilder,
-    GSend, GRecv, GChoice, GOffer, GRec, GVar, GEnd, GSeq, GPar,
+    global_protocol, Send, Recv, End,
+    Role, GlobalProtocolBuilder,
+    GSend, GRecv, GChoice, GRec, GVar, GEnd, GSeq, GPar,
     validate_global_protocol
 };
 
@@ -115,12 +115,10 @@ fn test_simple_message_passing() {
     assert!(validate_global_protocol(&protocol).is_ok());
     
     // Verify the projection for Client
-    type ClientProtocol = <PingPong as Project<Client>>::LocalProtocol;
     fn assert_client_type<T: std::fmt::Debug>() {}
     assert_client_type::<Send<String, Recv<String, End>>>();
     
     // Verify the projection for Server
-    type ServerProtocol = <PingPong as Project<Server>>::LocalProtocol;
     fn assert_server_type<T: std::fmt::Debug>() {}
     assert_server_type::<Recv<String, Send<String, End>>>();
 }
@@ -164,12 +162,6 @@ fn test_recursion() {
     // Define a recursive protocol manually
     struct ChatLoopLabel;
     
-    type ChatSession = GRec<ChatLoopLabel,
-        GChoice<Client, (
-            GSend<String, Client, Server, GRecv<String, Server, Client, GVar<ChatLoopLabel>>>,
-            GSend<bool, Client, Server, GEnd>
-        )>
-    >;
     
     // Create an instance of the protocol
     let protocol = GRec::<ChatLoopLabel,
@@ -224,21 +216,6 @@ fn test_complex_protocol() {
     // Define a complex protocol manually
     struct LoopLabel;
     
-    type ComplexProtocol = GSend<String, Client, Server,
-        GRec<LoopLabel,
-            GChoice<Server, (
-                GSend<i32, Server, Client,
-                    GRecv<bool, Client, Server, GVar<LoopLabel>>
-                >,
-                GSend<String, Server, Client,
-                    GPar<
-                        GSend<String, Client, Logger, GEnd>,
-                        GSend<i32, Server, Logger, GEnd>
-                    >
-                >
-            )>
-        >
-    >;
     
     // Create an instance of the protocol
     let protocol = GSend::<String, Client, Server,

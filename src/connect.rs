@@ -404,15 +404,17 @@ mod unix {
 /// ```no_run
 /// # #[cfg(feature = "tcp")]
 /// # {
-/// # use sessrums::prelude::*;
+/// # use sessrums::proto::{Send, End, RoleA}; // Specific imports instead of prelude
+/// # use sessrums::chan::Chan;
 /// # use sessrums::connect::{connect, StreamWrapper};
 /// # use std::net::TcpStream;
 /// # use std::io;
+/// # use sessrums::error::Error; // Import Error
 /// #
 /// // Define a simple protocol: Send an i32, then end.
 /// type ClientProto = Send<i32, End>;
 ///
-/// # async fn run() -> Result<(), sessrums::Error> {
+/// # async fn run() -> Result<(), Error> { // Use imported Error
 /// let tcp_stream = TcpStream::connect("127.0.0.1:8080").unwrap();
 ///
 /// // Create a channel directly from the stream
@@ -459,22 +461,25 @@ where
 /// ```no_run
 /// # #[cfg(feature = "tcp")]
 /// # {
-/// # use sessrums::prelude::*;
+/// # use sessrums::proto::{Recv, End, RoleB}; // Specific imports instead of prelude
+/// # use sessrums::chan::Chan;
 /// # use sessrums::connect::{accept, StreamWrapper};
 /// # use std::net::{TcpListener, TcpStream};
 /// # use std::io;
+/// # use sessrums::error::Error; // Import Error
 /// #
 /// // Define a simple protocol: Receive a String, then end.
 /// type ServerProto = Recv<String, End>;
 ///
-/// # async fn run() -> Result<(), sessrums::Error> {
+/// # async fn run() -> Result<(), Error> { // Use imported Error
 /// let listener = TcpListener::bind("127.0.0.1:0").unwrap(); // Bind to an available port
 /// let addr = listener.local_addr().unwrap();
 /// println!("Listening on {}", addr);
 ///
 /// // In a real server, you'd likely loop here accepting multiple connections.
 /// // This example accepts just one.
-/// let chan: Chan<ServerProto, RoleB, StreamWrapper<TcpStream, String>> = accept(&listener)?;
+/// // Pass the address string to satisfy ToSocketAddrs bound
+/// let chan: Chan<ServerProto, RoleB, StreamWrapper<TcpStream, String>> = accept(&addr.to_string())?;
 ///
 /// // Use the channel
 /// let (message, chan) = chan.recv().await?;
@@ -525,10 +530,12 @@ where
 /// ```no_run
 /// # #[cfg(feature = "tcp")]
 /// # {
-/// # use sessrums::prelude::*;
+/// # use sessrums::proto::{Send, End, RoleA}; // Specific imports instead of prelude
+/// # use sessrums::chan::Chan;
 /// # use sessrums::connect::{ConnectInfo, StreamWrapper, connect_with_protocol};
 /// # use std::net::{TcpStream, SocketAddr};
 /// # use std::io;
+/// # use sessrums::error::Error; // Import Error
 /// #
 /// # type MyProtocol = Send<String, End>;
 /// #
@@ -548,7 +555,7 @@ where
 ///     }
 /// }
 ///
-/// # async fn run() -> Result<(), sessrums::Error> {
+/// # async fn run() -> Result<(), Error> { // Use imported Error
 /// // Create an instance of the connector
 /// let connector = MyTcpConnector {
 ///     server_address: "127.0.0.1:8080".parse().unwrap(),
@@ -583,7 +590,7 @@ mod tests {
     use crate::proto::roles::{RoleA, RoleB};
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
-    use std::thread;
+    
 
     // A mock stream for testing
     struct MockStream {

@@ -167,7 +167,7 @@ mod tests {
     use crate::proto::send::Send;
     use crate::proto::recv::Recv;
     use crate::proto::end::End;
-    use crate::proto::roles::{RoleA, RoleB};
+    use crate::proto::roles::RoleA;
     
     #[test]
     fn test_binary_wrapper() {
@@ -175,7 +175,7 @@ mod tests {
         type BinaryProtocol = Send<i32, Recv<String, End>>;
         
         // Wrap it for use with MPST
-        let wrapped = BinaryWrapper::<BinaryProtocol, RoleA>::new(Default::default());
+        let _wrapped = BinaryWrapper::<BinaryProtocol, RoleA>::new(Default::default());
         
         // NOTE: protocol_name assertion removed as it's not part of the wrapper API
     }
@@ -186,7 +186,7 @@ mod tests {
         type MPSTLocalProtocol = Send<i32, Recv<String, End>>;
         
         // Wrap it for use with binary session types
-        let wrapped = MPSTWrapper::<MPSTLocalProtocol, RoleA>::new(Default::default());
+        let _wrapped = MPSTWrapper::<MPSTLocalProtocol, RoleA>::new(Default::default());
         
         // NOTE: protocol_name assertion removed as it's not part of the wrapper API
     }

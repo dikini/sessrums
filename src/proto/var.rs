@@ -48,7 +48,7 @@ impl<const N: usize> Protocol for Var<N> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::proto::{Rec, Send, Recv, End};
+    use crate::proto::{Rec, Send, Recv};
 
     #[test]
     fn test_var_protocol_implementation() {

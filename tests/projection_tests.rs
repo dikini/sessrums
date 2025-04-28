@@ -1,20 +1,9 @@
-use sessrums::proto::{Project, Role};
-
-// Define a third role for testing multi-party protocols
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-struct RoleC;
-
-impl Role for RoleC {
-    fn name(&self) -> &'static str {
-        "RoleC"
-    }
-}
 
 #[test]
 fn test_simple_send_projection() {
     // Import the necessary types from the public API
     use sessrums::proto::{End, Recv, Send};
-    use sessrums::proto::{RoleA, RoleB};
+    
 
     // Define a simple protocol: RoleA sends a String to RoleB, then ends
     // We'll use the local types directly since we can't access the global types
@@ -37,7 +26,7 @@ fn test_simple_send_projection() {
 fn test_simple_recv_projection() {
     // Import the necessary types from the public API
     use sessrums::proto::{End, Recv, Send};
-    use sessrums::proto::{RoleA, RoleB};
+    
 
     // Define a simple protocol: RoleB sends a String to RoleA, then ends
     // We'll use the local types directly since we can't access the global types
@@ -60,7 +49,7 @@ fn test_simple_recv_projection() {
 fn test_complex_protocol_projection() {
     // Import the necessary types from the public API
     use sessrums::proto::{End, Recv, Send};
-    use sessrums::proto::{RoleA, RoleB};
+    
 
     // Define a more complex protocol:
     // RoleA sends a String to RoleB,

@@ -7,7 +7,7 @@
 //! - Message passing between multiple parties
 
 use sessrums::chan::Chan;
-use sessrums::proto::{Send, Recv, Role, End, Choose, Offer};
+use sessrums::proto::{Send, Recv, Role, End};
 use sessrums::proto::roles::{RoleA, RoleB};
 
 // Define a third role for testing
@@ -59,7 +59,6 @@ impl<T: Clone + std::marker::Unpin> sessrums::io::AsyncReceiver<T> for MockIO<T>
 }
 
 // Define local protocols for a three-party interaction
-type ClientProtocol = Send<String, Recv<String, End>>;
 type ServerProtocol = Recv<String, Send<String, Send<String, End>>>;
 type LoggerProtocol = Recv<String, End>;
 
@@ -86,7 +85,7 @@ async fn test_final_integration() {
     
     // 2. Server receives the request
     println!("Server: Receiving request from client");
-    let (request, server_chan) = server_chan.recv().await.unwrap();
+    let (request, _server_chan) = server_chan.recv().await.unwrap();
     assert_eq!(request, "Request data");
     
     // 3. Server sends a response to Client (using a new channel with server_io2)
