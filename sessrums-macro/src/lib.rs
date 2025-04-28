@@ -122,53 +122,142 @@ pub fn global_protocol(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-/// Represents a set of protocol definitions.
+/// Represents a top-level item in the macro input (either a role or a protocol).
+enum MacroItem {
+    Role(RoleDefinition),
+    Protocol(ProtocolDefinition),
+}
+
+impl Parse for MacroItem {
+    fn parse(input: ParseStream) -> Result<Self> {
+        // Peek at the next identifier to determine the item type
+        let lookahead = input.lookahead1();
+        if lookahead.peek(Ident) {
+            let ident: Ident = input.fork().parse()?; // Use fork to peek without consuming
+            if ident == "protocol" {
+                input.parse().map(MacroItem::Protocol)
+            } else if ident == "role" {
+                input.parse().map(MacroItem::Role)
+            } else {
+                Err(Error::new(ident.span(), "Expected 'protocol' or 'role' keyword"))
+            }
+        } else {
+            Err(lookahead.error())
+        }
+    }
+}
+
+/// Represents a role definition: `role RoleName;`
+struct RoleDefinition {
+    _role_keyword: Ident, // Changed from Token![role]
+    name: Ident,
+    _semicolon_token: Token![;],
+}
+
+impl Parse for RoleDefinition {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let role_keyword: Ident = input.parse()?;
+        if role_keyword != "role" {
+            return Err(Error::new(role_keyword.span(), "Expected 'role' keyword"));
+        }
+        Ok(Self {
+            _role_keyword: role_keyword,
+            name: input.parse()?,
+            _semicolon_token: input.parse()?,
+        })
+    }
+}
+
+impl RoleDefinition {
+    fn expand(&self) -> TokenStream2 {
+        let role_name = &self.name;
+        // Use $crate directly in the quote! macro below
+
+        quote! {
+            #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+            pub struct #role_name;
+
+            impl Default for #role_name {
+                fn default() -> Self {
+                    #role_name
+                }
+            }
+
+            // Use absolute path ::sessrums:: to ensure correct resolution
+            impl ::sessrums::proto::roles::Role for #role_name {
+                fn name(&self) -> &'static str {
+                    stringify!(#role_name)
+                }
+            }
+        }
+    }
+}
+
+
+/// Represents a set of protocol and role definitions.
 struct ProtocolDefinitions {
-    protocols: Vec<ProtocolDefinition>,
+    items: Vec<MacroItem>, // Changed from protocols
 }
 
 impl Parse for ProtocolDefinitions {
     fn parse(input: ParseStream) -> Result<Self> {
-        let mut protocols = Vec::new();
+        let mut items = Vec::new(); // Changed from protocols
         
         while !input.is_empty() {
-            protocols.push(input.parse()?);
+            items.push(input.parse()?); // Parse MacroItem
         }
         
-        Ok(ProtocolDefinitions { protocols })
+        Ok(ProtocolDefinitions { items }) // Changed from protocols
     }
 }
 
 impl ProtocolDefinitions {
     fn expand(&self) -> TokenStream2 {
-        let protocol_defs = self.protocols.iter().map(|p| p.expand());
-        
+        let mut role_defs = Vec::new();
+        let mut protocol_defs = Vec::new();
+
+        for item in &self.items {
+            match item {
+                MacroItem::Role(role_def) => {
+                    role_defs.push(role_def.expand());
+                }
+                MacroItem::Protocol(protocol_def) => {
+                    protocol_defs.push(protocol_def.expand());
+                }
+            }
+        }
+
+        // Expand roles first, then protocols
         quote! {
+            #(#role_defs)*
             #(#protocol_defs)*
         }
     }
 }
 
-/// Represents a single protocol definition.
+/// Represents a single protocol definition: `protocol Name { ... }`
 struct ProtocolDefinition {
-    protocol_keyword: Ident,
+    _protocol_keyword: Ident,
     name: Ident,
-    brace_token: Brace,
+    _brace_token: Brace,
     body: ProtocolBody,
 }
 
 impl Parse for ProtocolDefinition {
     fn parse(input: ParseStream) -> Result<Self> {
-        let protocol_keyword = input.parse()?;
+        let protocol_keyword: Ident = input.parse()?;
+        if protocol_keyword != "protocol" {
+             return Err(Error::new(protocol_keyword.span(), "Expected 'protocol' keyword"));
+        }
         let name = input.parse()?;
         let content;
         let brace_token = braced!(content in input);
         let body = content.parse()?;
         
         Ok(ProtocolDefinition {
-            protocol_keyword,
+            _protocol_keyword: protocol_keyword,
             name,
-            brace_token,
+            _brace_token: brace_token,
             body,
         })
     }
@@ -189,16 +278,16 @@ impl ProtocolDefinition {
 enum ProtocolBody {
     Interactions(Vec<Interaction>),
     SequentialComposition {
-        seq_keyword: Ident,
-        brace_token: Brace,
+        _seq_keyword: Ident,
+        _brace_token: Brace,
         protocols: Vec<IncludeProtocol>,
     },
     ParallelComposition {
-        par_keyword: Ident,
-        first_brace_token: Brace,
+        _par_keyword: Ident,
+        _first_brace_token: Brace,
         first_body: Box<ProtocolBody>,
-        and_keyword: Ident,
-        second_brace_token: Brace,
+        _and_keyword: Ident,
+        _second_brace_token: Brace,
         second_body: Box<ProtocolBody>,
     },
 }
@@ -218,8 +307,8 @@ impl Parse for ProtocolBody {
                 }
                 
                 return Ok(ProtocolBody::SequentialComposition {
-                    seq_keyword: keyword,
-                    brace_token,
+                    _seq_keyword: keyword,
+                    _brace_token: brace_token,
                     protocols,
                 });
             } else if keyword == "par" {
@@ -237,11 +326,11 @@ impl Parse for ProtocolBody {
                 let second_body = Box::new(second_content.parse()?);
                 
                 return Ok(ProtocolBody::ParallelComposition {
-                    par_keyword: keyword,
-                    first_brace_token,
+                    _par_keyword: keyword,
+                    _first_brace_token: first_brace_token,
                     first_body,
-                    and_keyword,
-                    second_brace_token,
+                    _and_keyword: and_keyword,
+                    _second_brace_token: second_brace_token,
                     second_body,
                 });
             }
@@ -299,9 +388,9 @@ impl ProtocolBody {
 
 /// Represents an include statement for protocol composition.
 struct IncludeProtocol {
-    include_keyword: Ident,
+    _include_keyword: Ident,
     protocol_name: Ident,
-    semicolon_token: Token![;],
+    _semicolon_token: Token![;],
 }
 
 impl Parse for IncludeProtocol {
@@ -315,9 +404,9 @@ impl Parse for IncludeProtocol {
         let semicolon_token = input.parse()?;
         
         Ok(IncludeProtocol {
-            include_keyword,
+            _include_keyword: include_keyword,
             protocol_name,
-            semicolon_token,
+            _semicolon_token: semicolon_token,
         })
     }
 }
@@ -334,29 +423,29 @@ impl IncludeProtocol {
 enum Interaction {
     MessagePassing {
         from: Ident,
-        arrow: Token![->],
+        _arrow: Token![->],
         to: Ident,
-        colon: Token![:],
+        _colon: Token![:],
         message_type: Type,
-        semicolon: Token![;],
+        _semicolon: Token![;],
     },
     Choice {
-        choice_keyword: Ident,
-        at_keyword: Ident,
+        _choice_keyword: Ident,
+        _at_keyword: Ident,
         role: Ident,
-        brace_token: Brace,
+        _brace_token: Brace,
         options: Vec<Option>,
     },
     Recursion {
-        rec_keyword: Ident,
+        _rec_keyword: Ident,
         label: Ident,
-        brace_token: Brace,
+        _brace_token: Brace,
         body: Vec<Interaction>,
     },
     Continue {
-        continue_keyword: Ident,
+        _continue_keyword: Ident,
         label: Ident,
-        semicolon: Token![;],
+        _semicolon: Token![;],
     },
 }
 
@@ -374,11 +463,11 @@ impl Parse for Interaction {
             
             Ok(Interaction::MessagePassing {
                 from,
-                arrow,
+                _arrow: arrow,
                 to,
-                colon,
+                _colon: colon,
                 message_type,
-                semicolon,
+                _semicolon: semicolon,
             })
         } else if lookahead.peek(Ident) {
             let keyword: Ident = input.parse()?;
@@ -399,10 +488,10 @@ impl Parse for Interaction {
                 }
                 
                 Ok(Interaction::Choice {
-                    choice_keyword: keyword,
-                    at_keyword,
+                    _choice_keyword: keyword,
+                    _at_keyword: at_keyword,
                     role,
-                    brace_token,
+                    _brace_token: brace_token,
                     options,
                 })
             } else if keyword == "rec" {
@@ -416,9 +505,9 @@ impl Parse for Interaction {
                 }
                 
                 Ok(Interaction::Recursion {
-                    rec_keyword: keyword,
+                    _rec_keyword: keyword,
                     label,
-                    brace_token,
+                    _brace_token: brace_token,
                     body,
                 })
             } else if keyword == "continue" {
@@ -426,9 +515,9 @@ impl Parse for Interaction {
                 let semicolon = input.parse()?;
                 
                 Ok(Interaction::Continue {
-                    continue_keyword: keyword,
+                    _continue_keyword: keyword,
                     label,
-                    semicolon,
+                    _semicolon: semicolon,
                 })
             } else {
                 Err(Error::new(keyword.span(), "Expected 'choice', 'rec', or 'continue' keyword"))
@@ -492,9 +581,9 @@ impl Interaction {
 
 /// Represents an option in a choice interaction.
 struct Option {
-    option_keyword: Ident,
-    name: Ident,
-    brace_token: Brace,
+    _option_keyword: Ident,
+    _name: Ident, // Name is parsed but not used in expansion currently
+    _brace_token: Brace,
     body: Vec<Interaction>,
 }
 
@@ -515,9 +604,9 @@ impl Parse for Option {
         }
         
         Ok(Option {
-            option_keyword,
-            name,
-            brace_token,
+            _option_keyword: option_keyword,
+            _name: name,
+            _brace_token: brace_token,
             body,
         })
     }

@@ -142,3 +142,4 @@
 - The test verifies that all features work together correctly in a complex scenario
 - The integration test passes, confirming that all MPST features are working correctly together
 - **Fix Unused Imports:** Removed specific unused import items from `sessrums-macro/src/lib.rs` (lines 9-14), the entire import line from `src/proto/projection.rs` (line 16), and specific unused import items from `src/api.rs` (line 22). Verified fixes with `cargo check`.
+- **Enhance `global_protocol!` Macro:** Modified `sessrums-macro/src/lib.rs` to parse optional `role RoleName;` definitions and generate corresponding structs implementing `::sessrums::proto::roles::Role`. Added tests in `tests/macro_tests.rs` to verify the new functionality, including refactoring tests to invoke the macro at the module level for correct type resolution. Used absolute path `::sessrums::proto::roles::Role` in macro expansion to fix path issues during testing.
