@@ -224,3 +224,15 @@ global_protocol! {
 - **`Chan<P, IO>`**: Represents a communication channel endpoint following protocol `P` over an IO backend `IO`. The `P` type parameter changes as communication progresses.
 - **Roles**: Types implementing the `Role` trait identify participants in MPST protocols.
 - **Error Handling**: Communication errors (IO, protocol violations) are typically represented by an `Error` enum. Refer to [Error Handling Guide](error-handling.md) for details.
+
+## Further Reading
+
+*   [A Very Gentle Introduction to Multiparty Session Types](http://mrg.doc.ic.ac.uk/publications/a-very-gentle-introduction-to-multiparty-session-types/main.pdf)
+*   [Comprehensive Multiparty Session Types](https://arxiv.org/pdf/1902.00544)
+*   [Less is more: multiparty session types revisited](https://dl.acm.org/doi/10.1145/3290343)
+*   [Implementing Multiparty Session Types in Rust](https://inria.hal.science/hal-03273998v1/document)
+*   [A Linear Decomposition of Multiparty Sessions for Safe Distributed Programming](https://drops.dagstuhl.de/storage/00lipics/lipics-vol074-ecoop2017/LIPIcs.ECOOP.2017.24/LIPIcs.ECOOP.2017.24.pdf)
+*   [Complete Multiparty Session Type Projection with Automata](https://link.springer.com/chapter/10.1007/978-3-031-37709-9_17)
+*   [Composition and Decomposition of Multiparty Sessions](https://inria.hal.science/hal-03338671v1)
+*   [Global Types for Asynchronous Multiparty Sessions](https://t-ladies.di.unimi.it/kickoff-slides/giannini,%20paola.pdf)
+*   [API Generation for Multiparty Session Types, Revisited and Revised Using Scala 3](https://drops.dagstuhl.de/storage/00lipics/lipics-vol222-ecoop2022/LIPIcs.ECOOP.2022.27/LIPIcs.ECOOP.2022.27.pdf)
