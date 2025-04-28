@@ -209,7 +209,7 @@ mod tcp {
         }
     }
 
-    impl<'a, T> Future for StreamSendFuture<'a, TcpStream, T>
+    impl<T> Future for StreamSendFuture<'_, TcpStream, T>
     where
         T: Serialize + std::marker::Unpin,
     {
@@ -229,15 +229,15 @@ mod tcp {
                 
                 // Write the length
                 this.stream.write_all(&len_bytes)
-                    .map_err(|e| Error::Io(e))?;
+                    .map_err(Error::Io)?;
                 
                 // Write the serialized data
                 this.stream.write_all(&serialized)
-                    .map_err(|e| Error::Io(e))?;
+                    .map_err(Error::Io)?;
                 
                 // Flush the stream
                 this.stream.flush()
-                    .map_err(|e| Error::Io(e))?;
+                    .map_err(Error::Io)?;
                 
                 Poll::Ready(Ok(()))
             } else {
@@ -246,7 +246,7 @@ mod tcp {
         }
     }
 
-    impl<'a, T> Future for StreamRecvFuture<'a, TcpStream, T>
+    impl<T> Future for StreamRecvFuture<'_, TcpStream, T>
     where
         T: for<'de> Deserialize<'de> + std::marker::Unpin,
     {
@@ -258,14 +258,14 @@ mod tcp {
             // Read the length of the serialized data
             let mut len_bytes = [0u8; 4];
             this.stream.read_exact(&mut len_bytes)
-                .map_err(|e| Error::Io(e))?;
+                .map_err(Error::Io)?;
             
             let len = u32::from_be_bytes(len_bytes) as usize;
             
             // Read the serialized data
             let mut buffer = vec![0u8; len];
             this.stream.read_exact(&mut buffer)
-                .map_err(|e| Error::Io(e))?;
+                .map_err(Error::Io)?;
             
             // Deserialize the data
             let value = bincode::deserialize(&buffer)
@@ -652,7 +652,6 @@ mod tests {
     #[cfg(feature = "tcp")]
     // This test is disabled because it requires a running server
     // It's included as an example of how to use the connection functions
-    #[cfg(feature = "tcp")]
     #[ignore]
     #[tokio::test]
     async fn test_tcp_integration() {

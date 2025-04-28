@@ -271,11 +271,10 @@ mod tests {
         assert_protocol::<TestServer>();
         
         // Verify duality
-        fn assert_dual<P: Protocol, Q: Protocol>()
+        fn assert_dual<P, Q>()
         where
-            P::Dual: Protocol,
-            Q: Protocol<Dual = P>,
             P: Protocol<Dual = Q>,
+            Q: Protocol<Dual = P>,
         {}
         
         assert_dual::<TestClient, TestServer>();

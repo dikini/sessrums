@@ -36,6 +36,12 @@ pub trait GlobalProtocol {
 /// then continuing with the protocol `Next`.
 pub struct GSend<T, From: Role, To: Role, Next>(PhantomData<(T, From, To, Next)>);
 
+impl<T, From: Role, To: Role, Next> Default for GSend<T, From, To, Next> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T, From: Role, To: Role, Next> GSend<T, From, To, Next> {
     /// Creates a new `GSend` protocol step.
     pub fn new() -> Self {
@@ -155,6 +161,12 @@ pub enum ProjectedSendRecv<T, Next> {
 /// Represents receiving a value of type `T` by role `To` from role `From`,
 /// then continuing with the protocol `Next`.
 pub struct GRecv<T, From: Role, To: Role, Next>(PhantomData<(T, From, To, Next)>);
+
+impl<T, From: Role, To: Role, Next> Default for GRecv<T, From, To, Next> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<T, From: Role, To: Role, Next> GRecv<T, From, To, Next> {
     /// Creates a new `GRecv` protocol step.
@@ -439,9 +451,9 @@ impl<G1: GlobalProtocol, G2: GlobalProtocol> GlobalProtocolBranches for (G1, G2)
 /// # Type Parameters
 ///
 /// * `Label` - A unique type (often an empty struct or enum) used as an identifier
-///             for this recursive definition.
+///   for this recursive definition.
 /// * `Protocol` - The body of the recursive protocol, which must implement `GlobalProtocol`.
-///                It should contain `GVar<Label>` where recursion occurs.
+///   It should contain `GVar<Label>` where recursion occurs.
 ///
 /// # Examples
 ///
@@ -470,6 +482,12 @@ impl<G1: GlobalProtocol, G2: GlobalProtocol> GlobalProtocolBranches for (G1, G2)
 /// // assert!(roles.contains(&"Pong"));
 /// ```
 pub struct GRec<Label, Protocol>(PhantomData<(Label, Protocol)>);
+
+impl<Label, Protocol> Default for GRec<Label, Protocol> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<Label, Protocol> GRec<Label, Protocol> {
     /// Creates a new `GRec` protocol step.
@@ -542,13 +560,19 @@ impl<Label, Protocol: GlobalProtocol> GlobalProtocol for GRec<Label, Protocol> {
 /// # Type Parameters
 ///
 /// * `Label` - The unique type identifying the `GRec` definition to jump back to.
-///             Must match the `Label` used in the corresponding `GRec`.
+///   Must match the `Label` used in the corresponding `GRec`.
 ///
 /// # Examples
 ///
 /// See the example for `GRec`. `GVar<PingPongLoop>` is used inside the `GRec`
 /// definition to create the loop.
 pub struct GVar<Label>(PhantomData<Label>);
+
+impl<Label> Default for GVar<Label> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<Label> GVar<Label> {
     /// Creates a new `GVar` protocol step.
@@ -600,7 +624,8 @@ impl<Label> GlobalProtocol for GVar<Label> {
     /// A complete implementation would need to:
     /// 1.  Identify the corresponding `GRec<Label, Protocol>`.
     /// 2.  Return the result of calling `involved_roles()` on that `Protocol`.
-    /// This requires context about the enclosing `GRec` definitions.
+    /// 
+    // This requires context about the enclosing `GRec` definitions.
     fn involved_roles(&self) -> Vec<&'static str> {
         // TODO: Implement role collection for GVar.
         // This requires context to find the corresponding GRec<Label, P>
@@ -650,6 +675,12 @@ impl<Label> GlobalProtocol for GVar<Label> {
 /// // Note: Validation and role involvement for GSeq are currently placeholders.
 /// ```
 pub struct GSeq<First, Second>(PhantomData<(First, Second)>);
+
+impl<First, Second> Default for GSeq<First, Second> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<First, Second> GSeq<First, Second> {
     /// Creates a new `GSeq` protocol step.
@@ -739,6 +770,12 @@ where
 /// // are currently placeholders.
 /// ```
 pub struct GPar<First, Second>(PhantomData<(First, Second)>);
+
+impl<First, Second> Default for GPar<First, Second> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<First, Second> GPar<First, Second> {
     /// Creates a new `GPar` protocol step.
@@ -832,6 +869,12 @@ impl GlobalProtocol for GEnd {
 /// This builder simplifies the construction of complex protocol types, which can
 /// become deeply nested and verbose when written out manually.
 pub struct GlobalProtocolBuilder;
+
+impl Default for GlobalProtocolBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl GlobalProtocolBuilder {
     /// Creates a new `GlobalProtocolBuilder`.

@@ -276,6 +276,7 @@ async fn main() -> Result<(), Error> {
 // This unit test verifies at compile time that our futures implement Send
 #[cfg(test)]
 mod tests {
+use std::marker::Send;
     use super::*;
     
     // This function will fail to compile if SendFuture doesn't implement Send
