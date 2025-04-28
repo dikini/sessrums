@@ -6,12 +6,10 @@
 
 use proc_macro::TokenStream;
 use quote::{quote, format_ident};
-use syn::{parse_macro_input, LitStr, Ident, Token, parse::{Parse, ParseStream}, Result, Error, braced, bracketed, parenthesized};
-use syn::punctuated::Punctuated;
-use syn::token::{Brace, Bracket, Paren};
-use syn::{Type, TypePath};
-use proc_macro2::{Span, TokenStream as TokenStream2};
-use std::collections::HashMap;
+use syn::{parse_macro_input, Ident, Token, parse::{Parse, ParseStream}, Result, Error, braced};
+use syn::token::{Brace};
+use syn::{Type};
+use proc_macro2::{TokenStream as TokenStream2};
 
 /// A macro for defining global protocols using a sequence diagram-inspired syntax.
 ///

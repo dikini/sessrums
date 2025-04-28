@@ -19,7 +19,7 @@
 //! Macros are provided for defining complex protocol types in a more concise and
 //! readable way.
 
-use crate::proto::{Protocol, Send, Recv, End, Choose, Offer, Role};
+use crate::proto::{Protocol, Send, Recv, End, Role};
 use crate::chan::Chan;
 use crate::error::{Error, Result};
 use crate::connect;
@@ -84,12 +84,6 @@ pub type RequestServer<Req, Resp> = Recv<Req, Send<Resp, End>>;
 ///
 /// # Examples
 ///
-/// ```
-/// use sessrums::api::{channel_pair, RequestClient, RequestServer};
-///
-/// // Create a pair of channels for a request-response protocol
-/// let (client, server) = channel_pair::<RequestClient<String, i32>, ()>();
-/// ```
 pub fn channel_pair<P, R1, R2, IO>() -> (Chan<P, R1, IO>, Chan<P::Dual, R2, IO>)
 where
     P: Protocol,

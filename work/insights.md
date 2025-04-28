@@ -367,3 +367,4 @@
 3. **Performance Benchmarking**: The integration test could be used as a basis for performance benchmarking, measuring the overhead of using all MPST features together.
 
 4. **Visual Representation**: A visual representation of the protocol used in the integration test would help users understand its structure and behavior more easily.
+- **Precision in Removing Unused Imports:** When fixing `unused_imports` warnings in Rust, especially for lines with multiple imports (`use some_crate::{Item1, Item2, Item3};`), it's crucial to remove only the specific unused items identified by the compiler, rather than the entire line. Removing the whole line can inadvertently remove necessary imports, leading to build errors. Always verify with `cargo check` after making changes.
