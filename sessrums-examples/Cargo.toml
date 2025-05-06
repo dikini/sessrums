@@ -1,0 +1,9 @@
+[package]
+name = "sessrums-examples"
+version = "0.1.0"
+edition = "2024"
+
+
+[lib]
+sessrums-macro = { path = "./sessrums-macro" }
+sessrums-types = { path = "./sessrums-types" }
