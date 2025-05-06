@@ -494,7 +494,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sessrums"
+name = "sessrums-examples"
 version = "0.1.0"
 
 [[package]]
