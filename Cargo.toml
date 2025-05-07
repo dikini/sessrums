@@ -1,3 +1,4 @@
 [workspace]
 members = ["sessrums-types", "sessrums-macro", "sessrums-examples"]
 
+resolver = "3"

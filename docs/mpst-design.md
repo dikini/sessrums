@@ -28,9 +28,8 @@ The integration architecture will extend the existing `sessrums` library structu
 enum GlobalProtocol {
     Send { from: Role, to: Role, data_type: Type, next: Box<GlobalProtocol> },
     Receive { from: Role, to: Role, data_type: Type, next: Box<GlobalProtocol> },
-    Choice { by: Role, branches: HashMap<Label, GlobalProtocol> },
+    Choice { by: Role, branches: HashMap<Label, GlobalProtocol> }, //Choice from global perspective
     Offer { to: Role, branches: HashMap<Label, GlobalProtocol> }, // Offer from global perspective
-    Choose { by: Role, branches: HashMap<Label, GlobalProtocol> }, // Choose from global perspective
     Recursion { label: RecLabel, protocol: Box<GlobalProtocol> },
     Variable { label: RecLabel },
     End,
