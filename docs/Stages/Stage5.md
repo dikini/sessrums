@@ -141,8 +141,8 @@ pub enum LocalProtocol<R: Role> {
 
 ```rust
 // Example projection implementation for Rec and Var
-impl<R: Role> Project<R> for GlobalInteraction {
-    type Output = LocalProtocol<R>;
+impl<R: Role, M: Clone> Project<R, M> for GlobalInteraction<M> {
+    type Output = LocalProtocol<R, M>;
     
     fn project(self) -> Self::Output {
         match self {
@@ -152,11 +152,15 @@ impl<R: Role> Project<R> for GlobalInteraction {
                 LocalProtocol::Rec {
                     label,
                     body: Box::new(body.project()),
+                    _role: PhantomData,
                 }
             },
             
             GlobalInteraction::Var { label } => {
-                LocalProtocol::Var { label }
+                LocalProtocol::Var {
+                    label,
+                    _role: PhantomData,
+                }
             },
         }
     }
@@ -281,8 +285,8 @@ fn test_simple_recursive_protocol() {
     assert!(protocol.check_recursion_well_formedness().is_ok());
     
     // Project to client and server
-    let client_protocol = protocol.clone().project::<Client>();
-    let server_protocol = protocol.project::<Server>();
+    let client_protocol = protocol.clone().project::<Client, ()>();
+    let server_protocol = protocol.project::<Server, ()>();
     
     // Verify the structure of the projected protocols
     // (implementation-specific assertions)
@@ -326,8 +330,8 @@ fn test_recursive_protocol_with_choice() {
     assert!(protocol.check_recursion_well_formedness().is_ok());
     
     // Project to client and server
-    let client_protocol = protocol.clone().project::<Client>();
-    let server_protocol = protocol.project::<Server>();
+    let client_protocol = protocol.clone().project::<Client, ()>();
+    let server_protocol = protocol.project::<Server, ()>();
     
     // Verify the structure of the projected protocols
     // (implementation-specific assertions)
@@ -373,9 +377,9 @@ fn test_recursive_multiparty_protocol() {
     assert!(protocol.check_recursion_well_formedness().is_ok());
     
     // Project to all roles
-    let client_protocol = protocol.clone().project::<Client>();
-    let server_protocol = protocol.clone().project::<Server>();
-    let storage_protocol = protocol.project::<Storage>();
+    let client_protocol = protocol.clone().project::<Client, ()>();
+    let server_protocol = protocol.clone().project::<Server, ()>();
+    let storage_protocol = protocol.project::<Storage, ()>();
     
     // Verify the structure of the projected protocols
     // (implementation-specific assertions)
@@ -475,3 +479,84 @@ fn test_recursive_multiparty_protocol() {
 ---
 
 **This implementation plan provides a structured approach to adding recursion support to the multiparty session type system, completing the core type system needed for expressing realistic protocols.**
+
+---
+
+## Implementation Status and Improvements
+
+### 1. Optimization for Uninvolved Roles in Recursive Protocols
+
+One significant optimization implemented in the projection mechanism is the ability to detect and optimize away recursion for roles that are not involved in the recursive part of a protocol. This optimization works as follows:
+
+- When projecting a recursive protocol (`Rec` node), the system first projects the body of the recursion
+- It then checks if the projected body contains any meaningful interactions (Send, Receive, Select, or Offer) for the target role
+- If the role is not involved in any meaningful interactions within the recursive part, the recursion is "pruned" and replaced with an `End` node
+- This optimization prevents uninvolved roles from having to process recursive structures they don't participate in
+
+This optimization is particularly valuable in multiparty protocols where some roles may only be involved in specific parts of the protocol. For example, in a protocol where a Logger role only participates in the initial setup but not in the main recursive interaction between Client and Server, the Logger's projected protocol will be simplified by removing the unnecessary recursion.
+
+```rust
+// Example of how the optimization works
+fn contains_meaningful_interactions<R: Role, M: Clone>(protocol: &LocalProtocol<R, M>) -> bool {
+    match protocol {
+        LocalProtocol::Send { .. } | LocalProtocol::Receive { .. } 
+        | LocalProtocol::Select { .. } | LocalProtocol::Offer { .. } => true,
+        
+        LocalProtocol::Rec { body, .. } => contains_meaningful_interactions(body),
+        
+        LocalProtocol::Var { .. } | LocalProtocol::End { .. } => false,
+    }
+}
+
+// In the projection implementation for Rec:
+if contains_meaningful_interactions(&projected_body) {
+    // If the role is involved, preserve the recursion
+    LocalProtocol::Rec { label, body: Box::new(projected_body), ... }
+} else {
+    // If the role is not involved, prune the recursion
+    LocalProtocol::End { ... }
+}
+```
+
+This optimization has been thoroughly tested with both completely uninvolved roles and partially involved roles (roles that participate in some interactions outside the recursion but not within it).
+
+### 2. Integration Testing for Multiparty Recursive Protocols
+
+A comprehensive integration test suite has been implemented to verify the correct behavior of multiparty recursive protocols. The tests cover:
+
+- **Projection Correctness**: Verifying that global protocols are correctly projected to local protocols for each role, preserving the recursive structure where appropriate
+- **Protocol Execution**: Testing the actual execution of recursive protocols with multiple roles communicating through channels
+- **Multiple Iterations**: Ensuring that recursive protocols can execute for multiple iterations before terminating
+
+The integration tests use a three-role protocol (Client, Server, and Logger) with the following structure:
+
+```
+rec loop {
+  Client -> Server: Request;
+  Server -> Logger: LogEntry;
+  Logger -> Server: Confirmation;
+  Server -> Client: Response;
+  choice at Client {
+    Client -> Server: Continue;
+    continue loop;
+  } or {
+    Client -> Server: Stop;
+    end;
+  }
+}
+```
+
+The tests verify both the static structure of the projected protocols and their dynamic behavior during execution. The execution test simulates two iterations of the protocol, with the Client choosing to continue after the first iteration and to stop after the second iteration.
+
+This integration testing approach ensures that the recursion implementation works correctly in realistic multiparty scenarios, including the interaction between recursion and choice constructs.
+
+### 3. Other Improvements and Fixes
+
+In addition to the major features described above, several other improvements have been made to the recursion implementation:
+
+- **Well-formedness Checking**: Enhanced validation to ensure that all `Var` references point to defined `Rec` labels and that recursion is properly nested
+- **Type Safety**: Improved type safety throughout the recursion implementation, especially when unfolding recursive protocols
+- **API Ergonomics**: Refined the API for creating and working with recursive protocols to be more intuitive and user-friendly
+- **Documentation**: Added comprehensive documentation for the recursion features, including examples of common recursive patterns
+
+These improvements collectively ensure that the recursion implementation is robust, efficient, and easy to use, completing the core type system needed for expressing realistic protocols with loops or repeated interactions.

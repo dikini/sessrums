@@ -92,18 +92,18 @@ pub enum GlobalInteraction<M: Clone> {
     /// use sessrums_types::session_types::common::{RoleIdentifier, Label};
     ///
     /// // Define a protocol with a choice: client chooses between "login" and "register"
-    /// let protocol = GlobalInteraction::choice(
+    /// let protocol = GlobalInteraction::<()>::choice(
     ///     "client",
     ///     vec![
-    ///         ("login".into(), GlobalInteraction::message(
+    ///         ("login".into(), GlobalInteraction::<()>::message(
     ///             "client",
     ///             "server",
-    ///             GlobalInteraction::end(),
+    ///             GlobalInteraction::<()>::end(),
     ///         )),
-    ///         ("register".into(), GlobalInteraction::message(
+    ///         ("register".into(), GlobalInteraction::<()>::message(
     ///             "client",
     ///             "server",
-    ///             GlobalInteraction::end(),
+    ///             GlobalInteraction::<()>::end(),
     ///         )),
     ///     ],
     /// );
@@ -131,15 +131,15 @@ pub enum GlobalInteraction<M: Clone> {
     /// use sessrums_types::session_types::common::{RoleIdentifier, RecursionLabel};
     ///
     /// // Define a recursive ping-pong protocol
-    /// let protocol = GlobalInteraction::rec(
+    /// let protocol = GlobalInteraction::<()>::rec(
     ///     "loop",
-    ///     GlobalInteraction::message(
+    ///     GlobalInteraction::<()>::message(
     ///         "client",
     ///         "server",
-    ///         GlobalInteraction::message(
+    ///         GlobalInteraction::<()>::message(
     ///             "server",
     ///             "client",
-    ///             GlobalInteraction::var("loop"),
+    ///             GlobalInteraction::<()>::var("loop"),
     ///         ),
     ///     ),
     /// );
@@ -420,31 +420,38 @@ mod tests {
             ),
         );
         
+        // Clone the protocol for structure verification
+        let protocol_clone = protocol.clone();
+        
         // Verify the structure of the protocol
-        if let GlobalInteraction::Rec { label, body } = protocol {
-            assert_eq!(label.name(), "loop");
-            
-            if let GlobalInteraction::Message { from, to, cont, .. } = *body {
-                assert_eq!(from.name(), "client");
-                assert_eq!(to.name(), "server");
+        match protocol_clone {
+            GlobalInteraction::Rec { label, body } => {
+                assert_eq!(label.name(), "loop");
                 
-                if let GlobalInteraction::Message { from, to, cont, .. } = *cont {
-                    assert_eq!(from.name(), "server");
-                    assert_eq!(to.name(), "client");
-                    
-                    if let GlobalInteraction::Var { label } = *cont {
-                        assert_eq!(label.name(), "loop");
-                    } else {
-                        panic!("Expected Var, got something else");
-                    }
-                } else {
-                    panic!("Expected Message, got something else");
+                match *body {
+                    GlobalInteraction::Message { from, to, cont, .. } => {
+                        assert_eq!(from.name(), "client");
+                        assert_eq!(to.name(), "server");
+                        
+                        match *cont {
+                            GlobalInteraction::Message { from, to, cont, .. } => {
+                                assert_eq!(from.name(), "server");
+                                assert_eq!(to.name(), "client");
+                                
+                                match *cont {
+                                    GlobalInteraction::Var { label } => {
+                                        assert_eq!(label.name(), "loop");
+                                    },
+                                    _ => panic!("Expected Var, got something else"),
+                                }
+                            },
+                            _ => panic!("Expected Message, got something else"),
+                        }
+                    },
+                    _ => panic!("Expected Message, got something else"),
                 }
-            } else {
-                panic!("Expected Message, got something else");
-            }
-        } else {
-            panic!("Expected Rec, got something else");
+            },
+            _ => panic!("Expected Rec, got something else"),
         }
         
         // Verify well-formedness

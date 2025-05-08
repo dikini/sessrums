@@ -55,9 +55,25 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::any::Any;
 
+/// Checks if a local protocol contains any meaningful interactions for a role
+/// Returns true if the protocol contains Send, Receive, Select, or Offer actions
+/// Returns false if the protocol only contains End or Var actions
+fn contains_meaningful_interactions<R: Role + RoleExt, M: Clone>(
+    protocol: &LocalProtocol<R, M>
+) -> bool {
+    match protocol {
+        LocalProtocol::Send { .. } | LocalProtocol::Receive { .. } 
+        | LocalProtocol::Select { .. } | LocalProtocol::Offer { .. } => true,
+        
+        LocalProtocol::Rec { body, .. } => contains_meaningful_interactions(body),
+        
+        LocalProtocol::Var { .. } | LocalProtocol::End { .. } => false,
+    }
+}
+
 /// Trait for projecting a global protocol to a role-specific local protocol.
 ///
-/// The `Project<R>` trait defines how a global protocol is transformed into a
+/// The `Project<R, M>` trait defines how a global protocol is transformed into a
 /// local protocol for a specific role `R`. This is a key operation in multiparty
 /// session types, as it allows deriving role-specific behaviors from a single
 /// global definition.
@@ -91,7 +107,7 @@ use std::any::Any;
 /// );
 ///
 /// // Project it for the Client role
-/// let client_local = project_for_role::<Client>(global);
+/// let client_local = project_for_role::<Client, ()>(global);
 /// ```
 pub trait Project<R: Role, M: Clone = ()> {
     /// The resulting local protocol type after projection
@@ -135,10 +151,10 @@ pub trait Project<R: Role, M: Clone = ()> {
 /// );
 ///
 /// // Project it for the Client role
-/// let client_local = project_for_role::<Client>(global);
+/// let client_local = project_for_role::<Client, ()>(global);
 /// ```
 pub fn project_for_role<R: Role + RoleExt, M: Clone>(global: GlobalInteraction<M>) -> LocalProtocol<R, M> {
-    <GlobalInteraction<M> as Project<R>>::project(global)
+    <GlobalInteraction<M> as Project<R, M>>::project(global)
 }
 
 /// Project a global protocol for all roles in a set
@@ -246,11 +262,26 @@ impl<R: Role + RoleExt, M: Clone> Project<R, M> for GlobalInteraction<M> {
                 }
             },
             GlobalInteraction::Rec { label, body } => {
-                // Recursion point is preserved in projection
-                LocalProtocol::Rec {
-                    label: label.clone(),
-                    body: Box::new(body.project()),
-                    _role: PhantomData,
+                // Clone body before projecting to avoid moving out of self
+                let body_clone = body.clone();
+                
+                // Project the body
+                let projected_body = body_clone.project();
+                
+                // Check if the projected body contains meaningful interactions for this role
+                if contains_meaningful_interactions(&projected_body) {
+                    // If it does, preserve the recursion
+                    LocalProtocol::Rec {
+                        label: label.clone(),
+                        body: Box::new(projected_body),
+                        _role: PhantomData,
+                    }
+                } else {
+                    // If it doesn't, skip the recursion and just return End
+                    // This effectively "prunes" the recursion from the local protocol
+                    LocalProtocol::End {
+                        _role: PhantomData,
+                    }
                 }
             },
             GlobalInteraction::Var { label } => {
