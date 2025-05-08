@@ -6,8 +6,26 @@ pub mod global;
 pub mod local;
 pub mod multiparty_session;
 
-pub use binary::{End, Send, Receive, Session, Offer, Select, Dual, Either, ChoiceSignal, Rec, Var, ProtocolState};
+// Binary session types
+pub use binary::{End, Send, Receive, Session, Offer, Select, Dual, Either, Rec, Var, ProtocolState};
+pub use binary::ChoiceSignal;
+
+// Common types
 pub use common::{RoleIdentifier, Participant};
+
+// Global protocol types
 pub use global::GlobalInteraction;
+
+// Local protocol types
 pub use local::LocalProtocol;
-pub use multiparty_session::{MultipartySession, Send as MultipartySend, Receive as MultipartyReceive, End as MultipartyEnd, ProtocolState as MultipartyProtocolState, SendState, ReceiveState, EndState};
+
+// Multiparty session types
+pub use multiparty_session::{
+    MultipartySession, Send as MultipartySend, Receive as MultipartyReceive, 
+    Select as MultipartySelect, Offer as MultipartyOffer, Rec as MultipartyRec, 
+    Var as MultipartyVar, End as MultipartyEnd, OfferResult,
+    ProtocolState as MultipartyProtocolState, SendState, ReceiveState, 
+    SelectState, OfferState, RecState, VarState, EndState, 
+    MultipartyChoiceSignal,
+    ChoiceTransport, create_session
+};

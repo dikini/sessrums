@@ -48,7 +48,7 @@
 //! ```
 
 use crate::roles::{Role, Client, Server};
-use crate::session_types::common::{RoleIdentifier, RecursionLabel};
+use crate::session_types::common::RoleIdentifier;
 use crate::session_types::global::GlobalInteraction;
 use crate::session_types::local::LocalProtocol;
 use std::collections::HashMap;

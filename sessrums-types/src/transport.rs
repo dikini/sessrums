@@ -97,7 +97,7 @@ impl Display for RoleIdentifier {
 }
 
 /// A transport channel for multiparty session type communication.
-/// 
+///
 /// This trait extends the basic transport concept to support
 /// sending messages to specific roles and receiving messages
 /// from specific roles in a multiparty session.
@@ -107,6 +107,17 @@ pub trait MultipartyTransport {
     
     /// Receive a deserializable message from a specific role.
     fn receive_from<M: DeserializeOwned>(&mut self, from: &RoleIdentifier) -> Result<M, SessionError>;
+    
+    /// Broadcast a message to all participants.
+    ///
+    /// This is used for choice signals and other protocol control messages
+    /// that need to be sent to multiple participants.
+    fn broadcast<M: Serialize>(&mut self, message: M) -> Result<(), SessionError>;
+    
+    /// Receive a choice signal from any participant.
+    ///
+    /// This is used for receiving choice signals in offer operations.
+    fn receive_choice<M: DeserializeOwned>(&mut self) -> Result<M, SessionError>;
 }
 
 /// A message envelope for routing messages between participants.
@@ -247,6 +258,48 @@ impl<R: Role> MultipartyTransport for ParticipantChannel<R> {
             // Remove the message from the queue
             let envelope = queue.remove(pos).unwrap();
             
+            // Deserialize the message
+            return bincode::deserialize(&envelope.payload)
+                .map_err(SessionError::Serialization);
+        }
+        
+        // No message found
+        Err(SessionError::UnexpectedClose)
+    }
+    
+    fn broadcast<M: Serialize>(&mut self, message: M) -> Result<(), SessionError> {
+        // Get the broker's participant registry
+        let participants = self.broker.lock()?;
+        
+        // Serialize the message once
+        let payload = bincode::serialize(&message)?;
+        
+        // Send to all participants except self
+        for (role_name, queue_arc) in participants.iter() {
+            if role_name != &self.role_id.name() {
+                // Create the message envelope
+                let envelope = MessageEnvelope {
+                    from: self.role_id.name().to_string(),
+                    to: role_name.clone(),
+                    payload: payload.clone(),
+                };
+                
+                // Add the message to the recipient's queue
+                let mut queue = queue_arc.lock()?;
+                queue.push_back(envelope);
+            }
+        }
+        
+        Ok(())
+    }
+    
+    fn receive_choice<M: DeserializeOwned>(&mut self) -> Result<M, SessionError> {
+        // Get our incoming queue
+        let mut queue = self.queue.lock()?;
+        
+        // Take the first message in the queue (regardless of sender)
+        // This is a simplification for choice signals
+        if let Some(envelope) = queue.pop_front() {
             // Deserialize the message
             return bincode::deserialize(&envelope.payload)
                 .map_err(SessionError::Serialization);
