@@ -1,8 +1,8 @@
-# sessrums: Session Types 
+# sessrums: Session Types
 
 ## Overview
 
-sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks. The current implementation is mostly hallucinated, hence the name. Feedback is welcome.
+sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks. The project is under active development, with Stages 0-2 completed and further stages planned.
 
 ## Core Concepts
 
@@ -770,6 +770,70 @@ fn compile_fail_tests() {
     t.compile_fail("tests/compile_fail/*.rs");
 }
 ```
+
+## Current Implementation Status
+
+The project is being developed in stages as outlined in the implementation plan. Here's the current status:
+
+### Stage 0: Foundational Binary Session Types (Completed)
+
+- Core session type structures: `End`, `Send<M, NextP>`, `Receive<M, NextP>`
+- `Session<CurrentState, T: Transport>` struct with typestate pattern
+- Transport abstraction with `MockChannelEnd` implementation
+- Basic error handling
+- Tests for simple ping-pong protocols
+
+### Stage 1: Binary Session Types with External Choice (Completed)
+
+- External choice structures: `Select<L, R>` and `Offer<L, R>`
+- `ChoiceSignal` enum for signaling choice over transport
+- `Either<L, R>` enum for handling the result of an offer
+- Tests for choice protocols, including nested choices
+
+### Stage 2: Binary Session Types with Recursion (Completed)
+
+- Recursion structures: `Rec<F>` and `Var`
+- Fixed-point combinator style for recursive protocol definitions
+- Session methods for handling recursion (`enter_rec`, `recurse`)
+- Tests for recursive protocols, including bounded recursion with choice
+
+## Next Development Steps
+
+Based on the implementation plan, the following stages are planned:
+
+### Stage 3: Basic Multiparty Primitives & Manual Global/Local Types
+
+- Define `GlobalInteraction` (Message, End) and `LocalProtocol` (Send, Receive, End) enums
+- Implement `RoleIdentifier` and `Participant<R: Role>` structures
+- Create `MultipartyTransport` trait and `MockMultipartyBroker` for managing multiple channels
+- Manually write global and local protocols for 3+ party interactions
+
+### Stage 4: Automated Projection (Message, End, Choice)
+
+- Implement `Project<MyRole: Role>` trait for automated projection from global to local protocols
+- Extend `GlobalInteraction` and `LocalProtocol` with choice constructs
+- Implement projection algorithm for message, end, and choice constructs
+
+### Stage 5: Projection for Recursion & Full Multiparty Types
+
+- Extend `GlobalInteraction` and `LocalProtocol` with recursion constructs
+- Implement projection algorithm for recursive protocols
+- Test with complex recursive multiparty protocols
+
+### Stage 6: Multiparty Session Runtime
+
+- Develop `MultipartySession<MyRole, CurrentLocalState, AllChannels>` struct
+- Implement methods for multiparty communication
+- Test with various projected protocols
+
+### Stage 7-10: DSL Development and Integration
+
+- Implement DSL parser and AST definition
+- Create procedural macro for global protocol generation
+- Connect all components for end-to-end integration
+- Add advanced features like parallel composition
+
+For more details on the implementation plan, see the [MPST_DSL-Review AndImplementation.md](docs/chats/MPST_DSL-Review%20AndImplementation.md) document.
 
 ## Documentation
 
