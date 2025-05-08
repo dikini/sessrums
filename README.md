@@ -2,7 +2,7 @@
 
 ## Overview
 
-sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks. The project is under active development, with Stages 0-4 completed and further stages planned.
+sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks. The project is under active development, with Stages 0-5 completed and further stages planned.
 
 ## Core Concepts
 
