@@ -2,7 +2,7 @@
 
 ## Overview
 
-sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks. The project is under active development, with Stages 0-2 completed and further stages planned.
+sessrums implements session types, a type discipline for communication protocols that allows compile-time verification of protocol adherence. This library ensures that communicating parties follow the agreed-upon protocol without runtime errors or deadlocks. The project is under active development, with Stages 0-4 completed and further stages planned.
 
 ## Core Concepts
 
@@ -801,18 +801,21 @@ The project is being developed in stages as outlined in the implementation plan.
 
 Based on the implementation plan, the following stages are planned:
 
-### Stage 3: Basic Multiparty Primitives & Manual Global/Local Types
+### Stage 3: Basic Multiparty Primitives & Manual Global/Local Types (Completed)
 
 - Define `GlobalInteraction` (Message, End) and `LocalProtocol` (Send, Receive, End) enums
 - Implement `RoleIdentifier` and `Participant<R: Role>` structures
 - Create `MultipartyTransport` trait and `MockMultipartyBroker` for managing multiple channels
 - Manually write global and local protocols for 3+ party interactions
 
-### Stage 4: Automated Projection (Message, End, Choice)
+### Stage 4: Automated Projection (Message, End, Choice) (Completed)
 
-- Implement `Project<MyRole: Role>` trait for automated projection from global to local protocols
-- Extend `GlobalInteraction` and `LocalProtocol` with choice constructs
+- Implement `Project<R: Role>` trait for automated projection from global to local protocols
+- Extend `GlobalInteraction` with `Choice` variant for branching protocols
+- Extend `LocalProtocol` with `Select` and `Offer` variants for role-specific branching
 - Implement projection algorithm for message, end, and choice constructs
+- Add comprehensive tests for basic projection and choice projection
+- Add comprehensive tests for basic projection and choice projection
 
 ### Stage 5: Projection for Recursion & Full Multiparty Types
 
