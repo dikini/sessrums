@@ -817,11 +817,13 @@ Based on the implementation plan, the following stages are planned:
 - Add comprehensive tests for basic projection and choice projection
 - Add comprehensive tests for basic projection and choice projection
 
-### Stage 5: Projection for Recursion & Full Multiparty Types
+### Stage 5: Projection for Recursion & Full Multiparty Types (Completed)
 
-- Extend `GlobalInteraction` and `LocalProtocol` with recursion constructs
+- Extend `GlobalInteraction` and `LocalProtocol` with `Rec` and `Var` variants for recursion
 - Implement projection algorithm for recursive protocols
-- Test with complex recursive multiparty protocols
+- Add well-formedness checking for recursive protocols
+- Create builder methods for recursive protocols
+- Add comprehensive tests for recursive protocols, including with choice
 
 ### Stage 6: Multiparty Session Runtime
 

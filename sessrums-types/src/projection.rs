@@ -19,7 +19,11 @@
 //!    - Other roles' projections become `Offer`
 //!    - Branch labels are preserved during projection
 //!
-//! 3. **End Projection**:
+//! 3. **Recursion Projection**:
+//!    - Recursion points (`Rec`) and variables (`Var`) are preserved in projection
+//!    - The body of a recursion is projected for each role
+//!
+//! 4. **End Projection**:
 //!    - The `End` global interaction projects to `End` for all roles
 //!
 //! # Examples
@@ -44,7 +48,7 @@
 //! ```
 
 use crate::roles::{Role, Client, Server};
-use crate::session_types::common::RoleIdentifier;
+use crate::session_types::common::{RoleIdentifier, RecursionLabel};
 use crate::session_types::global::GlobalInteraction;
 use crate::session_types::local::LocalProtocol;
 use std::collections::HashMap;
@@ -189,7 +193,7 @@ impl RoleExt for Server {
 }
 
 /// Implementation of Project for GlobalInteraction
-impl<R: Role + RoleExt, M: Clone> Project<R> for GlobalInteraction<M> {
+impl<R: Role + RoleExt, M: Clone> Project<R, M> for GlobalInteraction<M> {
     type Output = LocalProtocol<R, M>;
     
     fn project(self) -> Self::Output {
@@ -240,7 +244,22 @@ impl<R: Role + RoleExt, M: Clone> Project<R> for GlobalInteraction<M> {
                         _role: PhantomData,
                     }
                 }
-            }
+            },
+            GlobalInteraction::Rec { label, body } => {
+                // Recursion point is preserved in projection
+                LocalProtocol::Rec {
+                    label: label.clone(),
+                    body: Box::new(body.project()),
+                    _role: PhantomData,
+                }
+            },
+            GlobalInteraction::Var { label } => {
+                // Recursion variable is preserved in projection
+                LocalProtocol::Var {
+                    label: label.clone(),
+                    _role: PhantomData,
+                }
+            },
         }
     }
 }

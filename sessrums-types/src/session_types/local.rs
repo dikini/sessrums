@@ -6,7 +6,7 @@
 
 use std::marker::PhantomData;
 use crate::roles::Role;
-use super::common::{RoleIdentifier, Label};
+use super::common::{RoleIdentifier, Label, RecursionLabel};
 
 /// Represents a local protocol in a multiparty session type system.
 ///
@@ -184,6 +184,57 @@ pub enum LocalProtocol<R: Role, M: Clone> {
         _role: PhantomData<R>,
     },
     
+    /// Recursion point in the local protocol.
+    ///
+    /// # Fields
+    ///
+    /// * `label` - The label identifying this recursion point
+    /// * `body` - The body of the recursive protocol
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::marker::PhantomData;
+    /// use sessrums_types::roles::Client;
+    /// use sessrums_types::session_types::local::LocalProtocol;
+    /// use sessrums_types::session_types::common::RecursionLabel;
+    ///
+    /// // Define a recursive ping-pong protocol for the client
+    /// let protocol = LocalProtocol::<Client, String>::rec(
+    ///     "loop",
+    ///     LocalProtocol::<Client, String>::send(
+    ///         "server",
+    ///         LocalProtocol::<Client, String>::receive(
+    ///             "server",
+    ///             LocalProtocol::<Client, String>::var("loop"),
+    ///         ),
+    ///     ),
+    /// );
+    /// ```
+    Rec {
+        /// The label identifying this recursion point
+        label: RecursionLabel,
+        
+        /// The body of the recursive protocol
+        body: Box<LocalProtocol<R, M>>,
+        
+        /// Phantom data to associate with the compile-time role type
+        _role: PhantomData<R>,
+    },
+    
+    /// Reference to a recursion point.
+    ///
+    /// # Fields
+    ///
+    /// * `label` - The label of the referenced recursion point
+    Var {
+        /// The label of the referenced recursion point
+        label: RecursionLabel,
+        
+        /// Phantom data to associate with the compile-time role type
+        _role: PhantomData<R>,
+    },
+    
     /// Represents the termination of the protocol.
     ///
     /// When a protocol reaches the `End` state, no further interactions are expected.
@@ -290,6 +341,43 @@ impl<R: Role, M: Clone> LocalProtocol<R, M> {
                 .into_iter()
                 .map(|(label, cont)| (label, Box::new(cont)))
                 .collect(),
+            _role: PhantomData,
+        }
+    }
+    
+    /// Creates a new recursion point in the local protocol.
+    ///
+    /// # Parameters
+    ///
+    /// * `label` - The label identifying this recursion point
+    /// * `body` - The body of the recursive protocol
+    ///
+    /// # Returns
+    ///
+    /// A new `LocalProtocol::Rec` variant
+    pub fn rec(
+        label: impl Into<RecursionLabel>,
+        body: LocalProtocol<R, M>,
+    ) -> Self {
+        LocalProtocol::Rec {
+            label: label.into(),
+            body: Box::new(body),
+            _role: PhantomData,
+        }
+    }
+    
+    /// Creates a new reference to a recursion point.
+    ///
+    /// # Parameters
+    ///
+    /// * `label` - The label of the referenced recursion point
+    ///
+    /// # Returns
+    ///
+    /// A new `LocalProtocol::Var` variant
+    pub fn var(label: impl Into<RecursionLabel>) -> Self {
+        LocalProtocol::Var {
+            label: label.into(),
             _role: PhantomData,
         }
     }

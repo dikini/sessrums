@@ -5,7 +5,8 @@
 //! described from a centralized perspective.
 
 use std::marker::PhantomData;
-use super::common::{RoleIdentifier, Label};
+use std::collections::HashSet;
+use super::common::{RoleIdentifier, Label, RecursionLabel};
 
 /// Represents a global protocol interaction in a multiparty session type system.
 ///
@@ -27,6 +28,9 @@ use super::common::{RoleIdentifier, Label};
 /// # Variants
 ///
 /// * `Message` - Represents a message exchange from one role to another
+/// * `Choice` - Represents a choice point where one role selects a branch
+/// * `Rec` - Represents a recursion point in the protocol
+/// * `Var` - Represents a reference to a recursion point
 /// * `End` - Represents the termination of the protocol
 ///
 /// # Examples
@@ -112,6 +116,52 @@ pub enum GlobalInteraction<M: Clone> {
         branches: Vec<(Label, Box<GlobalInteraction<M>>)>,
     },
     
+    /// Recursion point in the protocol.
+    ///
+    /// # Fields
+    ///
+    /// * `label` - The label identifying this recursion point
+    /// * `body` - The body of the recursive protocol
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::marker::PhantomData;
+    /// use sessrums_types::session_types::global::GlobalInteraction;
+    /// use sessrums_types::session_types::common::{RoleIdentifier, RecursionLabel};
+    ///
+    /// // Define a recursive ping-pong protocol
+    /// let protocol = GlobalInteraction::rec(
+    ///     "loop",
+    ///     GlobalInteraction::message(
+    ///         "client",
+    ///         "server",
+    ///         GlobalInteraction::message(
+    ///             "server",
+    ///             "client",
+    ///             GlobalInteraction::var("loop"),
+    ///         ),
+    ///     ),
+    /// );
+    /// ```
+    Rec {
+        /// The label identifying this recursion point
+        label: RecursionLabel,
+        
+        /// The body of the recursive protocol
+        body: Box<GlobalInteraction<M>>,
+    },
+    
+    /// Reference to a recursion point.
+    ///
+    /// # Fields
+    ///
+    /// * `label` - The label of the referenced recursion point
+    Var {
+        /// The label of the referenced recursion point
+        label: RecursionLabel,
+    },
+    
     /// Represents the termination of the protocol.
     ///
     /// When a protocol reaches the `End` state, no further interactions are expected.
@@ -172,6 +222,92 @@ impl<M: Clone> GlobalInteraction<M> {
                 .into_iter()
                 .map(|(label, cont)| (label, Box::new(cont)))
                 .collect(),
+        }
+    }
+    
+    /// Creates a new recursion point in the global protocol.
+    ///
+    /// # Parameters
+    ///
+    /// * `label` - The label identifying this recursion point
+    /// * `body` - The body of the recursive protocol
+    ///
+    /// # Returns
+    ///
+    /// A new `GlobalInteraction::Rec` variant
+    pub fn rec(
+        label: impl Into<RecursionLabel>,
+        body: GlobalInteraction<M>,
+    ) -> Self {
+        GlobalInteraction::Rec {
+            label: label.into(),
+            body: Box::new(body),
+        }
+    }
+    
+    /// Creates a new reference to a recursion point.
+    ///
+    /// # Parameters
+    ///
+    /// * `label` - The label of the referenced recursion point
+    ///
+    /// # Returns
+    ///
+    /// A new `GlobalInteraction::Var` variant
+    pub fn var(label: impl Into<RecursionLabel>) -> Self {
+        GlobalInteraction::Var {
+            label: label.into(),
+        }
+    }
+    
+    /// Check if this protocol is well-formed with respect to recursion.
+    ///
+    /// This method verifies that:
+    /// 1. All `Var` references point to defined `Rec` labels
+    /// 2. Recursion is properly nested
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` if the protocol is well-formed, or an error message if not
+    pub fn check_recursion_well_formedness(&self) -> Result<(), String> {
+        let mut defined_labels = HashSet::new();
+        self.check_recursion_well_formedness_inner(&mut defined_labels)
+    }
+    
+    fn check_recursion_well_formedness_inner(
+        &self, 
+        defined_labels: &mut HashSet<RecursionLabel>
+    ) -> Result<(), String> {
+        match self {
+            GlobalInteraction::Message { cont, .. } => {
+                cont.check_recursion_well_formedness_inner(defined_labels)
+            },
+            
+            GlobalInteraction::Choice { branches, .. } => {
+                for (_, branch) in branches {
+                    branch.check_recursion_well_formedness_inner(defined_labels)?;
+                }
+                Ok(())
+            },
+            
+            GlobalInteraction::Rec { label, body } => {
+                if defined_labels.contains(label) {
+                    return Err(format!("Duplicate recursion label: {:?}", label));
+                }
+                defined_labels.insert(label.clone());
+                let result = body.check_recursion_well_formedness_inner(defined_labels);
+                defined_labels.remove(label);
+                result
+            },
+            
+            GlobalInteraction::Var { label } => {
+                if !defined_labels.contains(label) {
+                    return Err(format!("Reference to undefined recursion label: {:?}", label));
+                }
+                Ok(())
+            },
+            
+            GlobalInteraction::End => Ok(()),
         }
     }
 }
@@ -266,5 +402,77 @@ mod tests {
         } else {
             panic!("Expected first Message, got End");
         }
+    }
+    
+    #[test]
+    fn test_create_recursive_protocol() {
+        // Define a recursive ping-pong protocol
+        let protocol: GlobalInteraction<String> = GlobalInteraction::rec(
+            "loop",
+            GlobalInteraction::message(
+                "client",
+                "server",
+                GlobalInteraction::message(
+                    "server",
+                    "client",
+                    GlobalInteraction::var("loop"),
+                ),
+            ),
+        );
+        
+        // Verify the structure of the protocol
+        if let GlobalInteraction::Rec { label, body } = protocol {
+            assert_eq!(label.name(), "loop");
+            
+            if let GlobalInteraction::Message { from, to, cont, .. } = *body {
+                assert_eq!(from.name(), "client");
+                assert_eq!(to.name(), "server");
+                
+                if let GlobalInteraction::Message { from, to, cont, .. } = *cont {
+                    assert_eq!(from.name(), "server");
+                    assert_eq!(to.name(), "client");
+                    
+                    if let GlobalInteraction::Var { label } = *cont {
+                        assert_eq!(label.name(), "loop");
+                    } else {
+                        panic!("Expected Var, got something else");
+                    }
+                } else {
+                    panic!("Expected Message, got something else");
+                }
+            } else {
+                panic!("Expected Message, got something else");
+            }
+        } else {
+            panic!("Expected Rec, got something else");
+        }
+        
+        // Verify well-formedness
+        assert!(protocol.check_recursion_well_formedness().is_ok());
+    }
+    
+    #[test]
+    fn test_invalid_recursive_protocol() {
+        // Define a protocol with an undefined recursion variable
+        let protocol: GlobalInteraction<String> = GlobalInteraction::message(
+            "client",
+            "server",
+            GlobalInteraction::var("undefined"),
+        );
+        
+        // Verify that well-formedness check fails
+        assert!(protocol.check_recursion_well_formedness().is_err());
+        
+        // Define a protocol with duplicate recursion labels
+        let protocol: GlobalInteraction<String> = GlobalInteraction::rec(
+            "loop",
+            GlobalInteraction::rec(
+                "loop",
+                GlobalInteraction::end(),
+            ),
+        );
+        
+        // Verify that well-formedness check fails
+        assert!(protocol.check_recursion_well_formedness().is_err());
     }
 }
