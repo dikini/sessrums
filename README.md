@@ -833,10 +833,27 @@ Based on the implementation plan, the following stages are planned:
 
 ### Stage 7-10: DSL Development and Integration
 
-- Implement DSL parser and AST definition
-- Create procedural macro for global protocol generation
+#### Stage 7: DSL Macro System (Completed)
+
+The DSL macro system provides a concise, readable syntax for defining multiparty session type protocols. It includes:
+
+- The `mpst!` macro for defining global protocols using a Mermaid-like syntax
+- The `project!` macro for projecting global protocols to local protocols
+- Comprehensive error reporting for syntax and semantic errors
+- Support for complex protocol patterns including choice and recursion
+
+For detailed documentation on the DSL macro system, see:
+- [MPST DSL Documentation](docs/mpst-dsl.md)
+- [Example: Simple Ping-Pong Protocol](docs/examples/ping-pong.md)
+- [Example: File Transfer with Choice](docs/examples/file-transfer.md)
+- [Example: Data Streaming with Recursion](docs/examples/data-stream.md)
+
+#### Future Stages
+
 - Connect all components for end-to-end integration
 - Add advanced features like parallel composition
+- Enhance error reporting and diagnostics
+- Optimize protocol validation and code generation
 
 For more details on the implementation plan, see the [MPST_DSL-Review AndImplementation.md](docs/chats/MPST_DSL-Review%20AndImplementation.md) document.
 
@@ -854,6 +871,79 @@ For a complete list of all documentation resources, see the [Documentation Index
 - [MPST Concepts](docs/mpst-concepts.md) - Introduction to Multiparty Session Types concepts
 - [MPST Design](docs/mpst-design.md) - Design and architecture of MPST support
 - [MPST Macro](docs/mpst-macro.md) - Guide to using the global protocol macro
+- [MPST DSL](docs/mpst-dsl.md) - Comprehensive documentation for the DSL macro system
+
+### DSL Macro System
+
+The DSL macro system provides a concise, readable syntax for defining multiparty session type protocols. It transforms textual protocol definitions into Rust code at compile time, ensuring type safety while offering an intuitive interface for protocol specification.
+
+#### Key Features
+
+- **Mermaid-like Syntax**: Define protocols using a familiar sequence diagram-like syntax
+- **Compile-time Verification**: Protocol errors are caught during compilation
+- **Comprehensive Error Reporting**: Clear, actionable error messages for syntax and semantic issues
+- **Support for Complex Patterns**: Define protocols with choice, recursion, and nested structures
+- **Seamless Integration**: Works with the existing MPST type system and projection mechanism
+
+#### Basic Example
+
+```rust
+use sessrums_macro::{mpst, project};
+use sessrums_types::roles::{Client, Server};
+
+// Define a simple protocol
+mpst! {
+    protocol PingPong {
+        participant Client;
+        participant Server;
+        
+        Client -> Server: String;
+        Server -> Client: String;
+        end;
+    }
+}
+
+// Project the global protocol to local protocols
+type ClientProtocol = project!(PingPong, Client, String);
+type ServerProtocol = project!(PingPong, Server, String);
+```
+
+#### Supported Constructs
+
+The DSL supports the following protocol constructs:
+
+- **Message Passing**: `A -> B: T;` - Role A sends a message of type T to role B
+- **Choice**: `choice at A { option B1 { ... } or { ... } }` - Role A makes a choice between different branches
+- **Recursion**: `rec Loop { ... continue Loop; }` - Define recursive protocols with labeled blocks
+- **End**: `end;` - Mark the end of a protocol path
+
+#### Advanced Example with Choice and Recursion
+
+```rust
+mpst! {
+    protocol FileTransfer {
+        participant Client;
+        participant Server;
+        
+        rec Loop {
+            Client -> Server: FileName;
+            
+            choice at Server {
+                option FileExists {
+                    Server -> Client: FileContent;
+                    continue Loop;
+                }
+                or {
+                    Server -> Client: FileNotFound;
+                    end;
+                }
+            }
+        }
+    }
+}
+```
+
+For more examples and detailed documentation, see the [MPST DSL Documentation](docs/mpst-dsl.md).
 
 ## License
 
