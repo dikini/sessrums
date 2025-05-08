@@ -410,6 +410,206 @@ let client_chan = Chan::<ClientProto, _>::new(());
 let server_chan = Chan::<ServerProto, _>::new(());
 ```
 
+### Using Offer and Select for Protocol Branching
+
+```rust
+use sessrums_types::{
+    session_types::{
+        binary::{Offer, Select, Either},
+        End, Send, Receive, Session,
+    },
+    transport::MockChannelEnd,
+    error::SessionError,
+};
+use serde::{Serialize, Deserialize};
+
+// Define message types
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+struct Proposal(String);
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+struct Acceptance(String);
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+struct Rejection(String, String); // Rejection with reason
+
+// Define protocol types for a proposal that can be accepted or rejected
+// Client sends a proposal, then server can either:
+// - Accept (left branch): Server sends an acceptance message
+// - Reject (right branch): Server sends a rejection message with reason
+type ClientProtocol = Send<Proposal,
+    Offer<
+        Receive<Acceptance, End>,  // Left branch - proposal accepted
+        Receive<Rejection, End>    // Right branch - proposal rejected
+    >
+>;
+
+// Server's dual protocol
+type ServerProtocol = Receive<Proposal,
+    Select<
+        Send<Acceptance, End>,     // Left branch - accept proposal
+        Send<Rejection, End>       // Right branch - reject proposal
+    >
+>;
+
+// Example usage
+fn main() -> Result<(), SessionError> {
+    // Create mock transport
+    let (client_chan, server_chan) = MockChannelEnd::new_pair();
+    
+    // Initialize sessions
+    let client = Session::<ClientProtocol, _>::new(client_chan);
+    let server = Session::<ServerProtocol, _>::new(server_chan);
+    
+    // Client sends proposal
+    let proposal = Proposal("Let's meet at 2pm".to_string());
+    let client = client.send(proposal)?;
+    
+    // Server receives proposal
+    let (received_proposal, server) = server.receive()?;
+    println!("Server received proposal: {:?}", received_proposal);
+    
+    // Server decides whether to accept or reject
+    // For this example, let's say the server rejects
+    let server = server.select_right()?;
+    
+    // Server sends rejection with reason
+    let rejection = Rejection(
+        received_proposal.0,
+        "I'm not available at that time".to_string()
+    );
+    let server = server.send(rejection)?;
+    
+    // Client waits for server's decision
+    let client_branch = client.offer()?;
+    
+    // Client handles the server's decision
+    match client_branch {
+        Either::Left(client) => {
+            // Proposal was accepted
+            let (acceptance, client) = client.receive()?;
+            println!("Proposal accepted: {:?}", acceptance);
+            client.close(); // Close session
+        },
+        Either::Right(client) => {
+            // Proposal was rejected
+            let (rejection, client) = client.receive()?;
+            println!("Proposal rejected: {:?}", rejection);
+            client.close(); // Close session
+        }
+    }
+    
+    // Close server session
+    server.close();
+    
+    Ok(())
+}
+```
+
+This example demonstrates:
+1. How to define protocols with branching using `Offer` and `Select`
+2. How the client offers choices and the server selects a branch
+3. How to handle different branches with pattern matching
+4. How the typestate system ensures protocol adherence
+5. A practical use case for protocol branching (proposal acceptance/rejection)
+
+### Using Recursion for Repeated Interactions
+
+```rust
+use sessrums_types::{
+    session_types::{Rec, Var, Send, Receive, Select, Offer, End, Either, Session},
+    transport::MockChannelEnd,
+    error::SessionError,
+};
+use serde::{Serialize, Deserialize};
+use std::marker::PhantomData;
+
+// Define message types
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+struct CounterMsg {
+    count: u32,
+}
+
+// Define recursive protocol types with a choice to continue or end
+fn client_body(_: Var) -> Send<CounterMsg, Receive<CounterMsg, Select<Var, End>>> {
+    Send(PhantomData)
+}
+
+fn server_body(_: Var) -> Receive<CounterMsg, Send<CounterMsg, Offer<Var, End>>> {
+    Receive(PhantomData)
+}
+
+type ClientProtocol = Rec<fn(Var) -> Send<CounterMsg, Receive<CounterMsg, Select<Var, End>>>>;
+type ServerProtocol = Rec<fn(Var) -> Receive<CounterMsg, Send<CounterMsg, Offer<Var, End>>>>;
+
+// Example usage
+fn main() -> Result<(), SessionError> {
+    // Create mock transport
+    let (client_chan, server_chan) = MockChannelEnd::new_pair();
+    
+    // Initialize sessions
+    let client = Session::<ClientProtocol, _>::new(client_chan);
+    let server = Session::<ServerProtocol, _>::new(server_chan);
+
+    // Unroll the recursion once
+    let client = client.enter_rec();
+    let server = server.enter_rec();
+
+    // Run the protocol for 3 iterations
+    let max_count = 3;
+    let mut count = 1;
+
+    while count <= max_count {
+        // Client sends counter
+        let client_msg = CounterMsg { count };
+        let client = client.send(client_msg)?;
+        
+        // Server receives counter
+        let (received_client_msg, server) = server.receive()?;
+        println!("Server received: count = {}", received_client_msg.count);
+        
+        // Server sends counter back
+        let server_msg = CounterMsg { count };
+        let server = server.send(server_msg)?;
+        
+        // Client receives counter
+        let (received_server_msg, client) = client.receive()?;
+        println!("Client received: count = {}", received_server_msg.count);
+
+        count += 1;
+
+        if count <= max_count {
+            // Continue with recursion
+            let client = client.select_left()?;
+            let client = client.recurse(client_body);
+            let client = client.enter_rec();
+
+            let Either::Left(server) = server.offer()? else {
+                panic!("Server should have received Left choice");
+            };
+            let server = server.recurse(server_body);
+            let server = server.enter_rec();
+        } else {
+            // End the protocol
+            let _client = client.select_right()?;
+            let Either::Right(_server) = server.offer()? else {
+                panic!("Server should have received Right choice");
+            };
+            break;
+        }
+    }
+    
+    Ok(())
+}
+```
+
+This example demonstrates a recursive protocol where:
+1. The client sends a counter message to the server
+2. The server receives the counter and sends it back
+3. The client receives the counter from the server
+4. The client decides whether to continue (recursion) or end the protocol
+5. If continuing, both parties loop back to step 1 using `recurse` and `enter_rec`
+
 ## Visual Protocol Representation
 
 ```

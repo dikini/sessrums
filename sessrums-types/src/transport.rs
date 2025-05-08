@@ -113,11 +113,31 @@ mod tests {
         assert_eq!(received, msg);
         
         // Test empty queue behavior
-        match end1.receive_payload::<TestMessage>() {
+        return match end1.receive_payload::<TestMessage>() {
             Err(SessionError::UnexpectedClose) => Ok(()),
             Ok(_) => panic!("Expected UnexpectedClose, got success"),
             Err(e) => panic!("Expected UnexpectedClose, got different error: {:?}", e),
-        }
+        };
+    }
+    
+    #[test]
+    fn test_choice_signal_transmission() -> Result<(), SessionError> {
+        use crate::session_types::binary::ChoiceSignal;
+        
+        // Create a mock channel pair
+        let (mut end1, mut end2) = MockChannelEnd::new_pair();
+        
+        // Test sending and receiving ChoiceSignal::Left
+        end1.send_payload(&ChoiceSignal::Left)?;
+        let received_left: ChoiceSignal = end2.receive_payload()?;
+        assert!(matches!(received_left, ChoiceSignal::Left));
+        
+        // Test sending and receiving ChoiceSignal::Right
+        end1.send_payload(&ChoiceSignal::Right)?;
+        let received_right: ChoiceSignal = end2.receive_payload()?;
+        assert!(matches!(received_right, ChoiceSignal::Right));
+        
+        Ok(())
     }
 
     #[test]

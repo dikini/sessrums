@@ -287,8 +287,20 @@ This plan aims to build the MPST DSL system incrementally, focusing on a runtime
         *   `pub struct Offer<L, R>(std::marker::PhantomData<(L, R)>);`
         *   `#[derive(Serialize, Deserialize)] enum ChoiceSignal { Left, Right }`
         *   `pub enum Either<S1, S2> { Left(S1), Right(S2) }`
-        *   `impl<L, R, T: Transport> Session<Select<L, R>, T> { pub fn select_left(self) -> Result<Session<L, T>, SessionError> { /* send ChoiceSignal::Left */ } pub fn select_right(self) -> Result<Session<R, T>, SessionError> { /* send ChoiceSignal::Right */ } }` (where L, R are 'static)
-        *   `impl<L, R, T: Transport> Session<Offer<L, R>, T> { pub fn offer(self) -> Result<Either<Session<L, T>, Session<R, T>>, SessionError> { /* receive ChoiceSignal, return Either */ } }` (where L, R are 'static)
+        *   
+        ```rust
+        impl<L, R, T: Transport> Session<Select<L, R>, T> { 
+            pub fn select_left(self) -> Result<Session<L, T>, SessionError> { /* send ChoiceSignal::Left */ } 
+            pub fn select_right(self) -> Result<Session<R, T>, SessionError> { /* send ChoiceSignal::Right */ } 
+        }
+        ``` 
+        (where L, R are 'static)
+        *   
+        ```rust
+        impl<L, R, T: Transport> Session<Offer<L, R>, T> { 
+            pub fn offer(self) -> Result<Either<Session<L, T>, Session<R, T>>, SessionError> { /* receive ChoiceSignal, return Either */ } }
+        ``` 
+        (where L, R are 'static)
     *   `tests/binary_choice.rs`.
 *   **Pre-conditions:** Stage 0 completed.
 *   **Post-conditions:** Code compiles. Compiler enforces choice logic. Tests for choice protocols pass.

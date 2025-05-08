@@ -26,9 +26,9 @@ Stage 0 is the foundational step in the MPST DSL project. Its goal is to impleme
 ## Stage 0: Actionable Task Breakdown
 
 ### 1. Project Setup
-- [ ] Initialize a new Rust workspace and library crate.
-- [ ] Add dependencies: `serde`, `bincode`, `thiserror` in `Cargo.toml`.
-- [ ] Create the following directory structure:
+- [x] Initialize a new Rust workspace and library crate.
+- [x] Add dependencies: `serde`, `bincode`, `thiserror` in `Cargo.toml`.
+- [x] Create the following directory structure:
     - `src/roles.rs`
     - `src/messages.rs`
     - `src/error.rs`
@@ -38,37 +38,37 @@ Stage 0 is the foundational step in the MPST DSL project. Its goal is to impleme
     - `tests/`
 
 ### 2. Define Roles
-- [ ] Implement zero-sized types for roles (e.g., `Client`, `Server`) in `src/roles.rs`.
-- [ ] Optionally define a `Role` trait for extensibility.
+- [x] Implement zero-sized types for roles (e.g., `Client`, `Server`) in `src/roles.rs`.
+- [x] Optionally define a `Role` trait for extensibility.
 
 ### 3. Define Message Types
-- [ ] Create simple message structs (e.g., `PingMsg`, `PongMsg`) in `src/messages.rs`.
-- [ ] Derive `Serialize`, `Deserialize`, and `PartialEq` for these types.
+- [x] Create simple message structs (e.g., `PingMsg`, `PongMsg`) in `src/messages.rs`.
+- [x] Derive `Serialize`, `Deserialize`, and `PartialEq` for these types.
 
 ### 4. Error Handling
-- [ ] Implement a `SessionError` enum in `src/error.rs` using `thiserror`.
-- [ ] Cover at least: transport errors, serialization/deserialization errors, protocol violations.
+- [x] Implement a `SessionError` enum in `src/error.rs` using `thiserror`.
+- [x] Cover at least: transport errors, serialization/deserialization errors, protocol violations.
 
 ### 5. Transport Abstraction
-- [ ] Define a `Transport` trait in `src/transport.rs` with `send_payload` and `receive_payload` methods.
-- [ ] Implement a `MockChannelEnd` struct for in-memory testing.
-- [ ] Implement serialization/deserialization helpers using `bincode`.
+- [x] Define a `Transport` trait in `src/transport.rs` with `send_payload` and `receive_payload` methods.
+- [x] Implement a `MockChannelEnd` struct for in-memory testing.
+- [x] Implement serialization/deserialization helpers using `bincode`.
 
 ### 6. Protocol State Structs
-- [ ] In `src/session_types/binary.rs`, define:
+- [x] In `src/session_types/binary.rs`, define:
     - `pub struct End;`
     - `pub struct Send<M, NextP>(std::marker::PhantomData<(M, NextP)>);`
     - `pub struct Receive<M, NextP>(std::marker::PhantomData<(M, NextP)>);`
 
 ### 7. Session Struct and API
-- [ ] Define `pub struct Session<S, T: Transport> { state: S, channel: T }`.
-- [ ] Implement `Session::new(channel: T) -> Self` (state is ZST).
-- [ ] For `Session<End, T>`, implement `fn close(self) -> T`.
-- [ ] For `Session<Send<M, NextP>, T>`, implement `fn send(self, message: M) -> Result<Session<NextP, T>, SessionError>`.
-- [ ] For `Session<Receive<M, NextP>, T>`, implement `fn receive(self) -> Result<(M, Session<NextP, T>), SessionError>`.
+- [x] Define `pub struct Session<S, T: Transport> { state: S, channel: T }`.
+- [x] Implement `Session::new(channel: T) -> Self` (state is ZST).
+- [x] For `Session<End, T>`, implement `fn close(self) -> T`.
+- [x] For `Session<Send<M, NextP>, T>`, implement `fn send(self, message: M) -> Result<Session<NextP, T>, SessionError>`.
+- [x] For `Session<Receive<M, NextP>, T>`, implement `fn receive(self) -> Result<(M, Session<NextP, T>), SessionError>`.
 
 ### 8. Testing
-- [ ] Write a test in `tests/ping_pong_binary_sequential.rs`:
+- [x] Write a test in `tests/ping_pong_binary_sequential.rs`:
     - Set up a mock channel pair.
     - Implement a Ping → Pong → End protocol using the typestate API.
     - Assert correct message flow and typestate transitions.
